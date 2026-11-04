@@ -2,11 +2,13 @@
 
 [미션 원문](a1_1_mission.md)의 필수 요구사항을 기준으로 상품 이미지·텍스트의 특성을 분석하고, 실제 구매 기록에서 단골 고객을 식별한다. 제출물은 `src/pipeline.py`, 실행 결과가 담긴 `notebooks/analysis_report.ipynb`, 데이터 출처와 인사이트가 포함된 `README.md`를 갖춘 GitHub 저장소다.
 
+실행 순서와 예외 처리 기준은 [상세 계획](a1_1_detailed_plan.md), 완료 여부는 [작업 체크표](a1_1_checklist.md)에서 확인한다.
+
 ## 현재 상태
 
 | 항목 | 확인한 상태 | 구현할 내용 |
 | --- | --- | --- |
-| 데이터 | 저장소와 로컬 작업 폴더에 분석용 원본이나 샘플이 없음 | 데이터 확보, 출처·이용 조건 확인, 입력 스키마 고정 |
+| 데이터 | 대회 데이터를 표본 ZIP으로 확보하는 절차를 정의함 | 접근 조건·입력 기준 검증 |
 | `src/pipeline.py` | `DataAnalyzer`에 CSV 로드, 결측치 대치, IQR, 이미지·텍스트 피처, RFM 기본 코드가 있음 | 실제 입력 연결, 대치 범위 제한, 구매 빈도 정의와 RFM 검증, 요약 통계 |
 | `notebooks/analysis_report.ipynb` | 마크다운 목차만 있음 | 데이터 로드부터 차트 6종, 통계 해석, 세그먼트 비교까지 실행 |
 | `README.md` | 프로젝트 소개, CSV 경로 예시, 인사이트 템플릿이 있음 | 다운로드와 재실행 방법, 데이터 설명, 근거가 있는 인사이트 3개 이상 |
@@ -15,9 +17,11 @@
 
 ## 1. 데이터 선정과 준비
 
-**우선 검증할 후보는 Kaggle의 H&M Personalized Fashion Recommendations다.** 구매 내역인 `transactions_train.csv`, 상품 메타데이터인 `articles.csv`, 상품 이미지가 `article_id`로 연결된다. 상품마다 이미지 유무가 다르고 전체 자료는 약 34.6 GB다. 필요한 CSV와 분석에 쓰는 상품의 이미지만 확보할 수 있는지 먼저 확인한다. [Kaggle 데이터 설명](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)
+미션 제공 샘플의 유무와 적용 가능성을 먼저 확인한다. 제공 샘플을 쓰기 어렵다면 Kaggle의 H&M Personalized Fashion Recommendations를 검증한다. 구매 내역인 `transactions_train.csv`, 상품 메타데이터인 `articles.csv`, 상품 이미지가 `article_id`로 연결된다. 전체 자료는 약 34.6 GB이며, 거래 CSV만 약 3.49 GB다. [Kaggle 데이터 설명](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data?select=transactions_train.csv)
 
-Kaggle 약관은 비상업적 교육 사용을 허용하고 대회 데이터의 재배포를 제한한다. 접근 가능 여부, 필요한 다운로드 규모, GitHub 제출 시 코드와 집계 결과를 공개할 수 있는 범위를 확인한 뒤 채택한다. 원본 파일은 `data/raw/`에 보관하고 `data/`를 Git 추적에서 제외한다. 공개 가능한 결과물과 데이터 재현 절차를 README에 적는다. [Kaggle 대회 규정 7·8절](https://www.kaggle.com/c/h-and-m-personalized-fashion-recommendations/rules)
+H&M을 사용할 경우 비공개 Kaggle Notebook에 대회 데이터를 연결해 원격에서 거래 행, 연결된 상품 정보, 일부 JPG를 선별한다. 로컬로는 이용 조건상 허용되는 작은 표본 ZIP만 옮기고, 재현에 필요한 기간·채널·시드·기준일을 함께 기록한다. [Kaggle Notebook 문서](https://www.kaggle.com/docs/notebooks)
+
+Kaggle 약관은 비상업적 교육 사용을 허용하고 대회 데이터의 재배포를 제한한다. 접근 가능 여부, 필요한 다운로드 규모, GitHub에서 코드와 집계 결과를 공개할 수 있는 범위를 확인한 뒤 채택한다. 저장 전에 `/data/`가 Git에서 제외되는지 검증한다. 공개 가능한 결과물과 데이터 재현 절차를 README에 적는다. [Kaggle 대회 규정 7·8절](https://www.kaggle.com/c/h-and-m-personalized-fashion-recommendations/rules)
 
 접근이나 공개 조건을 충족하기 어렵다면 CC BY 4.0인 UCI Online Retail 거래 데이터와 Amazon Berkeley Objects 상품명·이미지를 대안으로 검토한다. 이 경우 상품 분석과 고객 RFM을 두 데이터 흐름으로 분리하며, 서로 다른 상품 ID는 연결하지 않는다. 미션에서 단일 출처를 요구하는지 먼저 확인하고, 허용될 때 적용한다. UCI 원본 엑셀은 분석 전에 CSV로 내보낸다. [UCI Online Retail](https://archive.ics.uci.edu/dataset/352/online+retail), [Amazon Berkeley Objects](https://amazon-berkeley-objects.s3.us-east-1.amazonaws.com/index.html)
 
@@ -29,7 +33,7 @@ Kaggle 약관은 비상업적 교육 사용을 허용하고 대회 데이터의 
 | 상품 | 상품 1개 | `article_id`, `product_name` (`prod_name`), `category` (`product_type_name`), `image_path`, `has_image` |
 | 상품 이미지 | 상품 1개 | `article_id`에 대응하는 파일을 읽어 만든 NumPy 배열 |
 
-1. 기간을 고정하고, 용량 제한이 있으면 고객 ID를 고정된 방식으로 표본 추출한 뒤 해당 고객의 기간 내 거래를 모두 보존한다. 월별 추세를 비교할 수 있게 완전한 월을 3개 이상 확보하고, 거래는 정제 후 1,000건 이상을 목표로 한다. 기간·추출 규칙·행 수를 기록한다.
+1. 기간과 분석 채널을 고정하고, 고객 ID를 고정된 방식으로 표본 추출한 뒤 해당 고객의 기간 내 유효 거래를 모두 보존한다. 완전한 월을 3개 이상 확보하고 정제 후 유효 거래 1,000건 이상인지 확인한다. 기간·채널·추출 규칙·행 수를 기록한다.
 2. 거래와 상품은 `article_id`를 문자열로 읽어 선행 0을 보존하고, 거래에서 상품으로 다대일 왼쪽 조인한다. 상품 ID 중복, 미매칭 비율, 조인 전후 행 수와 구매금액 합계가 같은지 확인한다. 최종 탐색용 테이블에서 8개 이상 컬럼과 수치·범주·날짜·이미지 배열의 처리 경로를 확인한다.
 3. 이미지가 빠진 상품은 `has_image`로 구분한다. 이미지가 있는 상품은 상품별로 한 번 피처를 계산하고, 필요한 거래 분석에 피처를 조인한다. 이미지 유무에 따른 상품 비율과 분석 표본 수를 기록하고, 이미지 유무와 관계없이 유효 거래는 RFM에 포함한다.
 4. 고객 ID나 날짜가 비어 있는 행, 숫자로 변환할 수 없는 금액, 0 이하의 구매금액은 양의 구매 RFM 집계에서 분리하고 건수와 기준을 기록한다. H&M 데이터에서 값이 같은 행은 복수 구매일 수 있으므로 일괄 제거하지 않는다. 금액의 원본 단위를 확인하고, 근거가 있는 단위로 표기한다. [Kaggle 데이터 설명](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)
@@ -40,7 +44,7 @@ Kaggle 약관은 비상업적 교육 사용을 허용하고 대회 데이터의 
 - **이미지와 텍스트** `matplotlib.image.imread()`로 상품 이미지를 배열로 읽는다. RGB 채널과 픽셀 범위를 통일한 후 NumPy 슬라이싱과 인덱싱으로 공통 크기의 배열을 만든다. 파일 읽기는 상품별로 수행하고, 평균·표준편차 계산은 같은 모양의 배열을 배치로 쌓아 픽셀·채널 축 전체에 벡터 연산을 적용한다. 누락·손상 이미지는 건수를 남기고 피처를 결측으로 보존한다. 상품명 길이와 단어 수는 기존 Pandas 문자열 연산을 활용한다.
 - **결측치** `handle_missing_values()`에 대치 대상 컬럼과 그룹을 명시한다. 실제로 결측이 있는 분석용 수치 피처에 상품 카테고리별 평균을 적용하고, 그룹 평균을 계산할 수 없으면 해당 피처의 전체 평균을 사용한다. 기존 관측값과 거래 식별자·날짜·구매금액을 보존한다. 적용 가능한 결측이 원본에 없다면 별도 검증용 입력에서 그룹 대치 결과를 보여주고 실제 데이터의 결측 현황을 구분해 기록한다.
 - **이상치와 요약 통계** `detect_outliers()`의 `Q1 − k×IQR`, `Q3 + k×IQR` 마스크를 유지하고 기본 `k=1.5`를 인자로 받는다. 분석용 금액 분포의 원본과 상하한 보정 사본을 나란히 비교한다. 경계값, 탐지 건수와 비율, 보정 전후 차이를 기록하고 RFM에는 유효한 원래 구매금액을 사용한다. 주요 수치 변수의 평균·중앙값·표준편차·사분위수를 반환하는 요약 메서드를 추가한다.
-- **RFM 집계** `calculate_rfm()`에 주문 ID 또는 구매일을 기준으로 빈도를 계산하는 옵션을 둔다. Recency는 유효 거래 최종일과 고객 최종 구매일의 차이로 계산하며 최종일 구매는 0일이다. Frequency는 주문 ID가 있으면 고유 주문 수, H&M에서는 고유 구매일 수를 사용한다. 같은 날 여러 주문이 있어도 H&M의 Frequency에서는 하루로 집계된다. Monetary는 유효한 `amount`의 고객별 합계다.
+- **RFM 집계** `calculate_rfm()`에 주문 ID 또는 구매일을 기준으로 빈도를 계산하는 옵션을 둔다. Recency는 표본 추출 전의 유효 거래 최종일과 고객 최종 구매일의 차이로 계산하며 기준일 구매는 0일이다. Frequency는 주문 ID가 있으면 고유 주문 수, H&M에서는 고유 구매일 수를 사용한다. 같은 날 여러 주문이 있어도 H&M의 Frequency에서는 하루로 집계된다. Monetary는 유효한 `amount`의 고객별 합계다.
 - **점수와 분류** 최근일수는 작을수록, 빈도와 금액은 클수록 높은 1~4점을 준다. 동일한 지표값에 같은 점수를 부여하고, 동점 때문에 점수 구간이 줄어들면 그 결과를 기록한다. 기준일, 점수 경계, 규칙 우선순위를 노트북에 공개한다. 시작 규칙은 `VIP`(최근·빈도·금액 모두 상위), `Loyal`(활동이 최근이고 반복 구매), `New`(최근에 구매일 1회가 관측됨), `Churned`(최근성 하위로 이탈 위험), 나머지 `Potential`이다. `New`는 관찰 기간 내 분류로 해석한다. 고객이 실제로 들어간 그룹이 4개 미만이면 관찰 기간, 지표 분포와 경계를 점검한다.
 
 ## 3. 노트북과 README 완성
