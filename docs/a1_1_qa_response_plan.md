@@ -156,19 +156,44 @@
 
 ---
 
-## Part 4. 평가 전 최종 점검 실행 계획 (Action Items)
+## Part 4. 현재 리포지토리 구현 현황 진단 및 잔여 작업 계획
 
-질문 답변을 완벽히 뒷받침하기 위해 코드와 문서에서 다음 사항을 일관되게 유지해야 합니다.
+[구현 계획(`a1_1_implementation_plan.md`)](file:///Users/mpeg46551/A1_1/docs/a1_1_implementation_plan.md)과 [작업 체크표(`a1_1_checklist.md`)](file:///Users/mpeg46551/A1_1/docs/a1_1_checklist.md) 기준으로 점검한 현재 리포지토리의 실제 구현 상태와 미완료 과제입니다.
 
-1. **[`src/pipeline.py`](file:///Users/mpeg46551/A1_1/src/pipeline.py) 코드 숙지**:
-   * `handle_missing_values`의 `groupby().transform()` 동작 방식 (34~36행)
-   * `detect_outliers`의 `quantile(0.25)`, `quantile(0.75)` 및 마스크 반환 방식 (59~65행)
-   * `calculate_rfm`의 `pd.qcut` 랭크 스코어링과 `np.select` 세그먼트 분류 조건 (89~100행)
-   * `extract_image_features`의 `axis=reduce_axes` 다차원 축소 연산 (115~117행)
-2. **[`notebooks/analysis_report.ipynb`](file:///Users/mpeg46551/A1_1/notebooks/analysis_report.ipynb) 완성도 확보**:
-   * 모든 코드 셀 에러 없이 순차 실행 완료 상태 유지
-   * 6종 차트 제목/축 레이블 포함 및 마크다운에 **[수치 근거 + 시사점]** 명시
-   * 왜 이 대치 전략과 RFM 기준을 선택했는지 의사결정 근거를 마크다운에 기록
-3. **[`README.md`](file:///Users/mpeg46551/A1_1/README.md) 인사이트 3건 업데이트**:
-   * 템플릿 상태를 실제 노트북 분석 수치 기반의 **[근거 + 실행 + 검증]** 3요소 완비된 인사이트 3개 이상으로 채우기
+### 1. 산출물별 구현 진척도 요약 (전체 약 30~40% 진행)
+
+| 구분 | 대상 파일 / 경로 | 현재 상태 (진척도) | 구현된 내용 | 미구현 및 보완 필요 사항 (Gap) |
+| --- | --- | --- | --- | --- |
+| **파이프라인 모듈** | [`src/pipeline.py`](file:///Users/mpeg46551/A1_1/src/pipeline.py) | 기본 뼈대 완료 (~80%) | `DataAnalyzer` 클래스, 필수 메서드 4종(`load_data`, `handle_missing_values`, `detect_outliers`, `calculate_rfm`), 이미지/텍스트 피처 추출 기본 메서드 | - 거래 CSV + 상품 CSV 다대일 조인(`article_id` 선행 0 보존)<br>- 실제 `.jpg` 이미지를 `imread()`로 읽고 공통 크기로 슬라이싱해 배치 배열로 변환하는 연결 경로<br>- `handle_missing_values()`에서 대치 대상 컬럼을 지정해 식별자/원본 금액 덮어쓰기 방지<br>- `calculate_rfm()`에서 단순 행 개수(`count`) 외에 **고유 구매일/주문 ID** 기준 Frequency 집계 및 동점 처리 옵션<br>- 주요 수치 변수 기술통계 요약 메서드 추가 |
+| **분석 리포트 노트북** | [`notebooks/analysis_report.ipynb`](file:///Users/mpeg46551/A1_1/notebooks/analysis_report.ipynb) | **미구현 (0%, 목차만 존재)** | `## 1. 데이터 로드...` ~ `## 6. RFM 기반 고객 세분화...` 마크다운 헤더 셀 7개만 존재 | - 파이썬 분석 코드 셀 전체 작성 및 실행 출력 저장<br>- `info()`, `describe()`, `head()` 탐색 및 마크다운 해석<br>- 이미지(Mean/Std) 및 텍스트(길이/단어 수) 파생변수 추가 확인<br>- 그룹별 결측치 대치 및 IQR 이상치 처리 전후 비교<br>- 기술통계 및 상관계수 2쌍 이상 계산 + 수치 근거/시사점 해석<br>- **필수 6종 차트**(히스토그램, 박스플롯, 막대그래프, 히트맵, 산점도, 라인차트) 생성<br>- RFM 4개 이상 세그먼트 프로파일 표 및 분석 |
+| **프로젝트 문서** | [`README.md`](file:///Users/mpeg46551/A1_1/README.md) | 초안 템플릿 (~30%) | 프로젝트 개요, H&M 표본 복원 스크립트 안내, 데이터 설명 요약, 인사이트 빈 템플릿 | - 실제 분석 결과 수치에 기반한 **비즈니스 인사이트 3건 이상** (`근거` + `실행` + `검증` 3요소 완비)<br>- 검증 완료한 Python/패키지 버전 및 재현 절차 상세화 |
+| **로컬 데이터셋** | `data/raw/hm/` | **현재 워크스페이스에 미복원** | [`scripts/restore_hm_sample.py`](file:///Users/mpeg46551/A1_1/scripts/restore_hm_sample.py) 및 [`notebooks/prepare_hm_sample.ipynb`](file:///Users/mpeg46551/A1_1/notebooks/prepare_hm_sample.ipynb) 준비 완료, 체크리스트 A2~A4 사전 검증 기록 존재 | - 현재 로컬 경로(`/Users/mpeg46551/A1_1/data/`)에 `A1_1_hm_sample.zip` 복원 필요 |
+
+### 2. 체크리스트(`a1_1_checklist.md`) 기준 미완료 구간 (B ~ F 단계)
+* **완료된 항목**: `P0`(실행 환경 확인), `A2`(스키마 확정), `A3`(관찰 범위 2020년 6~8월, 시드 42), `A4`(데이터 기준 확인)
+* **미완료 항목 (`[ ]` 상태)**:
+  * **A1 (데이터 채택 및 로컬 배치)**: 로컬 `data/raw/hm/`에 샘플 아카이브 압축 해제 및 공개 범위 최종 확인
+  * **B1 ~ B4 (로드와 멀티모달 피처)**: 노트북에서 `DataAnalyzer` 호출, 거래-상품 다대일 조인 정합성 검증, 이미지 배치 연산 및 예외(누락/손상) 구분, 단위 테스트(`Blue cotton shirt` 길이 17·단어 수 3, 0/1 이미지 평균·표준편차 0.5) 확인
+  * **C1 ~ C5 (정제와 RFM)**: 유효 거래 건수 대조, 그룹 평균 대치 검증(20/30/50 테스트), IQR 경계값 검증, RFM 손계산 검증(고객 A `0·2·60`, 고객 B `1·1·5`), 4개 이상 세그먼트 배정 확인
+  * **D1 ~ D4 (분석 노트북 작성)**: 기본 탐색, 기술통계·상관계수 2쌍, 6종 차트(제목·축 레이블·월별 합계 일치), 세그먼트 프로파일링
+  * **E1 ~ E2 (README 완성)**: 재현 안내 및 실제 수치 기반 인사이트 3개 이상 작성
+  * **F1 ~ F3 (제출 전 검증)**: 클린 커널 전체 재실행, 개인정보/식별자 노출 점검, GitHub 최종 산출물 3종 확인
+
+---
+
+## Part 5. 평가 전 최종 실행 및 점검 계획 (Action Items)
+
+평가를 통과하고 위 예상 질문(Q1~Q10)에 완벽히 답변하기 위해 다음 순서로 잔여 구현을 진행합니다.
+
+1. **Step 1 — 로컬 데이터 준비 (`A1`)**:
+   * `A1_1_hm_sample.zip` 파일을 확보하여 `python scripts/restore_hm_sample.py --archive <경로>`로 `data/raw/hm/`에 복원합니다.
+2. **Step 2 — [`src/pipeline.py`](file:///Users/mpeg46551/A1_1/src/pipeline.py) 고도화 (`B1~C5`)**:
+   * 거래-상품 조인, 이미지 파일 로드(`imread`) 및 슬라이싱 배치 처리, 대상 컬럼 지정 결측치 대치, 구매일/주문 기준 RFM Frequency 옵션을 반영하고 단위 검증을 통과시킵니다.
+   * 코드 라인별 핵심 로직(`groupby().transform()`, `quantile()`, `pd.qcut`, `np.select`, `axis=reduce_axes`)을 숙지합니다.
+3. **Step 3 — [`notebooks/analysis_report.ipynb`](file:///Users/mpeg46551/A1_1/notebooks/analysis_report.ipynb) 구현 및 실행 (`D1~D4`)**:
+   * 모든 코드 셀이 처음부터 끝까지 에러 없이 실행되도록 작성하고 출력 결과를 저장합니다.
+   * 6종 차트에 제목과 축 레이블을 명시하고, 모든 분석 단계마다 마크다운에 **[수치 근거 1개 이상 + 시사점 1문장 이상]** 및 의사결정 근거(대치 전략, RFM 기준 등)를 기록합니다.
+4. **Step 4 — [`README.md`](file:///Users/mpeg46551/A1_1/README.md) 인사이트 3건 업데이트 (`E1~F3`)**:
+   * 빈 템플릿을 실제 노트북 분석 수치에 기반한 **[근거 + 실행 + 검증]** 3요소 완비 인사이트 3개 이상으로 채우고 체크리스트([`a1_1_checklist.md`](file:///Users/mpeg46551/A1_1/docs/a1_1_checklist.md), [`a1_1_implementation_plan.md`](file:///Users/mpeg46551/A1_1/docs/a1_1_implementation_plan.md))를 최종 완료 처리합니다.
+
 
