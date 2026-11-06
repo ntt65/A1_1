@@ -18,7 +18,7 @@
 | [utils/image_features.py](utils/image_features.py) | 픽셀 정규화·상품별 이미지 배치 통계 |
 | [utils/run_checks.py](utils/run_checks.py) | 가상 입력 검증·선택적 새 커널 노트북 실행 |
 | [tests/test_pipeline.py](tests/test_pipeline.py) | B1~B4 회귀 검증, 실제 데이터 불필요 |
-| [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb) | 실제 분석의 설정·클래스 호출·해석, 공개본 출력 비움 |
+| [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb) | 실제 데이터·ID·이미지·통계·RFM과 원본 실행 출력 |
 | [notebooks/prepare_hm_sample.ipynb](notebooks/prepare_hm_sample.ipynb) | Kaggle에서 필요한 거래·상품·이미지만 추출 |
 | [scripts/restore_hm_sample.py](scripts/restore_hm_sample.py) | 비공개 표본 ZIP 검사·안전한 로컬 복원 |
 | [utils/analytics.py](utils/analytics.py) | 거래 정제·결측·IQR·RFM·세그먼트 프로파일 |
@@ -34,8 +34,8 @@
 
 | 추가 파일 | 역할 |
 | --- | --- |
-| [utils/publish_report.py](utils/publish_report.py) | 승인 집계·안전 차트·공개 집계 보고서 생성 |
-| [tests/test_publication.py](tests/test_publication.py) | 원본 행·식별자 출력 제거 검증 |
+| [utils/publish_report.py](utils/publish_report.py) | 원본 실행본·차트 보존과 보조 집계 보고서 생성 |
+| [tests/test_publication.py](tests/test_publication.py) | 원본 필드·실행본 바이트 보존과 오류 실행 거부 검증 |
 | [docs/results/analysis_report.md](docs/results/analysis_report.md) | 원본·노트북 stdout 없이 집계 구조에서 생성한 정적 보고서 |
 | [docs/results/analysis_aggregates.json](docs/results/analysis_aggregates.json) | 설정·집계·통계·검증 결과 |
 | [docs/results/segment_profile.csv](docs/results/segment_profile.csv) · [docs/results/monthly_amount.csv](docs/results/monthly_amount.csv) | 공개 고객 그룹·월별 집계 |

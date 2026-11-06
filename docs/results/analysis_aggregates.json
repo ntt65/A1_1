@@ -9,6 +9,11 @@
     "iqr_threshold": 1.5
   },
   "reference_date": "2020-08-31",
+  "input_sha256": {
+    "transactions_sample.csv": "1495d4320e01e1a4c7f89f00a962f854c835c9cff413c8c4390c3bc5dca414d8",
+    "articles_sample.csv": "f3afdd956f5a8feba3303855d6d0aa04873247cff0573efcc9d3f859e2b93f96",
+    "sample_manifest.json": "1c2258042dfcb240a5f03272df612afe8f99100b09c84dd75330ad434368aa58"
+  },
   "versions": {
     "python": "3.11.4",
     "numpy": "2.4.6",
@@ -20,6 +25,22 @@
   "customers": 1000,
   "products": 4705,
   "joined_columns": 9,
+  "feature_columns": [
+    "t_dat",
+    "customer_id",
+    "article_id",
+    "price",
+    "sales_channel_id",
+    "prod_name",
+    "product_type_name",
+    "source_image_available",
+    "image_sampled",
+    "prod_name_length",
+    "prod_name_word_count",
+    "image_mean",
+    "image_std",
+    "image_status"
+  ],
   "cleaning": {
     "source_rows": 8084,
     "missing_customer_rows": 0,
@@ -168,13 +189,14 @@
     "2020-07": 62.77937288135593,
     "2020-08": 58.667372881355924
   },
-  "publication_policy": {
-    "original_rows": false,
-    "customer_product_ids": false,
-    "original_images": false,
-    "individual_product_features": false,
-    "user_approved_aggregates": true
-  },
+  "figures": [
+    "01_histogram",
+    "02_boxplot",
+    "03_bar",
+    "04_heatmap",
+    "05_scatter",
+    "06_line"
+  ],
   "statistics": {
     "price": {
       "count": 8084.0,

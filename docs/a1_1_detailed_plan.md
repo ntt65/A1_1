@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | 표본 | 비공개 Drive·로컬 유지, Git 제외 | 새 환경은 표본 ZIP 복원 |
 | 파이프라인 | 유효 거래·관측값 보존 대치·IQR 사본·일관된 RFM·통계·그룹 프로파일 | 손계산과 실제 합계 회귀 검증 |
-| 분석 노트북 | NB_LOAD~NB_REPRO 전체 분석, 필수 차트 6종·상관 2쌍·그룹 4개 | 실제 출력은 data/processed에 저장 |
+| 분석 노트북 | NB_LOAD~NB_REPRO 전체 분석, 필수 차트 6종·상관 2쌍·그룹 4개 | 원본 실행 출력을 제출 노트북과 data/processed에 동일하게 보존 |
 | README | 실행·데이터·계산 기준과 비식별 집계 기반 인사이트 3개 | 최종 복사 실행 절차와 성공 로그 정리 |
 
 기존 관측값 50이 바뀌던 대치 오류는 수정했고 손계산 20/30/50을 통과했다. RFM은 기준일 구매 0일·고유 구매일 빈도·동일값 동일점수를 적용했으며 입력 순서 독립성을 확인했다. A~F의 아래 내용은 계속 적용하는 구현·검증 기준이다.
@@ -32,7 +32,7 @@
 
 총 60시간이다. 데이터 확보와 병행해 작은 검증 입력으로 B·C의 계산을 확인할 수 있다. 최종 통계와 인사이트는 채택한 데이터에서 산출한다.
 
-A~F의 구현·검증과 PR #9의 main 반영을 마쳤다. 평가 PDF와 현재 Markdown을 대조한 의견·19개 Q&A·기술 학습서는 이슈 #6에서 작성한다. 마지막 이슈 #11에서 README의 본문 통계·차트·SRC·복사 명령·검증 상태 로그와 공개 집계 실행 보고서를 정리한다.
+A~F의 구현·검증과 PR #9의 main 반영을 마쳤다. 평가 PDF와 현재 Markdown을 대조한 의견·19개 Q&A·기술 학습서는 이슈 #6에서 작성한다. 마지막 이슈 #11에서 README의 본문 통계·차트·SRC·복사 명령·검증 상태 로그와 원본 실행 노트북을 정리한다.
 
 ## 재사용과 반복 작업의 운영 기준
 
@@ -55,7 +55,7 @@ H&M 대회 자료는 구매 내역 `transactions_train.csv`, 상품 정보 `arti
 1. A 단계의 첫 2시간에 미션 제공 샘플의 유무와 재사용 조건을 확인한다. 제공 샘플이 A2~A4를 충족할 수 있으면 우선 검토한다. 그 외에는 계정 소유자가 H&M 대회 규정에 동의한 뒤, 비공개 Kaggle Notebook의 **Add Input**에서 해당 대회 데이터를 연결할 수 있는지 확인한다. 노트북 입력 화면에서 실제 원본 경로를 확인한다. [Kaggle Notebook 문서](https://www.kaggle.com/docs/notebooks)
 2. [표본 추출 노트북](../notebooks/prepare_hm_sample.ipynb)을 비공개 Kaggle Notebook으로 가져온다. A3에 따라 구매 행과 상품 이미지를 선별하고 `/kaggle/working/hm_sample.zip`에 저장한다. 다운로드 전에 파일 목록과 압축·해제 용량을 확인하고, 규정상 허용되는 표본 결과 파일만 로컬 `data/raw/hm/`에 받는다. 전체 대회 묶음, 거래 원본 CSV, 전체 이미지 폴더는 Kaggle 입력으로만 사용한다. 공식 CLI의 `download -f`는 파일 전체를 받는 방식이므로 거래 행 표본 추출에 사용하지 않는다. [Kaggle 파일 다운로드](https://github.com/Kaggle/kaggle-cli/blob/main/docs/competitions.md#kaggle-competitions-download) · [노트북 결과 다운로드](https://github.com/Kaggle/kaggle-cli/blob/main/docs/kernels.md#kaggle-kernels-output)
 3. `.gitignore`에 `/data/`가 적용되어 있다. 내려받기 전에 `git check-ignore data/raw/hm/hm_sample.zip`과 `git ls-files -- data`로 제외 여부와 추적 파일이 없음을 확인한다. 표본 ZIP과 압축을 푼 파일, 중간 결과는 `data/`에 둔다.
-4. 대회 규정을 기준으로 비공개 표본의 로컬 사용 범위와 GitHub에 올릴 코드·집계 표·차트·README 수치의 공개 범위를 구분해 기록한다. GitHub에 실행된 집계 결과를 제출할 수 있는 조건까지 확인되어야 최종 채택한다. [H&M 대회 규정 7·8절](https://www.kaggle.com/c/h-and-m-personalized-fashion-recommendations/rules)
+4. 재실행용 원본 CSV·ZIP은 기존 Drive·로컬 보관 방식을 유지한다. 사용자의 최신 지시에 따라 GitHub 평가 노트북에는 원본 행·ID·상품 이미지 예시와 실행 결과를 그대로 보존하고, 출력 보존과 원본 파일의 Git 제외를 검증한다. [H&M 대회 규정 7·8절](https://www.kaggle.com/c/h-and-m-personalized-fashion-recommendations/rules)
 
 접근·용량·공개 범위 문제로 H&M을 제출에 사용할 수 없으면 원인을 기록하고 대체 데이터를 검토한다. CC BY 4.0으로 제공되는 UCI Online Retail 거래와 Amazon Berkeley Objects 상품·이미지를 사용하는 경우, 두 데이터 흐름을 분리하는 구성이 평가 기준에 허용되는지 먼저 확인한다. 서로 다른 상품 ID는 연결하지 않는다. UCI의 `InvoiceNo`는 주문 ID로, `UnitPrice × Quantity`는 금액으로 사용하고 취소·반품을 양의 구매 집계와 분리한다. 원본 엑셀은 CSV로 내보낸다. ABO 상품은 자체 ID로 메타데이터와 이미지를 연결한다. [UCI Online Retail](https://archive.ics.uci.edu/dataset/352/online+retail) · [Amazon Berkeley Objects](https://amazon-berkeley-objects.s3.us-east-1.amazonaws.com/index.html)
 
@@ -189,7 +189,7 @@ H&M 채택 시 표본 ZIP에 아래 파일을 담는다. 첫 샘플을 읽어 �
 
 ### F2. 공개 범위와 라이브러리 점검
 
-분석 구현은 표준 라이브러리와 NumPy·Pandas·Matplotlib·Seaborn을 사용한다. 이미지 입력은 허용된 `imread()`로 읽고 NumPy로 변환·계산한다. OpenCV·Pillow를 분석 코드에서 직접 사용하거나 Scikit-learn·NLTK·자동 EDA 패키지를 도입하지 않는다. Plotly는 인터랙티브 시각화 보너스를 선택했을 때 사용한다. Git 변경 사항과 노트북 출력에 원본 이미지, 원본 거래 행, 고객 ID, 인증 정보, 개인 환경에 종속되는 경로가 포함되는지 확인하고 공개 범위에 맞게 정리한다. 집계 표와 차트 역시 확인한 이용 조건에 맞춰 저장한다.
+분석 구현은 표준 라이브러리와 NumPy·Pandas·Matplotlib·Seaborn을 사용한다. 이미지 입력은 허용된 `imread()`로 읽고 NumPy로 변환·계산한다. OpenCV·Pillow를 분석 코드에서 직접 사용하거나 Scikit-learn·NLTK·자동 EDA 패키지를 도입하지 않는다. Plotly는 인터랙티브 시각화 보너스를 선택했을 때 사용한다. 인증 정보와 재실행용 원본 CSV·ZIP은 Git에서 제외한다. 사용자의 최신 지시에 따라 실제 거래 행·고객/상품 ID·상품 이미지 예시와 전체 실행 출력을 제출 노트북에 그대로 보존한다. 집계 보고서는 보조 자료이며 노트북을 대체하지 않는다.
 
 ### F3. 제출 대상 확인
 
@@ -201,7 +201,7 @@ H&M 채택 시 표본 ZIP에 아래 파일을 담는다. 첫 샘플을 읽어 �
 
 [평가 기준](a1_1_eval.md#5-평가문항)의 항목 1~4에는 세부 문항 19개가 있다. 아래 식별자는 각 항목 안의 문항 순서다. 항목 5의 보너스는 별도로 관리한다.
 
-노트북을 구현할 때 `NB_LOAD`, `NB_FEATURES`, `NB_CLEAN`, `NB_STATS`, `NB_PLOTS`, `NB_RFM`, `NB_REPRO`라는 마크다운 제목을 대응하는 분석 구간에 추가한다. 아래의 증거 위치는 구현 후 채울 위치이며, 완료 시 셀 위치와 실행 결과를 체크표에 기록한다. NB_LOAD~NB_REPRO 전체 구간의 실제 출력은 로컬 실행본에 저장했다. 공개 노트북은 출력을 비우며 체크표에 검증 근거를 기록한다.
+노트북을 구현할 때 `NB_LOAD`, `NB_FEATURES`, `NB_CLEAN`, `NB_STATS`, `NB_PLOTS`, `NB_RFM`, `NB_REPRO`라는 마크다운 제목을 대응하는 분석 구간에 추가한다. 아래의 증거 위치는 구현 후 채울 위치이며, 완료 시 셀 위치와 실행 결과를 체크표에 기록한다. NB_LOAD~NB_REPRO 전체 구간의 실제 출력은 로컬 실행본과 제출 노트북에 동일하게 저장한다. 실제 행·고객/상품 ID·상품 이미지 예시를 마스킹하지 않고, 성공한 실행본의 바이트 일치를 검증한다.
 
 | 평가 문항 | 확인할 내용 | 작업 | 완료를 입증할 증거 |
 | --- | --- | --- | --- |

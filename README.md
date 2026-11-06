@@ -24,7 +24,7 @@ py -3.11 -m venv .venv
 
 파일은 `data/raw/hm/transactions_sample.csv`, `articles_sample.csv`, `sample_manifest.json`, `images/<ID 앞 3자리>/<ID>.jpg`에 복원된다. `data/raw/hm/hm_sample.zip`을 보관하면 `--archive`를 생략할 수 있다. 복원은 구성·추출 기록과 기존 파일 충돌을 검증한다. 개인 Drive 설정이 있으면 SHA-256도 대조한다. 새 환경에는 개인 설정이나 인증 정보를 복사할 필요가 없다.
 
-[규정 7절](https://www.kaggle.com/c/h-and-m-personalized-fashion-recommendations/rules)의 비상업·교육 목적과 데이터 재배포 제한을 확인했다. 원본 ZIP·CSV·이미지·식별자·개별 거래 및 상품 피처 표는 공개하지 않는다. 원본 행이 포함된 실제 실행본은 Git 제외 경로에 둔다. 사용자가 승인한 비식별 집계·통계·인사이트·집계 차트와 명시적으로 선택한 Markdown 집계 보고서를 공개한다. 공개 박스플롯은 개별 이상치 점을 제외하고 최소·최대 수염으로 전체 범위를 요약하며, 공개 이미지 산점도는 상품 3개 이상인 구간만 표시한다. 원본 접근 권한은 별도로 확보해야 한다.
+데이터 출처는 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)다. 사용자 지시에 따라 평가 노트북 `notebooks/analysis_report.ipynb`에는 원본 행·고객/상품 ID·원본 이미지 예시와 실행 결과를 숨기거나 치환하지 않고 저장했다. CSV·전체 이미지·ZIP 자체는 기존 Drive·로컬 보관 방식을 유지한다. 다음 명령으로 같은 원본 실행본을 다시 만들 수 있다.
 
 기존 PC처럼 ZIP이 `data/raw/hm/hm_sample.zip`에 있으면 아래 명령으로 재검증·복원한다. 동일 파일 재실행은 허용하고 다른 내용의 기존 파일은 덮어쓰지 않는다.
 
@@ -122,13 +122,13 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 
 ## 필수 시각화 6종
 
-아래 그림은 같은 실제 표본에서 만든 공개 집계 버전이다. 비공개 원본 실행본에는 상품별 관측 산점도와 이상치 점도 있지만, 공개본은 개별 원본 행·상품 피처 재배포를 피하도록 요약했다. 모든 그림에 제목·축·단위를 표시한다.
+아래 그림은 같은 실제 표본에서 만든 원본 분석 결과이다. 실제 거래금액의 이상치 점과 관측 상품별 산점도를 그대로 표시한다. 모든 그림에 제목·축·단위를 표시한다.
 
 **1. 거래금액 히스토그램:** 값이 집중된 구간과 긴 꼬리를 본다. 원본 금액을 사용한다.
 
 ![거래금액 히스토그램](docs/results/figures/01_histogram.png)
 
-**2. IQR 전후 박스플롯:** 같은 축에서 원값·EDA 사본의 분포를 비교한다. 공개본은 개별 이상치 점을 숨기고 사분위·최소/최대 수염을 표시해 전체 범위 축소를 비교한다. 이 그림의 수염은 일반적인 1.5×IQR 수염과 다르며, 보정 알고리즘의 IQR 경계와 구분한다.
+**2. IQR 전후 박스플롯:** 같은 축에서 원값·EDA 사본의 분포를 비교한다. 일반적인 IQR 수염과 실제 이상치 점을 포함해 보정 전후를 같은 축에서 비교한다.
 
 ![동일 금액의 IQR 보정 전후 요약](docs/results/figures/02_boxplot.png)
 
@@ -140,9 +140,9 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 
 ![고객 RFM 상관 히트맵](docs/results/figures/04_heatmap.png)
 
-**5. 이미지 통계 산점도:** 공개본은 평균·표준편차 구간 중심에 상품 3개 이상인 칸만 표시하고 점 크기로 빈도를 나타낸다. 개별 상품 ID·이미지·피처 행은 공개하지 않는다. 전체 상품으로 일반화하지 않는다.
+**5. 이미지 통계 산점도:** 이미지를 실제로 읽은 상품 각각의 평균·표준편차를 점으로 표시한다. 임의 구간화나 점 제거를 하지 않는다. 표본에 없는 상품으로 일반화하지 않는다.
 
-![관측 이미지 통계의 구간 집계 산점도](docs/results/figures/05_scatter.png)
+![관측 상품별 이미지 통계 산점도](docs/results/figures/05_scatter.png)
 
 **6. 월별 금액 라인차트:** 관측 범위의 완전한 세 달을 표시하고 거래·RFM 합계와 대조한다.
 
@@ -201,18 +201,19 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 - 동일 지표의 점수가 같고 입력 순서를 바꿔도 RFM이 동일함. 고객당 단일 그룹, 네 그룹 이상과 금액 합계도 확인함.
 - 월 누락·상수 상관·원본 행 공개 제거도 가상 입력 테스트로 확인함.
 
-## 공개 집계 보고서와 다시 생성하는 방법
+## 원본 실행 보고서와 다시 생성하는 방법
 
-공개 보고서 `docs/results/analysis_report.md`는 원본 행이나 노트북 stdout을 복사하지 않고 승인 집계 구조와 안전한 차트에서 직접 생성했다. 읽기용 보고서이며 재실행은 원본 노트북과 위 검증 명령을 사용한다.
+평가용 파일은 [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb)이다. 코드와 실행 결과가 함께 저장되어 있어 원본 행·고객 ID·상품 이미지 예시·피처·통계·RFM·차트를 바로 볼 수 있다. 대화나 게시 과정에서 값을 마스킹하거나 출력을 비우지 않았다. 전체 실행본은 `data/processed/analysis_report.executed.ipynb`와 바이트 단위로 동일하게 보존한다.
 
-공개 데이터 파일은 `docs/results/analysis_aggregates.json`, `segment_profile.csv`, `monthly_amount.csv`다. 모두 집계이며 고객·상품 ID와 원본 행은 없다. 원본 CSV·ZIP·상품 이미지·개인 Drive 설정은 Git 제외 상태다. 원본 데이터에 접근할 수 없어도 이 README의 집계·차트·설명과 공개 집계 보고서로 결과를 확인할 수 있다.
+보조 집계 자료는 `docs/results/analysis_aggregates.json`, `segment_profile.csv`, `monthly_amount.csv`, `analysis_report.md`다. 그림은 원본 분석에서 생성한 PNG를 그대로 복사한다. 원본 CSV·ZIP·전체 JPG 묶음과 개인 인증 설정은 Git에 넣지 않는다.
 
 ```powershell
-.venv\Scripts\python.exe -B -m utils.publish_report --approved-aggregates
+.venv\Scripts\python.exe -B -m utils.run_checks --with-sample
+.venv\Scripts\python.exe -B -m utils.publish_report
 .venv\Scripts\python.exe -B -m utils.repository_checks
 ```
 
-공개 생성 도구는 기준 입력 SHA-256과 다시 계산한 고객 그룹을 대조하고, 허용된 집계 필드만 내보낸다. 원본 로드 셀·알 수 없는 출력은 제거하며 64자리 고객 ID 형태와 개인 경로·원본 행 필드를 검사한다. 코드·출력 구조를 바꾸면 공개 내용을 다시 검토해야 한다.
+SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본을 바이트 그대로 복사하며 표·ID·이미지를 삭제하지 않는다. 오류가 있거나 실행되지 않은 셀이 있으면 제출본 보존을 중단한다. 검증 도구는 실행 오류·제출 파일·상대 링크·허용 라이브러리와 원본 데이터 파일의 Git 제외를 확인한다.
 
 ## 기능별 SRC
 
@@ -237,12 +238,12 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 - 현재 관측 기간과 선택 고객·이미지를 전체 고객·상품의 특성으로 일반화하지 않는다.
 - 신규 가입·실제 이탈·주문당 객단가·마진·LTV를 추정 없이 단정하지 않는다.
 - 이미지 통계는 촬영 조건을 함께 요약한다. 의미·질감·선호의 직접 측정값이 아니다.
-- 공개 보고서의 일부 출력 제거는 데이터 사용 조건에 따른 조치다. 원본 접근권한이 없는 평가자는 실제 입력 재실행 대신 공개 집계를 검토할 수 있다.
+- 데이터에 접근할 수 없는 평가자도 저장된 원본 실행 출력과 집계를 확인할 수 있다. 재실행에는 표본 ZIP이 필요하다.
 - 모델 학습, 이미지 고급 피처·코호트·Plotly 보너스는 필수 구현과 구분하며 완료했다고 주장하지 않는다.
 
 ## 실제 실행 확인 기록
 
-2026-11-07 실제 검증의 성공 상태를 기록했다. 원문 stdout은 원본 노트북 정보가 섞일 수 있어 비공개에 보관하고, 아래 공개 기록은 검증한 테스트 수·종료 성공·고정된 상태 문구만 담았다. 이 블록은 실행 결과이며 복사 실행할 명령은 앞 절의 PowerShell 블록이다.
+2026-11-07 실제 검증의 성공 상태를 기록했다. 아래는 테스트 수·종료 성공·검증 상태 요약이며, 전체 분석 출력은 실행 노트북에서 확인할 수 있다. 이 블록은 실행 결과이며 복사 실행할 명령은 앞 절의 PowerShell 블록이다.
 
 ```text
 Validation status summary, 2026-11-07 Asia/Seoul

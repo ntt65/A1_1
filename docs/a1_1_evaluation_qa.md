@@ -4,7 +4,7 @@
 
 ## 연습과 증거 준비
 
-답변은 **핵심 설명 → SRC 지목 → 검증 결과 → 한계** 순서로 말한다. 아래 19개 질문을 먼저 혼자 설명하고 꼬리 질문을 연습한다. 실제 계산 결과는 로컬 `data/processed/analysis_report.executed.ipynb`와 `analysis_verification.json`, 새 환경 비교는 `reproduction_verification.json`에서 확인한다. 공개 소스 노트북은 원본 데이터 출력을 비운다. 실제 집계 출력·검토한 차트는 `docs/results/analysis_report.md`와 `docs/results/analysis_aggregates.json`에서도 확인할 수 있다. 원본 행·개별 상품 피처는 공개하지 않는다. 실행과 제출 요약은 [README](../README.md)에서 확인한다.
+답변은 **핵심 설명 → SRC 지목 → 검증 결과 → 한계** 순서로 말한다. 아래 19개 질문을 먼저 혼자 설명하고 꼬리 질문을 연습한다. 실제 계산 결과는 로컬 `data/processed/analysis_report.executed.ipynb`와 `analysis_verification.json`, 새 환경 비교는 `reproduction_verification.json`에서 확인한다. 평가 노트북은 원본 데이터·ID·이미지 예시와 실행 출력을 그대로 보존한다. 실제 집계 출력·검토한 차트는 `docs/results/analysis_report.md`와 `docs/results/analysis_aggregates.json`에서도 확인할 수 있다. 사용자 지시에 따라 평가 실행 결과는 마스킹하지 않는다. 실행과 제출 요약은 [README](../README.md)에서 확인한다.
 
 ```powershell
 .venv\Scripts\python.exe -B -m utils.run_checks --with-sample

@@ -283,7 +283,7 @@ SRC: [utils/analytics.py](../utils/analytics.py)의 `calculate_customer_rfm`, `s
 | ZIP / 압축 | 여러 파일을 묶고 크기를 줄이는 형식. 복원 전 경로·구성·충돌을 검증한다. |
 | 재배포·비식별 집계 | 원본 배포와 고객 ID 없는 그룹 통계를 구분한다. 사용 조건과 사용자 승인 범위 안에서 게시한다. |
 
-개인정보·인증정보·원본 접근권한과 분석 결과의 공개 권한을 혼동하지 않는다. 원본 CSV·이미지·개별 거래는 공개 저장소에 넣지 않는다. 비식별 집계·통계·차트는 공개하기 전에 출력 내용을 확인한다. 데이터가 없으면 실행에 필요한 접근·복원 조건을 명확히 안내한다.
+인증정보와 데이터 접근권한을 구분한다. 이 과제는 사용자 지시에 따라 실제 실행 노트북의 원본 행·고객/상품 ID·상품 이미지 예시를 그대로 보존한다. 재실행용 CSV·ZIP·전체 이미지 묶음은 기존 Drive·로컬에 보관하고 필요한 접근·복원 조건을 README에 안내한다. 집계는 개별 관측을 요약하는 분석 방법이며 원본 실행 출력을 대체하지 않는다.
 
 SRC: [Kaggle 추출 노트북](../notebooks/prepare_hm_sample.ipynb), [복원 도구](../scripts/restore_hm_sample.py), [H&M 규정](https://www.kaggle.com/c/h-and-m-personalized-fashion-recommendations/rules).
 
