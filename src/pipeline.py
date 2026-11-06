@@ -14,6 +14,7 @@ import pandas as pd
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from utils.image_features import extract_product_image_features
+from utils.analytics import clean_transactions, impute_features, iqr_limits, calculate_customer_rfm, segment_profile
 
 
 class DataAnalyzer:
@@ -27,6 +28,10 @@ class DataAnalyzer:
         self.product_key: Optional[str] = None
         self.join_summary: dict = {}
         self.image_batch_info: dict = {}
+        self.transaction_audit: dict = {}
+        self.missing_audit: dict = {}
+        self.outlier_audit: dict = {}
+        self.rfm_audit: dict = {}
 
     def load_data(self, *, required_columns=(), date_columns=(), dtype=None) -> pd.DataFrame:
         """CSV를 읽어 self.df를 교체하고 반환한다.
@@ -57,6 +62,10 @@ class DataAnalyzer:
         self.product_key = None
         self.join_summary = {}
         self.image_batch_info = {}
+        self.transaction_audit = {}
+        self.missing_audit = {}
+        self.outlier_audit = {}
+        self.rfm_audit = {}
         return self.df
 
     def join_products(self, product_path: str, *, key="article_id", amount_col="price") -> pd.DataFrame:
@@ -109,97 +118,69 @@ class DataAnalyzer:
         self.df, self.products, self.product_key = joined, products, key
         return self.df
 
-    def handle_missing_values(self, strategy: str = "group_mean", group_col: Optional[str] = None) -> pd.DataFrame:
-        """strategy에 따라 self.df의 결측을 처리하고 결과를 반환한다.
-
-        group_mean에는 group_col이 필요하다. 현재 수치 열 전체를 대상으로
-        하며, 대상 열 제한과 관측값 보존 보완은 통합 계획 C2에서 진행한다.
-        """
+    def validate_transactions(self, customer_col="customer_id", date_col="t_dat", amount_col="price", **settings):
+        """유효 거래로 self.df를 교체하고 제외 사유를 transaction_audit에 기록한다."""
         if self.df is None:
             raise ValueError("Data is not loaded. Call load_data() first.")
-
-        if strategy == "group_mean":
-            if group_col is None:
-                raise ValueError("group_col must be provided when strategy='group_mean'.")
-
-            numeric_cols = self.df.select_dtypes(include=[np.number]).columns.difference([group_col])
-            self.df[numeric_cols] = self.df.groupby(group_col)[numeric_cols].transform(
-                lambda col: col.fillna(col.mean())
-            )
-            remaining_numeric = self.df.select_dtypes(include=[np.number]).columns
-            self.df[remaining_numeric] = self.df[remaining_numeric].fillna(self.df[remaining_numeric].mean())
-        elif strategy == "mean":
-            numeric_cols = self.df.select_dtypes(include=[np.number]).columns
-            self.df[numeric_cols] = self.df[numeric_cols].fillna(self.df[numeric_cols].mean())
-        elif strategy == "median":
-            numeric_cols = self.df.select_dtypes(include=[np.number]).columns
-            self.df[numeric_cols] = self.df[numeric_cols].fillna(self.df[numeric_cols].median())
-        elif strategy == "drop":
-            self.df = self.df.dropna()
-        else:
-            raise ValueError("Unsupported strategy. Use one of: group_mean, mean, median, drop.")
-
+        valid, audit = clean_transactions(self.df, customer_col, date_col, amount_col, **settings)
+        self.df, self.transaction_audit = valid, audit
         return self.df
 
-    def detect_outliers(self, column: str, threshold: float = 1.5) -> pd.Series:
-        """column의 IQR 경계 밖 행을 True로 반환하고 원본 값은 보존한다.
+    def handle_missing_values(self, strategy="group_mean", group_col=None, *, columns=None, eligible=None):
+        """지정한 수치 피처의 결측만 처리하고 대치 집계를 missing_audit에 남긴다.
 
-        threshold는 IQR 배수이며 기본값은 1.5다. 경계와 같은 값은 제외한다.
+        eligible=False인 행과 기존 관측값을 보존한다. 실패하면 self.df를 바꾸지
+        않는다. 그룹 평균이 없을 때 대치 전 전체 관측값의 평균을 사용한다.
         """
         if self.df is None:
             raise ValueError("Data is not loaded. Call load_data() first.")
-        if column not in self.df.columns:
+        result, audit = impute_features(self.df, strategy, group_col, columns, eligible)
+        self.df, self.missing_audit = result, audit
+        return self.df
+
+    def detect_outliers(self, column, threshold=1.5):
+        """원본을 바꾸지 않고 IQR 경계 밖 마스크를 반환하고 경계를 기록한다."""
+        if self.df is None:
+            raise ValueError("Data is not loaded. Call load_data() first.")
+        if column not in self.df:
             raise ValueError(f"Column '{column}' not found in data.")
+        lower, upper = iqr_limits(self.df[column], threshold)
+        mask = (self.df[column] < lower) | (self.df[column] > upper)
+        self.outlier_audit[column] = {"lower": lower, "upper": upper, "count": int(mask.sum()), "threshold": threshold}
+        return mask
 
-        q1 = self.df[column].quantile(0.25)
-        q3 = self.df[column].quantile(0.75)
-        iqr = q3 - q1
-        lower_bound = q1 - threshold * iqr
-        upper_bound = q3 + threshold * iqr
+    def clip_outliers(self, column, threshold=1.5):
+        """EDA용 보정 Series를 반환한다. self.df의 원본 금액은 보존한다."""
+        self.detect_outliers(column, threshold)
+        limits = self.outlier_audit[column]
+        return self.df[column].clip(limits["lower"], limits["upper"])
 
-        return (self.df[column] < lower_bound) | (self.df[column] > upper_bound)
+    def calculate_rfm(self, customer_col, date_col, amount_col, *, reference_date=None,
+                      frequency_unit="purchase_day", order_col=None, split_inactive=False):
+        """원본 거래를 보존하며 고객별 RFM 표와 계산 기준 rfm_audit를 만든다.
 
-    def calculate_rfm(self, customer_col: str, date_col: str, amount_col: str) -> pd.DataFrame:
-        """고객별 RFM·점수·그룹을 새 표로 반환하고 self.df는 보존한다.
-
-        customer_col/date_col/amount_col은 원본 열 이름이다. 현재 기준일은
-        최종일+1, 빈도는 행 수다. 구매일 빈도·기준일 인자·동점 점수의
-        수정과 검증은 통합 계획 C4~C5에서 진행한다.
+        기준일 구매의 Recency는 0, 기본 Frequency는 고유 구매일 수다.
+        같은 값은 평균 순위로 같은 점수를 받는다. 그룹 규칙은 통합 계획 C5다.
         """
         if self.df is None:
             raise ValueError("Data is not loaded. Call load_data() first.")
+        result, audit = calculate_customer_rfm(self.df, customer_col, date_col, amount_col,
+            reference_date=reference_date, frequency_unit=frequency_unit,
+            order_col=order_col, split_inactive=split_inactive)
+        self.rfm_audit = audit
+        return result
 
-        working = self.df.copy()
-        working[date_col] = pd.to_datetime(working[date_col], errors="coerce")
-        if working[date_col].isna().all():
-            raise ValueError("All date values are invalid. Check date_col input.")
+    def summarize(self, columns=None):
+        """수치 열의 건수·평균·중앙값·표준편차·사분위수 표를 반환한다."""
+        if self.df is None:
+            raise ValueError("Data is not loaded. Call load_data() first.")
+        frame = self.df[columns] if columns is not None else self.df.select_dtypes(include="number")
+        return frame.describe().T.rename(columns={"25%": "Q1", "50%": "median", "75%": "Q3"})
 
-        reference_date = working[date_col].max() + pd.Timedelta(days=1)
-
-        rfm = (
-            working.groupby(customer_col)
-            .agg(
-                Recency=(date_col, lambda d: (reference_date - d.max()).days),
-                Frequency=(customer_col, "count"),
-                Monetary=(amount_col, "sum"),
-            )
-            .reset_index()
-        )
-
-        rfm["R_Score"] = pd.qcut(rfm["Recency"].rank(method="first", ascending=False), 4, labels=[1, 2, 3, 4]).astype(int)
-        rfm["F_Score"] = pd.qcut(rfm["Frequency"].rank(method="first"), 4, labels=[1, 2, 3, 4]).astype(int)
-        rfm["M_Score"] = pd.qcut(rfm["Monetary"].rank(method="first"), 4, labels=[1, 2, 3, 4]).astype(int)
-
-        conditions = [
-            (rfm["R_Score"] >= 3) & (rfm["F_Score"] >= 3) & (rfm["M_Score"] >= 3),
-            (rfm["F_Score"] >= 3) & (rfm["M_Score"] >= 2),
-            (rfm["R_Score"] >= 3) & (rfm["F_Score"] <= 2),
-            (rfm["R_Score"] <= 2) & (rfm["F_Score"] <= 2),
-        ]
-        labels = ["VIP", "Loyal", "New", "Churned"]
-        rfm["Segment"] = np.select(conditions, labels, default="Potential")
-
-        return rfm
+    @staticmethod
+    def profile_segments(rfm):
+        """고객 단위 표를 받아 세그먼트별 건수·중앙값·구매금액 비중을 반환한다."""
+        return segment_profile(rfm)
 
     def extract_image_features(self, image_column: str = "image", *, image_dir=None,
                                image_size: int = 32, batch_size: int = 32) -> pd.DataFrame:
