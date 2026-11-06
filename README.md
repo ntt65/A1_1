@@ -199,7 +199,7 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 - `[1,2,3,4,100]` → IQR 경계−1·7, 100만 탐지. `[-2,1,2,3,6]`의 경계값은 탐지하지 않음.
 - A 고객이 1/1에 10·20, 1/3에30, B가1/2에5 구매 → 기준일1/3에서 A=R0/F2/M60, B=R1/F1/M5, 합계65.
 - 동일 지표의 점수가 같고 입력 순서를 바꿔도 RFM이 동일함. 고객당 단일 그룹, 네 그룹 이상과 금액 합계도 확인함.
-- 월 누락·상수 상관·원본 행 공개 제거도 가상 입력 테스트로 확인함.
+- 월 누락·상수 상관·원본 필드와 실행본 바이트 보존도 가상 입력 테스트로 확인함.
 
 ## 원본 실행 보고서와 다시 생성하는 방법
 
@@ -225,11 +225,11 @@ SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본�
 | [utils/reporting.py](utils/reporting.py) | pair_correlation·monthly_amount·make_figures·write_insights |
 | [utils/run_checks.py](utils/run_checks.py) | 가상 테스트와 현재 Python의 새 커널 실행 |
 | [utils/reproducibility.py](utils/reproducibility.py) | 새 복제본·새 환경·표본 복원과 결과 전체 대조 |
-| [utils/publish_report.py](utils/publish_report.py) | 허용 집계·안전 차트·원본 행 제거 실행본 생성 |
+| [utils/publish_report.py](utils/publish_report.py) | 원본 실행본·차트·집계 보존과 보조 보고서 생성 |
 | [utils/repository_checks.py](utils/repository_checks.py) | 제출 파일·링크·분석 import·데이터 제외·공개 보고서 검사 |
 | [scripts/restore_hm_sample.py](scripts/restore_hm_sample.py) | ZIP 구성·기록·경로·충돌·선택적 체크섬 확인 |
 | [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb) | NB_LOAD~NB_REPRO 실행·해석 |
-| [tests/test_pipeline.py](tests/test_pipeline.py) · [tests/test_analytics.py](tests/test_analytics.py) · [tests/test_reporting.py](tests/test_reporting.py) · [tests/test_publication.py](tests/test_publication.py) | 로드·조인·이미지·정제·대치·IQR·RFM·월·상관·공개 경계 검증 |
+| [tests/test_pipeline.py](tests/test_pipeline.py) · [tests/test_analytics.py](tests/test_analytics.py) · [tests/test_reporting.py](tests/test_reporting.py) · [tests/test_publication.py](tests/test_publication.py) | 로드·조인·이미지·정제·대치·IQR·RFM·월·상관·원본 출력 보존 검증 |
 
 용어·원리·작은 예제는 [docs/tech_study.md](docs/tech_study.md), 평가 질문·SRC·시연은 [docs/a1_1_evaluation_qa.md](docs/a1_1_evaluation_qa.md), 원본 평가 자료에 대한 의견은 [docs/a1_1_eval_review.md](docs/a1_1_eval_review.md)에 있다. 실행·결과·인사이트의 필수 설명은 이 README 본문에 포함했다.
 
@@ -259,3 +259,151 @@ Original stdout is private. No notebook rows or identifiers are copied here.
 새 복제본·새 가상환경에서는 표본 203파일을 복원하고 입력 체크섬·설정·버전·정제·이미지·월별·RFM·상관 등 기록한 전체 필드를 비교한다. 성공 시 `Fresh-checkout reproduction matched every recorded field.`를 출력한다. 검증 원문은 `data/processed/reproduction_verification.json`에 남는다.
 
 작업 흐름은 이슈 → 기능 브랜치 → 검증·커밋 → develop PR → 검증한 묶음 main 반영이다. 계획·완료 증거는 통합 계획과 체크표에 유지하며, 마지막 README 작업은 이슈 #11에서 관리한다.
+
+## 소스 구조와 실행 흐름
+
+아래 트리와 Mermaid 차트는 현재 구현의 파일·클래스·호출 순서를 설명한다. 분석을 처음 읽을 때는 **파일 트리 → 모듈 연결 → 클래스 구조 → 분석 순서 → 검증·제출 순서**로 확인한다. 이 문서의 도식 보완은 이슈 #14에서 관리한다.
+
+### 1. SRC 파일 트리 개요
+
+`src/`에는 분석 상태를 관리하는 `pipeline.py`가 있다. 공용 계산은 `utils/`, 분석 호출과 설명은 `notebooks/`, 표본 복원은 `scripts/`가 담당한다.
+
+```text
+A1_1/
+├── src/
+│   └── pipeline.py                 # DataAnalyzer 클래스와 간단한 로드·조인 CLI
+├── utils/
+│   ├── __init__.py                  # 공용 도구 패키지
+│   ├── analytics.py                 # 거래 정제·결측 대치·IQR·RFM·그룹 프로파일
+│   ├── image_features.py            # 이미지 정규화·축소·배치 mean/std
+│   ├── reporting.py                 # 통계 상관·월별 집계·6종 차트·인사이트
+│   ├── run_checks.py                # 회귀 테스트와 선택적 새 커널 실행
+│   ├── reproducibility.py           # 새 복제본·새 환경의 전체 결과 대조
+│   ├── publish_report.py            # 원본 실행본·차트 보존과 보조 집계 생성
+│   └── repository_checks.py         # 제출 파일·링크·실행 오류·Git 제외 검사
+├── notebooks/
+│   ├── prepare_hm_sample.ipynb       # Kaggle 원격 환경에서 필요한 표본 추출
+│   └── analysis_report.ipynb         # 분석 단계·해석과 실제 실행 출력
+├── scripts/
+│   └── restore_hm_sample.py         # ZIP 검사와 로컬 표본 복원
+├── tests/
+│   ├── test_pipeline.py             # 로드·상품 조인·이미지·텍스트
+│   ├── test_analytics.py            # 정제·대치·IQR·RFM
+│   ├── test_reporting.py            # 상관·월별 합계 경계
+│   └── test_publication.py          # 원본 필드·실행본 보존
+└── docs/results/                    # README의 차트·집계·실행 상태 기록
+```
+
+`data/raw/hm/`은 재실행용 표본, `data/processed/`는 실행 중 생성하는 결과의 로컬 경로다. 파일별 자세한 위치는 [index.md](index.md), 기능을 바꿀 때 함께 확인할 위치는 [reverse_index.md](reverse_index.md)에 있다.
+
+### 2. 클래스와 모듈 연결 구조
+
+현재 분석 핵심 클래스는 `DataAnalyzer` 하나다. 별도 부모·자식 클래스로 나누지 않고 공용 함수 모듈을 호출한다. 아래 화살표는 **호출하는 쪽 → 호출되는 쪽**이며 상속 관계를 의미하지 않는다.
+
+```mermaid
+flowchart LR
+    NB["notebooks/analysis_report.ipynb<br/>설정·단계 실행·결과 해석"]
+    DA["src/pipeline.py<br/>DataAnalyzer"]
+    CLI["src/pipeline.py main<br/>로드·선택적 상품 조인 CLI"]
+    AN["utils/analytics.py<br/>clean_transactions / impute_features<br/>iqr_limits / calculate_customer_rfm<br/>segment_profile"]
+    IM["utils/image_features.py<br/>extract_product_image_features<br/>prepare_image"]
+    RP["utils/reporting.py<br/>pair_correlation / monthly_amount<br/>make_figures / write_insights"]
+    NP["NumPy<br/>배열·이미지 통계"]
+    PD["Pandas<br/>표·조인·집계"]
+    NB --> DA
+    CLI --> DA
+    DA --> AN
+    DA --> IM
+    NB --> RP
+    DA --> NP
+    DA --> PD
+```
+
+전체 분석의 진입점은 노트북이다. `python src/pipeline.py --data ... --products ...`는 CSV 로드와 선택적 상품 조인을 확인하는 CLI다. SRC: [src/pipeline.py](src/pipeline.py), [utils/analytics.py](utils/analytics.py), [utils/image_features.py](utils/image_features.py), [utils/reporting.py](utils/reporting.py).
+
+### 3. DataAnalyzer 클래스 구조도
+
+속성은 현재 분석 상태와 검증 기록을, 메서드는 수행할 작업을 나타낸다. `df`는 거래 표, `products`는 상품 표이며 로드·조인 전에는 `None`이다. `+`는 공개 인터페이스, `-`는 내부 보조 메서드라는 관례를 표시하며, `$`는 정적 메서드다.
+
+```mermaid
+classDiagram
+    class DataAnalyzer {
+        +str data_path
+        +DataFrame df
+        +DataFrame products
+        +str product_key
+        +dict join_summary
+        +dict image_batch_info
+        +dict transaction_audit
+        +dict missing_audit
+        +dict outlier_audit
+        +dict rfm_audit
+        +__init__(data_path)
+        +load_data(required_columns, date_columns, dtype)
+        +validate_transactions(customer_col, date_col, amount_col, settings)
+        +join_products(product_path, key, amount_col)
+        +extract_text_features(text_column)
+        +extract_image_features(image_column, image_dir, image_size, batch_size)
+        -_extract_image_files(directory, prefix, image_size, batch_size)
+        +handle_missing_values(strategy, group_col, columns, eligible)
+        +detect_outliers(column, threshold)
+        +clip_outliers(column, threshold)
+        +calculate_rfm(customer_col, date_col, amount_col, reference_date, frequency_unit, order_col, split_inactive)
+        +summarize(columns)
+        +profile_segments(rfm)$
+    }
+```
+
+`load_data()`는 분석 상태를 초기화하고, `validate_transactions()`·`join_products()`·피처/대치 메서드는 자신의 인스턴스 표를 갱신한다. `clip_outliers()`는 보정된 별도 Series를, `calculate_rfm()`는 고객별 별도 DataFrame을 반환하므로 거래 원금액은 유지된다. `profile_segments()`는 전달받은 RFM 표를 요약하는 정적 메서드다. 실제 타입·기본값·키워드 전용 인자는 [클래스 원문](src/pipeline.py)에서 확인한다.
+
+### 4. 노트북 분석 실행 차트
+
+노트북에 있는 `NB_*` 제목의 실제 순서다. 상품 이미지 피처의 결측 대치는 별도 `imputer` 인스턴스의 EDA 사본에 적용한다. IQR 보정 금액도 사본으로 반환하며 RFM·월별 합계에는 유효 거래의 원금액을 사용한다.
+
+```mermaid
+flowchart TD
+    SET["설정<br/>경로·기간·채널·시드와 manifest 대조"]
+    LOAD["NB_LOAD<br/>load_data → validate_transactions → join_products<br/>head / info / describe와 조인 보존 검증"]
+    FEAT["NB_FEATURES<br/>상품명 길이·단어 수 / 이미지 mean·std<br/>상태별 건수와 실제 상품 이미지 표시"]
+    CLEAN["NB_CLEAN<br/>별도 피처 사본 결측 대치<br/>IQR 탐지·금액 사본 보정"]
+    EDA["EDA 사본<br/>대치한 이미지 피처 / clipped_amount"]
+    RFM["NB_RFM<br/>거래 원금액 → 고객 RFM → 그룹 프로파일<br/>고객·금액 합계와 손계산 대조"]
+    STATS["NB_STATS<br/>기술통계와 상관 2쌍<br/>상품 단위 / 고객 단위 구분"]
+    PLOTS["NB_PLOTS<br/>원금액 월별 집계와 필수 차트 6종<br/>IQR 전후 비교에는 clipped_amount 사용"]
+    INSIGHT["비즈니스 해석<br/>write_insights → 근거·실행·검증 3개"]
+    REPRO["NB_REPRO<br/>입력 체크섬·설정·환경·전체 분석 기록<br/>analysis_verification.json / segment_profile.csv"]
+    SET --> LOAD --> FEAT --> CLEAN --> RFM --> STATS --> PLOTS --> INSIGHT --> REPRO
+    CLEAN -. "원본과 별도 보관" .-> EDA
+    EDA -. "보정 금액의 분포 비교" .-> PLOTS
+    FEAT -. "관측 상품 피처" .-> STATS
+```
+
+SRC: [실행 노트북](notebooks/analysis_report.ipynb)의 `NB_LOAD`~`NB_REPRO`, [DataAnalyzer](src/pipeline.py), [보고서 공용 함수](utils/reporting.py). `NB_REPRO`는 실행 기록을 저장하는 셀이며, 아래의 새 복제본·새 환경 검증은 별도 명령으로 수행한다.
+
+### 5. 검증·제출 실행 차트
+
+실제 실행·원본 보존·저장소 검사 순서를 보여준다. 각 명령이 성공한 뒤 다음 단계를 진행한다. 새 환경 재현은 분석 결과가 생성된 뒤 별도로 실행하는 검증 경로다.
+
+```mermaid
+flowchart TD
+    ZIP["scripts/restore_hm_sample.py<br/>ZIP 검사·표본 복원"]
+    TEST["utils.run_checks --with-sample<br/>회귀 테스트 15개"]
+    KERNEL["현재 Python의 새 커널<br/>analysis_report.ipynb 전체 실행"]
+    LOCAL["data/processed/<br/>실행 노트북·검증 JSON·차트·프로파일"]
+    PUB["utils.publish_report<br/>성공한 실행본을 바이트 그대로 복사<br/>원본 차트·집계와 보조 보고서 생성"]
+    REPO["utils.repository_checks<br/>제출 파일·실행 오류·문서 링크<br/>허용 분석 라이브러리·Git 제외 검사"]
+    SUBMIT["제출 결과<br/>notebooks/analysis_report.ipynb<br/>docs/results/ + README.md"]
+    FRESH["utils.reproducibility<br/>새 복제본·새 가상환경·표본 복원<br/>회귀 테스트·새 커널 전체 실행"]
+    COMPARE["분석 JSON 전체 필드 대조<br/>reproduction_verification.json"]
+    ZIP --> TEST
+    TEST -->|"테스트 성공"| KERNEL
+    KERNEL -->|"전체 셀 성공"| LOCAL
+    LOCAL --> PUB --> REPO --> SUBMIT
+    LOCAL -. "별도 재현 검증" .-> FRESH
+    FRESH --> COMPARE
+    LOCAL -. "대조 기준" .-> COMPARE
+```
+
+`utils.run_checks`만 실행하면 회귀 테스트까지 수행하며, `--with-sample`을 붙여야 새 커널 분석을 실행한다. `utils.publish_report`는 README 설명과 본문 인사이트를 자동 작성하지 않으며 실행 결과와 보조 집계 파일을 갱신한다. 재실행 후 README의 수치·설명도 결과와 대조한다. 전체 명령은 앞의 **전체 분석과 검증**, **원본 실행 보고서와 다시 생성하는 방법**에 있다.
+
+SRC: [표본 복원](scripts/restore_hm_sample.py) → [검증 실행](utils/run_checks.py) → [원본 결과 보존](utils/publish_report.py) → [저장소 검사](utils/repository_checks.py). 독립 검증: [새 환경 재현](utils/reproducibility.py).

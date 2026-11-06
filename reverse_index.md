@@ -35,3 +35,4 @@
 | 원본 실행본·차트·집계 보존 | `utils/publish_report.py` | `tests/test_publication.py`·notebooks·docs/results·README |
 | 제출 보고서·실행 오류·그림 검사 | `utils/repository_checks.py` | 실행 노트북·보조 집계·차트6개·data 제외 |
 | 최종 실행 설명·성공 로그·SRC | `README.md` | 이슈 #11·집계·실제 명령 |
+| 소스 파일 트리·클래스 구조·분석/검증 Mermaid 차트 | `README.md`의 소스 구조와 실행 흐름 | `src/pipeline.py`의 실제 속성·메서드·노트북 NB 순서·utils 호출·이슈 #14 |
