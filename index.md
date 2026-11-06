@@ -4,7 +4,7 @@
 
 | 파일 | 역할 |
 | --- | --- |
-| [README.md](README.md) | 환경 설치, 비공개 표본 복원, 실행 안내 |
+| [README.md](README.md) | 환경·표본·실행·결과 안내와 하단 파일 트리·클래스 구조·실행 Mermaid 차트 |
 | [docs/a1_1_detailed_plan.md](docs/a1_1_detailed_plan.md) | 통합 구현 계획·계산 정의·평가 매핑·QA |
 | [docs/a1_1_checklist.md](docs/a1_1_checklist.md) | 완료 여부와 검증 증거 |
 | [docs/a1_1_mission.md](docs/a1_1_mission.md) | 미션 원문 |
