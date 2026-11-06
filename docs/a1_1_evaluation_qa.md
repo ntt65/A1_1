@@ -4,7 +4,7 @@
 
 ## 연습과 증거 준비
 
-답변은 **핵심 설명 → SRC 지목 → 검증 결과 → 한계** 순서로 말한다. 아래 19개 질문을 먼저 혼자 설명하고 꼬리 질문을 연습한다. 실제 계산 결과는 로컬 `data/processed/analysis_report.executed.ipynb`와 `analysis_verification.json`, 새 환경 비교는 `reproduction_verification.json`에서 확인한다. 공개 저장소의 노트북은 원본 데이터 출력이 비어 있다. 실행과 제출 요약은 [README](../README.md)에서 확인한다.
+답변은 **핵심 설명 → SRC 지목 → 검증 결과 → 한계** 순서로 말한다. 아래 19개 질문을 먼저 혼자 설명하고 꼬리 질문을 연습한다. 실제 계산 결과는 로컬 `data/processed/analysis_report.executed.ipynb`와 `analysis_verification.json`, 새 환경 비교는 `reproduction_verification.json`에서 확인한다. 평가 노트북은 원본 데이터·ID·이미지 예시와 실행 출력을 그대로 보존한다. 실제 집계 출력·검토한 차트는 `docs/results/analysis_report.md`와 `docs/results/analysis_aggregates.json`에서도 확인할 수 있다. 사용자 지시에 따라 평가 실행 결과는 마스킹하지 않는다. 실행과 제출 요약은 [README](../README.md)에서 확인한다.
 
 ```powershell
 .venv\Scripts\python.exe -B -m utils.run_checks --with-sample
@@ -27,7 +27,7 @@
 
 **답변:** 현재 가상환경의 새 커널에서 전체 노트북을 실행한다. 새 복제본에는 원본을 넣지 않고 허가된 ZIP을 복원한 뒤 새 환경에서 같은 결과를 대조한다. 성공의 근거는 오류가 없다는 사실과 주요 집계 전체의 일치다.
 
-**SRC/증거:** [utils/run_checks.py](../utils/run_checks.py)의 `run_notebook`, [utils/reproducibility.py](../utils/reproducibility.py)의 `verify_reproduction`, NB_REPRO. 회귀 테스트는 13개다.
+**SRC/증거:** [utils/run_checks.py](../utils/run_checks.py)의 `run_notebook`, [utils/reproducibility.py](../utils/reproducibility.py)의 `verify_reproduction`, NB_REPRO. 회귀 테스트는 15개다.
 
 **꼬리 질문:** 기존 커널로 실행하면 왜 부족한가? 이전 셀의 변수나 순서 의존 오류가 숨을 수 있다.
 
