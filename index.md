@@ -18,7 +18,13 @@
 | [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb) | 실제 분석의 설정·클래스 호출·해석, 공개본 출력 비움 |
 | [notebooks/prepare_hm_sample.ipynb](notebooks/prepare_hm_sample.ipynb) | Kaggle에서 필요한 거래·상품·이미지만 추출 |
 | [scripts/restore_hm_sample.py](scripts/restore_hm_sample.py) | 비공개 표본 ZIP 검사·안전한 로컬 복원 |
-| [requirements.txt](requirements.txt) | 분석용 의존성 |
+| [utils/analytics.py](utils/analytics.py) | 거래 정제·결측·IQR·RFM·세그먼트 프로파일 |
+| [utils/reporting.py](utils/reporting.py) | 상관·월별 집계·필수 차트·인사이트 |
+| [utils/reproducibility.py](utils/reproducibility.py) | 새 복제본·새 환경의 전체 결과 대조 |
+| [utils/repository_checks.py](utils/repository_checks.py) | 제출 파일·링크·출력·공개 데이터 제외 검사 |
+| [tests/test_analytics.py](tests/test_analytics.py) · [tests/test_reporting.py](tests/test_reporting.py) | 손계산·원본 보존·월 누락·상관 경계 검증 |
+| [requirements.txt](requirements.txt) | 검증 버전으로 고정한 분석용 의존성 |
+| [requirements-notebook.txt](requirements-notebook.txt) | 별도 노트북 실행 의존성 |
 | [.gitignore](.gitignore) | 데이터·환경·인증 설정·임시 출력 제외 |
 
 `data/raw/hm/`의 표본, `data/drive_source.json`의 개인 연결 정보, `data/processed/`의 실행 결과는 로컬 전용이며 Git에 없다. 검증 명령은 [AGENTS.md](AGENTS.md), 다음 작업은 [체크표](docs/a1_1_checklist.md)에서 확인한다.
