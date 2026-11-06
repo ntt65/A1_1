@@ -25,7 +25,8 @@ def run_notebook(notebook_path, output_path):
     runtime = ROOT / "data" / ".jupyter"
     for name, directory in (("JUPYTER_CONFIG_DIR", runtime / "config"),
                             ("JUPYTER_RUNTIME_DIR", runtime / "runtime"),
-                            ("IPYTHONDIR", runtime / "ipython")):
+                            ("IPYTHONDIR", runtime / "ipython"),
+                            ("MPLCONFIGDIR", runtime / "matplotlib")):
         directory.mkdir(parents=True, exist_ok=True)
         os.environ[name] = str(directory)
 
