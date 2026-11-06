@@ -31,3 +31,13 @@
 | [.gitignore](.gitignore) | 데이터·환경·인증 설정·임시 출력 제외 |
 
 `data/raw/hm/`의 표본, `data/drive_source.json`의 개인 연결 정보, `data/processed/`의 실행 결과는 로컬 전용이며 Git에 없다. 검증 명령은 [AGENTS.md](AGENTS.md), 다음 작업은 [체크표](docs/a1_1_checklist.md)에서 확인한다.
+
+| 추가 파일 | 역할 |
+| --- | --- |
+| [utils/publish_report.py](utils/publish_report.py) | 승인 집계·안전 차트·공개 집계 보고서 생성 |
+| [tests/test_publication.py](tests/test_publication.py) | 원본 행·식별자 출력 제거 검증 |
+| [docs/results/analysis_report.md](docs/results/analysis_report.md) | 원본·노트북 stdout 없이 집계 구조에서 생성한 정적 보고서 |
+| [docs/results/analysis_aggregates.json](docs/results/analysis_aggregates.json) | 설정·집계·통계·검증 결과 |
+| [docs/results/segment_profile.csv](docs/results/segment_profile.csv) · [docs/results/monthly_amount.csv](docs/results/monthly_amount.csv) | 공개 고객 그룹·월별 집계 |
+
+공개 차트 6종은 `docs/results/figures/`에 있고 README 본문에서 볼 수 있다. 원본 표본·개인 연결 설정은 계속 로컬 전용이다.

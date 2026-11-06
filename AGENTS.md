@@ -34,9 +34,9 @@
 
 - 사용자 결정에 따라 H&M 표본은 비공개 Google Drive와 로컬 `data/`에서 관리한다. 공개 GitHub에 ZIP·CSV·이미지·고객 ID·개인 Drive 설정을 넣지 않는다.
 - 복원은 `scripts/restore_hm_sample.py`를 사용한다. 전체 대회 데이터 다운로드는 하지 않는다.
-- `--with-sample` 결과는 `data/processed/analysis_report.executed.ipynb`와 `analysis_verification.json`에 남는다. Git의 분석 노트북은 실데이터 출력과 실행 번호를 비운 상태로 유지한다.
+- `--with-sample` 결과는 `data/processed/analysis_report.executed.ipynb`와 `analysis_verification.json`에 남는다. notebooks의 분석 소스는 출력을 비우고, docs/results에는 검토한 집계 출력만 담은 공개 집계 보고서을 둔다.
 - 데이터가 없으면 가상 입력 검증을 실행하고 실제 표본 검증을 미실행으로 보고한다. 임의 데이터로 실제 검증 완료를 대체하지 않는다.
-- 규정 7절과 사용자 지시에 따라 원본·개별 거래·상품 피처·실제 실행 출력은 비공개로 유지한다. 공개 README는 원본을 복원할 수 없는 고객 그룹 수준 집계와 해석만 기재한다.
+- 규정 7절과 사용자 지시에 따라 원본·개별 거래·상품 피처·원본 행이 있는 실행 출력은 비공개로 유지한다. 사용자가 승인한 비식별 집계·통계·인사이트·집계 차트와 명시적 집계 구조에서 만든 Markdown 보고서는 docs/results와 README에 게시할 수 있다. 실행 노트북은 data/processed에만 보관한다.
 
 ## 토큰과 탐색 비용 줄이기
 
