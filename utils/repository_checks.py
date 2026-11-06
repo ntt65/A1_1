@@ -21,7 +21,7 @@ def check_repository():
     tracked = subprocess.check_output(["git", "ls-files"], cwd=ROOT, text=True).splitlines()
     if any(name.startswith(("data/", ".venv/")) for name in tracked):
         raise ValueError("Local data/environment is tracked by Git.")
-    for name in ["README.md", "index.md", "reverse_index.md", *[str(p.relative_to(ROOT)).replace("\\", "/") for p in (ROOT / "docs").glob("*.md")]]:
+    for name in ["README.md", "index.md", "reverse_index.md", *[str(p.relative_to(ROOT)).replace("\\", "/") for p in (ROOT / "docs").rglob("*.md")]]:
         path = ROOT / name
         for link in re.findall(r"\]\(([^)]+)\)", path.read_text(encoding="utf-8")):
             if link.startswith(("http:", "https:", "#", "mailto:")):
@@ -33,8 +33,18 @@ def check_repository():
     for path in (ROOT / "notebooks").glob("*.ipynb"):
         notebook = json.loads(path.read_text(encoding="utf-8"))
         for cell in notebook["cells"]:
-            if cell.get("outputs") or cell.get("execution_count") is not None:
-                raise ValueError(f"Public notebook contains outputs: {path.name}")
+            if path.name == "analysis_report.ipynb":
+                if any(output.get("output_type") == "error" for output in cell.get("outputs", [])):
+                    raise ValueError("Analysis report contains an execution error.")
+            elif cell.get("outputs") or cell.get("execution_count") is not None:
+                raise ValueError(f"Unexpected outputs in preparation notebook: {path.name}")
+    public_path = ROOT / "docs/results/analysis_report.md"
+    if public_path.exists():
+        if len(list((ROOT / "docs/results/figures").glob("*.png"))) != 6:
+            raise ValueError("Expected six reviewed aggregate figures.")
+        aggregate = json.loads((ROOT / "docs/results/analysis_aggregates.json").read_text(encoding="utf-8"))
+        if "profile" not in aggregate or "monthly" not in aggregate:
+            raise ValueError("Missing analysis summary.")
     forbidden = {"cv2", "PIL", "sklearn", "nltk", "ydata_profiling", "pandas_profiling", "sweetviz"}
     for name in ("src/pipeline.py", "utils/analytics.py", "utils/image_features.py", "utils/reporting.py"):
         tree = ast.parse((ROOT / name).read_text(encoding="utf-8"))
@@ -42,7 +52,7 @@ def check_repository():
             modules = [alias.name for alias in node.names] if isinstance(node, ast.Import) else [node.module or ""] if isinstance(node, ast.ImportFrom) else []
             if any(module.split(".")[0] in forbidden for module in modules):
                 raise ValueError(f"Forbidden analysis import in {name}")
-    print("Repository checks passed: submission files, documentation links, output-free notebooks, data exclusion, analysis imports.")
+    print("Repository checks passed: submission files, documentation links, executed analysis report, data exclusion, analysis imports.")
 
 
 if __name__ == "__main__":

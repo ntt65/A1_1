@@ -23,6 +23,15 @@
 | 월별 합계·상관·차트·실제 인사이트 | `utils/reporting.py` | `tests/test_reporting.py`·NB_STATS·NB_PLOTS·README |
 | 새 복제본·새 가상환경 비교 | `utils/reproducibility.py` | 고정 의존성·로컬 입력·NB_REPRO |
 | 제출 파일·링크·Git 제외 검사 | `utils/repository_checks.py` | README·공개 노트북·data 제외 |
+| PDF 평가 기준과 현재 Markdown 내용 검토 | `docs/a1_1_eval_review.md` | 원본 PDF·평가 문항·가상 참고 예시 구분 |
+| 평가 예상 질문·답변·시연 | `docs/a1_1_evaluation_qa.md` | 19개 문항·SRC·실행 기록·이슈 #6 |
+| 기술·용어·원리 학습 | `docs/tech_study.md` | 미션 필수·선택·제약·코드·QA |
 | 토큰 절약·수정과 검증 반복 절차 | `AGENTS.md` | 인덱스 최신성·관련 파일만 읽기 |
 
-호출 흐름은 `분석 노트북 → DataAnalyzer → utils.image_features`다. 검증 흐름은 `utils.run_checks → tests`이며, `--with-sample`을 지정하면 `분석 노트북 → data/processed/`까지 실행한다. 로컬 기록에는 실제 표본 수·금액·이미지 상태와 배치 메모리 정보가 있으며, 공개 문서에는 합격 여부와 가상 입력의 기대값을 기록한다.
+호출 흐름은 `분석 노트북 → DataAnalyzer → utils.image_features`다. 검증 흐름은 `utils.run_checks → tests`이며, `--with-sample`을 지정하면 `분석 노트북 → data/processed/`까지 실행한다. `utils.publish_report`는 성공한 실행본을 제출 노트북에 바이트 그대로 복사하고 원본 차트·집계를 보존한다.
+
+| 공개 결과 작업 | 수정 위치 | 함께 확인 |
+| --- | --- | --- |
+| 원본 실행본·차트·집계 보존 | `utils/publish_report.py` | `tests/test_publication.py`·notebooks·docs/results·README |
+| 제출 보고서·실행 오류·그림 검사 | `utils/repository_checks.py` | 실행 노트북·보조 집계·차트6개·data 제외 |
+| 최종 실행 설명·성공 로그·SRC | `README.md` | 이슈 #11·집계·실제 명령 |

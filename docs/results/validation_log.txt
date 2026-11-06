@@ -1,0 +1,8 @@
+Validation status summary, 2026-11-07 Asia/Seoul
+> .venv/Scripts/python.exe -B -m utils.run_checks --with-sample
+Ran 15 tests
+OK
+Notebook execution: PASS
+> .venv/Scripts/python.exe -B -m utils.repository_checks
+Repository checks: PASS
+Original stdout is private. No notebook rows or identifiers are copied here.

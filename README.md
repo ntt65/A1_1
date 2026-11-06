@@ -4,13 +4,15 @@
 
 ## 환경과 실행
 
-저장소 루트에서 실행한다. 검증한 Python은 3.11.4다. 분석 패키지 버전은 `requirements.txt`, 노트북 실행 도구는 `requirements-notebook.txt`에 고정했다.
+저장소 루트에서 실행한다. 검증한 Python은 3.11.4다. 새 환경은 `git clone https://github.com/ntt65/A1_1.git` 후 `cd A1_1`에서 시작한다. 현재 PC의 기존 저장소에서는 복제·환경 생성을 반복하지 않아도 된다. 분석 패키지 버전은 `requirements.txt`, 노트북 실행 도구는 `requirements-notebook.txt`에 고정했다.
 
 ```powershell
 py -3.11 -m venv .venv
 .venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-notebook.txt
 .venv\Scripts\python.exe -B -m utils.run_checks
 ```
+
+검증한 분석 패키지: NumPy 2.4.6, Pandas 3.1.1, Matplotlib 3.11.2, Seaborn 0.13.2. 실행 도구는 Notebook 7.6.4, ipykernel 7.4.0, nbclient 0.11.0, nbformat 5.11.1이다. Python 3.11 환경에서 설치·실행을 확인했다.
 
 ## 비공개 데이터 준비
 
@@ -22,7 +24,13 @@ py -3.11 -m venv .venv
 
 파일은 `data/raw/hm/transactions_sample.csv`, `articles_sample.csv`, `sample_manifest.json`, `images/<ID 앞 3자리>/<ID>.jpg`에 복원된다. `data/raw/hm/hm_sample.zip`을 보관하면 `--archive`를 생략할 수 있다. 복원은 구성·추출 기록과 기존 파일 충돌을 검증한다. 개인 Drive 설정이 있으면 SHA-256도 대조한다. 새 환경에는 개인 설정이나 인증 정보를 복사할 필요가 없다.
 
-[규정 7절](https://www.kaggle.com/c/h-and-m-personalized-fashion-recommendations/rules)의 비상업·교육 목적과 데이터 재배포 제한을 확인했다. 원본 ZIP·CSV·이미지·식별자·개별 거래 및 상품 피처 표는 공개하지 않는다. 실제 노트북 출력과 그림도 Git 제외 경로에 저장한다. 이 README에는 원본을 복원할 수 없는 고객 그룹 수준 집계와 분석 해석만 기재한다. 원본 접근 권한은 별도로 확보해야 한다.
+데이터 출처는 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)다. 사용자 지시에 따라 평가 노트북 `notebooks/analysis_report.ipynb`에는 원본 행·고객/상품 ID·원본 이미지 예시와 실행 결과를 숨기거나 치환하지 않고 저장했다. CSV·전체 이미지·ZIP 자체는 기존 Drive·로컬 보관 방식을 유지한다. 다음 명령으로 같은 원본 실행본을 다시 만들 수 있다.
+
+기존 PC처럼 ZIP이 `data/raw/hm/hm_sample.zip`에 있으면 아래 명령으로 재검증·복원한다. 동일 파일 재실행은 허용하고 다른 내용의 기존 파일은 덮어쓰지 않는다.
+
+```powershell
+.venv\Scripts\python.exe scripts/restore_hm_sample.py
+```
 
 ## 입력과 계산 기준
 
@@ -42,6 +50,18 @@ py -3.11 -m venv .venv
 R은 기준일−최종 구매일(기준일 구매=0일), F는 고유 구매일 수, M은 유효 금액 원값 합계다. 주문 ID가 있는 다른 데이터는 주문 수 모드를 선택할 수 있다. R은 내림차순, F·M은 오름차순 평균 순위로 점수를 부여한다. `(평균 순위−0.5)/고객 수`가 0.25/0.50/0.75 이하인지에 따라 1/2/3점, 나머지는 4점이다. 같은 값은 같은 점수를 받는다.
 
 VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F원값=1) → Churned(R≤2) → Potential 순으로 배정한다. New는 신규 가입을, Churned는 실제 이탈 확정을 의미하지 않는다.
+
+## 분석 흐름과 원본 보존
+
+1. 거래 CSV를 읽고 ID·날짜 자료형을 맞춘다. 고객·날짜·주문 모드·금액의 대표 제외 사유를 중복 없이 센다.
+2. 상품 ID의 다대일 왼쪽 조인을 검증하고 거래 행·순서·금액을 대조한다.
+3. 상품별 이미지 mean/std와 상품명 길이·단어 수를 계산해 거래에 연결한다. 원본 이미지 배열을 거래마다 복제하지 않는다.
+4. 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 미표본 이미지·원래 관측값·원문을 보존한다.
+5. `Q1−1.5×IQR`, `Q3+1.5×IQR` 밖을 탐지하고 금액의 EDA 사본만 clip한다. 경계값은 정상 범위에 포함한다.
+6. 원금액으로 RFM과 완전한 월별 합계를 계산하고 그룹 고객·금액 합계를 대조한다.
+7. 분석 단위를 구분한 통계·상관·6종 차트를 만들고 근거·실행·검증 인사이트를 작성한다.
+
+SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 공통 정제·RFM 계산을, `utils/image_features.py`가 이미지 통계를, `utils/reporting.py`가 상관·차트·인사이트를 담당한다.
 
 ## 전체 분석과 검증
 
@@ -68,6 +88,73 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 ```
 
 비교 결과는 `data/processed/reproduction_verification.json`에 저장한다. 자료형·동점·순서·대치·IQR·월 누락 등의 작은 입력 검증과 실제 조인·금액 대조를 함께 수행한다.
+
+## 실제 실행 결과와 기술통계
+
+검증일: 2026-11-07. 필수 조건은 실제 표본의 유효 거래·상품 조인 후 확인했다. 아래는 비식별 집계이며 전체 H&M 고객·매출을 대표하는 수치가 아니다.
+
+| 확인 항목 | 결과 |
+| --- | ---: |
+| 유효 거래 상품 행 | 8,084 |
+| 고객 | 1,000 |
+| 상품 | 4,705 |
+| 상품 조인 직후 열 | 9 |
+| 이미지 읽기 성공 | 200 |
+| 이미지 표본 미포함 | 4,496 |
+| 원본 이미지 누락 | 9 |
+
+수치형 금액·피처, 범주/문자열 상품·채널, 날짜형 구매일을 포함한다. 이미지 배열은 상품 배치에서 처리하며 거래에는 숫자 피처를 연결한다. ID는 문자열이므로 수치형 변수로 계산하지 않는다.
+
+| 변수 | 평균 | 중앙값 | 표준편차 | Q1 | Q3 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| price | 0.025014 | 0.022017 | 0.014912 | 0.015237 | 0.033881 |
+| prod_name_length | 16.088570 | 16.000000 | 6.207140 | 11.000000 | 21.000000 |
+| prod_name_word_count | 2.840673 | 3.000000 | 1.105405 | 2.000000 | 4.000000 |
+
+거래금액 평균과 중앙값의 차이·꼬리를 함께 보며 평균 하나로 전형적인 구매를 대표하지 않는다. 기술통계의 표준편차는 Pandas 기본 표본 기준이고 이미지 자체 피처는 ddof=0이다. 이미지 대치가 분산을 축소할 수 있어 이미지 상관에는 원래 관측값만 사용한다.
+
+| 분석 단위·상관 쌍 | 유효 쌍 수 | Pearson r | 해석 |
+| --- | ---: | ---: | --- |
+| 상품: image_mean–image_std | 200 | -0.9435 | 평균이 높은 관측 이미지에서 픽셀 퍼짐이 낮아지는 경향. 밝은 배경·촬영 조건 등을 고려하며 질감을 직접 설명하지 않는다. |
+| 고객: Frequency–Monetary | 1,000 | 0.6397 | 구매일이 많은 고객의 관측 금액도 큰 경향. 같은 거래에서 집계되는 구조를 고려하며 인과로 해석하지 않는다. |
+
+금액 IQR 하한은 -0.012729, 상한은 0.061847이며 212행을 표시했다. 이는 구매 오류 확정이 아니다. RFM·월별 합계에는 보정 전 원값을 유지했다.
+
+## 필수 시각화 6종
+
+아래 그림은 같은 실제 표본에서 만든 원본 분석 결과이다. 실제 거래금액의 이상치 점과 관측 상품별 산점도를 그대로 표시한다. 모든 그림에 제목·축·단위를 표시한다.
+
+**1. 거래금액 히스토그램:** 값이 집중된 구간과 긴 꼬리를 본다. 원본 금액을 사용한다.
+
+![거래금액 히스토그램](docs/results/figures/01_histogram.png)
+
+**2. IQR 전후 박스플롯:** 같은 축에서 원값·EDA 사본의 분포를 비교한다. 일반적인 IQR 수염과 실제 이상치 점을 포함해 보정 전후를 같은 축에서 비교한다.
+
+![동일 금액의 IQR 보정 전후 요약](docs/results/figures/02_boxplot.png)
+
+**3. 세그먼트 막대그래프:** 고객 단위 그룹 규모다. 상품 구매 행 수와 구분한다.
+
+![고객 세그먼트별 인원](docs/results/figures/03_bar.png)
+
+**4. RFM 상관 히트맵:** 고객 지표의 선형 연관을 본다. 상관은 캠페인 효과·인과를 증명하지 않는다.
+
+![고객 RFM 상관 히트맵](docs/results/figures/04_heatmap.png)
+
+**5. 이미지 통계 산점도:** 이미지를 실제로 읽은 상품 각각의 평균·표준편차를 점으로 표시한다. 임의 구간화나 점 제거를 하지 않는다. 표본에 없는 상품으로 일반화하지 않는다.
+
+![관측 상품별 이미지 통계 산점도](docs/results/figures/05_scatter.png)
+
+**6. 월별 금액 라인차트:** 관측 범위의 완전한 세 달을 표시하고 거래·RFM 합계와 대조한다.
+
+![완전한 월의 표본 금액 합계](docs/results/figures/06_line.png)
+
+| 월 | 구매금액 합계·원본 단위 |
+| --- | ---: |
+| 2020-06 | 80.766000 |
+| 2020-07 | 62.779373 |
+| 2020-08 | 58.667373 |
+
+첫 달 대비 마지막 달의 표본 금액은 -27.4% 변화했다. 선택 고객의 기간 내 관측이며 계절성·표본 선택의 영향을 검토해야 한다. 월별 합계 202.212746는 RFM 입력 원금액 합계와 일치한다.
 
 ## 실제 고객 그룹 요약
 
@@ -103,3 +190,72 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 - **검증:** 무작위 대조군과 순증 구매율·혜택 비용 차감 후 마진을 비교한다. 비용·상품 재고·후속 거래가 필요하며 수익이 늘지 않으면 확대하지 않는다.
 
 세 인사이트의 우선순위와 ROI는 현재 데이터만으로 확정하지 않는다. 이미지 평균·표준편차는 밝기·배경·색상 요약이며 상품 패턴이나 구매 원인을 직접 설명하지 않는다.
+
+## 검증을 직접 재현할 작은 입력
+
+- 텍스트 `Blue cotton shirt` → 17자·3단어.
+- 픽셀 절반 0·절반 1 → 이미지 평균·표준편차 각각 0.5.
+- 그룹 A의 10·30·결측 → 결측20, 그룹 누락 행의 관측50 보존, 전체 관측 평균 fallback30.
+- `[1,2,3,4,100]` → IQR 경계−1·7, 100만 탐지. `[-2,1,2,3,6]`의 경계값은 탐지하지 않음.
+- A 고객이 1/1에 10·20, 1/3에30, B가1/2에5 구매 → 기준일1/3에서 A=R0/F2/M60, B=R1/F1/M5, 합계65.
+- 동일 지표의 점수가 같고 입력 순서를 바꿔도 RFM이 동일함. 고객당 단일 그룹, 네 그룹 이상과 금액 합계도 확인함.
+- 월 누락·상수 상관·원본 행 공개 제거도 가상 입력 테스트로 확인함.
+
+## 원본 실행 보고서와 다시 생성하는 방법
+
+평가용 파일은 [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb)이다. 코드와 실행 결과가 함께 저장되어 있어 원본 행·고객 ID·상품 이미지 예시·피처·통계·RFM·차트를 바로 볼 수 있다. 대화나 게시 과정에서 값을 마스킹하거나 출력을 비우지 않았다. 전체 실행본은 `data/processed/analysis_report.executed.ipynb`와 바이트 단위로 동일하게 보존한다.
+
+보조 집계 자료는 `docs/results/analysis_aggregates.json`, `segment_profile.csv`, `monthly_amount.csv`, `analysis_report.md`다. 그림은 원본 분석에서 생성한 PNG를 그대로 복사한다. 원본 CSV·ZIP·전체 JPG 묶음과 개인 인증 설정은 Git에 넣지 않는다.
+
+```powershell
+.venv\Scripts\python.exe -B -m utils.run_checks --with-sample
+.venv\Scripts\python.exe -B -m utils.publish_report
+.venv\Scripts\python.exe -B -m utils.repository_checks
+```
+
+SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본을 바이트 그대로 복사하며 표·ID·이미지를 삭제하지 않는다. 오류가 있거나 실행되지 않은 셀이 있으면 제출본 보존을 중단한다. 검증 도구는 실행 오류·제출 파일·상대 링크·허용 라이브러리와 원본 데이터 파일의 Git 제외를 확인한다.
+
+## 기능별 SRC
+
+| SRC 경로 | 주요 함수·책임 |
+| --- | --- |
+| [src/pipeline.py](src/pipeline.py) | DataAnalyzer의 load_data·join_products·validate_transactions·handle_missing_values·detect_outliers·calculate_rfm·summarize |
+| [utils/analytics.py](utils/analytics.py) | clean_transactions·impute_features·iqr_limits·calculate_customer_rfm·segment_profile |
+| [utils/image_features.py](utils/image_features.py) | prepare_image·extract_product_image_features. 픽셀 통계의 NumPy 축 연산 |
+| [utils/reporting.py](utils/reporting.py) | pair_correlation·monthly_amount·make_figures·write_insights |
+| [utils/run_checks.py](utils/run_checks.py) | 가상 테스트와 현재 Python의 새 커널 실행 |
+| [utils/reproducibility.py](utils/reproducibility.py) | 새 복제본·새 환경·표본 복원과 결과 전체 대조 |
+| [utils/publish_report.py](utils/publish_report.py) | 허용 집계·안전 차트·원본 행 제거 실행본 생성 |
+| [utils/repository_checks.py](utils/repository_checks.py) | 제출 파일·링크·분석 import·데이터 제외·공개 보고서 검사 |
+| [scripts/restore_hm_sample.py](scripts/restore_hm_sample.py) | ZIP 구성·기록·경로·충돌·선택적 체크섬 확인 |
+| [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb) | NB_LOAD~NB_REPRO 실행·해석 |
+| [tests/test_pipeline.py](tests/test_pipeline.py) · [tests/test_analytics.py](tests/test_analytics.py) · [tests/test_reporting.py](tests/test_reporting.py) · [tests/test_publication.py](tests/test_publication.py) | 로드·조인·이미지·정제·대치·IQR·RFM·월·상관·공개 경계 검증 |
+
+용어·원리·작은 예제는 [docs/tech_study.md](docs/tech_study.md), 평가 질문·SRC·시연은 [docs/a1_1_evaluation_qa.md](docs/a1_1_evaluation_qa.md), 원본 평가 자료에 대한 의견은 [docs/a1_1_eval_review.md](docs/a1_1_eval_review.md)에 있다. 실행·결과·인사이트의 필수 설명은 이 README 본문에 포함했다.
+
+## 범위와 한계
+
+- 현재 관측 기간과 선택 고객·이미지를 전체 고객·상품의 특성으로 일반화하지 않는다.
+- 신규 가입·실제 이탈·주문당 객단가·마진·LTV를 추정 없이 단정하지 않는다.
+- 이미지 통계는 촬영 조건을 함께 요약한다. 의미·질감·선호의 직접 측정값이 아니다.
+- 데이터에 접근할 수 없는 평가자도 저장된 원본 실행 출력과 집계를 확인할 수 있다. 재실행에는 표본 ZIP이 필요하다.
+- 모델 학습, 이미지 고급 피처·코호트·Plotly 보너스는 필수 구현과 구분하며 완료했다고 주장하지 않는다.
+
+## 실제 실행 확인 기록
+
+2026-11-07 실제 검증의 성공 상태를 기록했다. 아래는 테스트 수·종료 성공·검증 상태 요약이며, 전체 분석 출력은 실행 노트북에서 확인할 수 있다. 이 블록은 실행 결과이며 복사 실행할 명령은 앞 절의 PowerShell 블록이다.
+
+```text
+Validation status summary, 2026-11-07 Asia/Seoul
+> .venv/Scripts/python.exe -B -m utils.run_checks --with-sample
+Ran 15 tests
+OK
+Notebook execution: PASS
+> .venv/Scripts/python.exe -B -m utils.repository_checks
+Repository checks: PASS
+Original stdout is private. No notebook rows or identifiers are copied here.
+```
+
+새 복제본·새 가상환경에서는 표본 203파일을 복원하고 입력 체크섬·설정·버전·정제·이미지·월별·RFM·상관 등 기록한 전체 필드를 비교한다. 성공 시 `Fresh-checkout reproduction matched every recorded field.`를 출력한다. 검증 원문은 `data/processed/reproduction_verification.json`에 남는다.
+
+작업 흐름은 이슈 → 기능 브랜치 → 검증·커밋 → develop PR → 검증한 묶음 main 반영이다. 계획·완료 증거는 통합 계획과 체크표에 유지하며, 마지막 README 작업은 이슈 #11에서 관리한다.
