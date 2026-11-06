@@ -19,6 +19,10 @@
 | 데이터 공개·Git 제외 | `.gitignore`·`AGENTS.md` | A1·F2·README·Git 노트북 출력 |
 | 작업 순서·계산 기준·평가·QA 변경 | `docs/a1_1_detailed_plan.md` | 체크표·원문과의 일치 |
 | 완료 상태·실행 증거 확인 | `docs/a1_1_checklist.md` | 로컬 `data/processed/` 기록 |
+| 거래 유효성·결측·IQR·RFM 계산 정책 | `utils/analytics.py`·`DataAnalyzer` 대응 메서드 | `tests/test_analytics.py`·NB_CLEAN·NB_RFM |
+| 월별 합계·상관·차트·실제 인사이트 | `utils/reporting.py` | `tests/test_reporting.py`·NB_STATS·NB_PLOTS·README |
+| 새 복제본·새 가상환경 비교 | `utils/reproducibility.py` | 고정 의존성·로컬 입력·NB_REPRO |
+| 제출 파일·링크·Git 제외 검사 | `utils/repository_checks.py` | README·공개 노트북·data 제외 |
 | 토큰 절약·수정과 검증 반복 절차 | `AGENTS.md` | 인덱스 최신성·관련 파일만 읽기 |
 
 호출 흐름은 `분석 노트북 → DataAnalyzer → utils.image_features`다. 검증 흐름은 `utils.run_checks → tests`이며, `--with-sample`을 지정하면 `분석 노트북 → data/processed/`까지 실행한다. 로컬 기록에는 실제 표본 수·금액·이미지 상태와 배치 메모리 정보가 있으며, 공개 문서에는 합격 여부와 가상 입력의 기대값을 기록한다.
