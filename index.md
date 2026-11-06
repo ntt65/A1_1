@@ -8,7 +8,10 @@
 | [docs/a1_1_detailed_plan.md](docs/a1_1_detailed_plan.md) | 통합 구현 계획·계산 정의·평가 매핑·QA |
 | [docs/a1_1_checklist.md](docs/a1_1_checklist.md) | 완료 여부와 검증 증거 |
 | [docs/a1_1_mission.md](docs/a1_1_mission.md) | 미션 원문 |
-| [docs/a1_1_eval.md](docs/a1_1_eval.md) | 평가 원문 |
+| [docs/a1_1_eval.md](docs/a1_1_eval.md) | 평가 기준 Markdown 원본 |
+| [docs/a1_1_eval_review.md](docs/a1_1_eval_review.md) | PDF·Markdown 자료 대조와 검토 의견 |
+| [docs/a1_1_evaluation_qa.md](docs/a1_1_evaluation_qa.md) | 평가 문항 19개 Q&A·SRC·시연·준비 계획 |
+| [docs/tech_study.md](docs/tech_study.md) | 미션·평가 용어와 기술 원리·예시·구현 위치 |
 | [docs/ai1_1_mission.pdf](docs/ai1_1_mission.pdf) · [docs/a1_1_eval.pdf](docs/a1_1_eval.pdf) | 원본 PDF |
 | [src/pipeline.py](src/pipeline.py) | DataAnalyzer 상태·로드·조인·피처·정제·RFM 및 CLI |
 | [utils/__init__.py](utils/__init__.py) | 공용 도구 패키지 |
