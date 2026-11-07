@@ -41,3 +41,11 @@
 | [docs/results/segment_profile.csv](docs/results/segment_profile.csv) · [docs/results/monthly_amount.csv](docs/results/monthly_amount.csv) | 공개 고객 그룹·월별 집계 |
 
 공개 차트 6종은 `docs/results/figures/`에 있고 README 본문에서 볼 수 있다. 원본 표본·개인 연결 설정은 계속 로컬 전용이다.
+
+| 보너스 파일 | 역할 |
+| --- | --- |
+| [utils/bonus.py](utils/bonus.py) | 첫 관찰 구매월 코호트·히트맵·Plotly RFM |
+| [tests/test_bonus.py](tests/test_bonus.py) | 히스토그램·엣지·분모·미관측·원본 관측 보존 |
+| [requirements-bonus.txt](requirements-bonus.txt) | 보너스 전용 고정 의존성 |
+| [docs/results/bonus/rfm_interactive.html](docs/results/bonus/rfm_interactive.html) | 원본1000고객의 독립 실행 Plotly HTML |
+| [docs/results/bonus/cohort_retention.csv](docs/results/bonus/cohort_retention.csv) | 첫 구매월 코호트 월별 활동 비율 |
