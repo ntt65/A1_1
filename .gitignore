@@ -162,6 +162,9 @@ venv.bak/
 # Local datasets and derived data
 /data/
 
+# Temporary native-chart workbook conversion workspaces.
+/.chart-data-*/
+
 # Spyder project settings
 .spyderproject
 .spyproject

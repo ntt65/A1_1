@@ -25,6 +25,7 @@
 | 제출 파일·링크·Git 제외 검사 | `utils/repository_checks.py` | README·공개 노트북·data 제외 |
 | PDF 평가 기준과 현재 Markdown 내용 검토 | `docs/a1_1_eval_review.md` | 원본 PDF·평가 문항·가상 참고 예시 구분 |
 | 평가 예상 질문·답변·시연 | `docs/a1_1_evaluation_qa.md` | 19개 문항·SRC·실행 기록·이슈 #6 |
+| 평가 PPT·질문별 원고·발표자 노트·도식 | `utils/eval_presentation_content.mjs`·`utils/build_eval_presentation.mjs` | docs/presentation·실제 분석 JSON/그림·질문별 페이지·이슈 #17 |
 | 기술·용어·원리 학습 | `docs/tech_study.md` | 미션 필수·선택·제약·코드·QA |
 | 토큰 절약·수정과 검증 반복 절차 | `AGENTS.md` | 인덱스 최신성·관련 파일만 읽기 |
 

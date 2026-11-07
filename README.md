@@ -332,6 +332,8 @@ A1_1/
 ├── utils/
 │   ├── __init__.py                  # 공용 도구 패키지
 │   ├── bonus.py                     # 첫 관찰 구매월 코호트·Plotly 보너스
+│   ├── build_eval_presentation.mjs   # 평가 PPT 작성·렌더·파일 검증
+│   ├── eval_presentation_content.mjs # 질문별 기술 원고·발표자 노트
 │   ├── analytics.py                 # 거래 정제·결측 대치·IQR·RFM·그룹 프로파일
 │   ├── image_features.py            # 이미지 정규화·축소·배치 mean/std
 │   ├── reporting.py                 # 통계 상관·월별 집계·6종 차트·인사이트
@@ -350,7 +352,9 @@ A1_1/
 │   ├── test_analytics.py            # 정제·대치·IQR·RFM
 │   ├── test_reporting.py            # 상관·월별 합계 경계
 │   └── test_publication.py          # 원본 필드·실행본 보존
-└── docs/results/                    # README의 차트·집계·실행 상태 기록
+└── docs/
+    ├── results/                    # 실제 차트·집계·보너스·실행 상태
+    └── presentation/               # 질문별 기술 PPT와 페이지/재생성 안내
 ```
 
 `data/raw/hm/`은 재실행용 표본, `data/processed/`는 실행 중 생성하는 결과의 로컬 경로다. 파일별 자세한 위치는 [index.md](index.md), 기능을 바꿀 때 함께 확인할 위치는 [reverse_index.md](reverse_index.md)에 있다.
@@ -468,3 +472,9 @@ flowchart TD
 `utils.run_checks`만 실행하면 회귀 테스트까지 수행하며, `--with-sample`을 붙여야 새 커널 분석을 실행한다. `utils.publish_report`는 README 설명과 본문 인사이트를 자동 작성하지 않으며 실행 결과와 보조 집계 파일을 갱신한다. 재실행 후 README의 수치·설명도 결과와 대조한다. 전체 명령은 앞의 **전체 분석과 검증**, **원본 실행 보고서와 다시 생성하는 방법**에 있다.
 
 SRC: [표본 복원](scripts/restore_hm_sample.py) → [검증 실행](utils/run_checks.py) → [원본 결과 보존](utils/publish_report.py) → [저장소 검사](utils/repository_checks.py). 독립 검증: [새 환경 재현](utils/reproducibility.py).
+
+## 평가 기술 발표자료
+
+[질문별 기술 발표 PPT](docs/presentation/a1_1_eval_technical_final.pptx)는 **31장**이며, 평가서 필수 질문 **19개를 각각 최소 한 장**으로 설명한다. 질문 번호1-1~4-3을 표시하고 실제 구현·코드·수식·배열 축·메모리/Stride/SIMD·RFM 손계산·검증값과 한계를 담았다. 보너스3개는 B-1~B-3에서 실제 결과로 설명한다. 각 장의 발표자 노트에는 질문 원문·설명·코드 시연·꼬리 질문·SRC/출처가 있다.
+
+필수 분석과 보너스의 실제 실행 화면, 편집 가능한 표·차트·기술 도식을 함께 사용했다. [질문별 페이지·발표/재생성 안내](docs/presentation/README.md)에서 필요한 질문을 찾을 수 있다. 관련 이슈는 #17이며, 보너스 구현은 별도 #18에서 관리했다.
