@@ -77,5 +77,5 @@ def interactive_rfm(rfm, path):
     figure.update_layout(meta={"customers": len(rfm), "frequency_unit": "purchase_day"})
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    figure.write_html(path, include_plotlyjs=True, full_html=True, auto_open=False)
+    path.write_bytes(figure.to_html(include_plotlyjs=True, full_html=True).encode("utf-8"))
     return figure

@@ -47,7 +47,8 @@ def run_notebook(notebook_path, output_path):
     print("Starting a fresh notebook kernel in the current Python environment...", flush=True)
     client.execute(cleanup_kc=True)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    nbformat.write(notebook, output_path)
+    # 플랫폼별 줄바꿈 변환 없이 같은 UTF-8 직렬화 바이트를 보존한다.
+    output_path.write_bytes(nbformat.writes(notebook).encode("utf-8"))
     return output_path
 
 

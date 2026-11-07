@@ -223,6 +223,30 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 
 실제 브라우저에서 네트워크를 차단한 채 전체 점 1,000개·범례 필터·3D 카메라 조작을 확인했다. 화면에서 그룹을 선택해도 원본 관측을 삭제하지 않는다. 이미지·코호트·인터랙티브 결과는 앞의 재생성 명령으로 갱신된다. SRC: [이미지 배치](utils/image_features.py), [보너스 함수](utils/bonus.py), [검증 입력](tests/test_bonus.py), [실행 노트북](notebooks/analysis_report.ipynb).
 
+### 실제 실행 화면과 기능 확인
+
+아래는 실제 고객 1,000명으로 실행한 Plotly 화면이다. 위의 히스토그램·코호트 화면과 앞 절의 필수 차트 6종도 실제 분석 결과다.
+
+![실제 Plotly RFM 실행 화면: 고객1000명과4개 그룹](docs/results/bonus/rfm_interactive_preview.png)
+
+| 구현 기능 | 실행 화면에서 확인할 내용 | 구현 위치 |
+| --- | --- | --- |
+| 이미지 고급 피처 | 8구간 비중·합1·평균 엣지, 관측200상품의 피처 표 | `utils/image_features.py::advanced_image_statistics`, NB_BONUS_IMAGES |
+| 코호트 활동 비율 | 첫 구매월별 분모550/288/162, 관측 비율과 미래 빈칸 | `utils/bonus.py::cohort_retention/cohort_figure`, NB_BONUS_COHORT |
+| 인터랙티브 RFM | 드래그 회전·스크롤 확대·범례 선택·고객ID hover | `utils/bonus.py::interactive_rfm`, NB_BONUS_PLOTLY |
+| 원본 결과 보존 | 실제 표·ID·사진·분석 출력을 함께 가진 노트북 | `utils/publish_report.py::preserve_execution` |
+
+아래 명령은 저장소 루트에서 실행한다. 마지막 명령은 Windows에서 실제 HTML 화면을 연다. 원본 거래 표·상품 사진·정제·통계·RFM 결과는 실행 노트북에서도 함께 확인할 수 있다.
+
+```powershell
+.venv\Scripts\python.exe -B -m utils.run_checks --with-sample
+.venv\Scripts\python.exe -B -m utils.publish_report
+.venv\Scripts\python.exe -B -m utils.repository_checks
+Invoke-Item docs/results/bonus/rfm_interactive.html
+```
+
+보너스 포함 검증 결과: 테스트20개 통과, 새 커널 코드12셀 전체 성공, 독립 새 복제본·새 가상환경에서도 보너스를 포함한 분석 JSON 전체 항목 일치. 실제 브라우저에서는 네트워크를 차단하고 점수·필터·카메라 조작을 확인했다.
+
 ## 검증을 직접 재현할 작은 입력
 
 - 텍스트 `Blue cotton shirt` → 17자·3단어.
