@@ -374,3 +374,21 @@ SRC: [AGENTS.md](../AGENTS.md), [utils/run_checks.py](../utils/run_checks.py), [
 7. 새 환경에서 입력·설정·결과가 같음을 어떤 기록으로 증명하는지 보여준다.
 
 모든 설명을 암기하기보다 SRC를 열고 작은 입력의 결과를 예측한 뒤 실제 실행과 대조하며 공부한다.
+
+## 15. 실제 보너스 구현의 계산 기준
+
+### 정규화 히스토그램과 간단한 엣지
+
+`advanced_image_statistics(batch, bins=8)`은 `(N,H,W,3)` 0~1 RGB 배열을 받는다. 가중 밝기는 `g=0.2126R+0.7152G+0.0722B`의 근사이며 감마 보정·물리 휘도 측정과 구분한다. 각 픽셀의 구간은 `min(floor(g*8),7)`이다. 이미지 번호별 offset을 더한 인덱스에 `np.bincount`를 적용해 이미지별 히스토그램을 한 번에 만든 뒤 `H*W`로 나눈다. 결과는 `(N,8)`이고 이미지마다 합1이다.
+
+엣지 값은 `sum(abs(diff(g,axis=H))) + sum(abs(diff(g,axis=W)))`를 `H*(W-1)+(H-1)*W`로 나눈 값이다. 상수 이미지는0, 2×2 0/1 체커보드는1이며 1×1에는 인접 쌍이 없어0으로 정의한다. 이 값은 밝기 변화량의 간단한 요약이고 Canny·Sobel·의미 인식은 아니다. 실제 관측200상품의 평균은0.045633이다. 실패·미표본 피처는NaN이다. SRC: [이미지 도구](../utils/image_features.py), [알려진 이미지 검증](../tests/test_bonus.py).
+
+### 코호트 분모와 우측 관측 중단
+
+각 고객의 기간 내 최초 구매월을 코호트C로 둔다. C에서 시작한 고객 수를N(C), C+k월에 구매한 고유 고객 수를A(C,k)라고 하면 `retention(C,k)=A(C,k)/N(C)`이다. 같은 달 여러 거래는 한 번만 센다. M0은100%이고 후속 월 활동 비율은 감소만 하는 함수가 아니다. 구매를 쉬었다가 돌아온 고객도 해당 월 분자에 들어간다.
+
+6월 코호트는550명이고 M1=224/550=40.7%, M2=213/550=38.7%다. 7월은288명이고 M1=82/288=28.5%다. 8월은162명이다. 8월 이후는 관측하지 않았으므로0이 아닌NaN이다. 가입일이나 6월 이전 거래가 없어 진짜 가입·생애 첫 구매를 판정하지 않는다. SRC: [cohort_retention·cohort_figure](../utils/bonus.py), [실제 결과](results/bonus/cohort_retention.csv).
+
+### 인터랙티브 탐색과 원본 관측
+
+`interactive_rfm`은 Recency·Frequency·Monetary 3축과 세그먼트 색상, 원본 고객ID hover를 가진 Plotly scatter3d를 생성한다. 독립 HTML에 JS를 내장하며 회전·확대·범례 필터를 제공한다. 범례는 화면 표시를 선택하는 기능이고 원본 고객을 제거하지 않는다. Plotly7은 숫자 배열을 이진 표현으로 전송할 수 있으므로 브라우저 검증은 해석된 실제 좌표를 확인한다. 실제1000고객·4그룹과 네트워크 차단 상태의 필터/카메라 조작을 검증했다. Plotly는 이 보너스에서만 import한다. SRC: [보너스 함수](../utils/bonus.py), [독립 HTML](results/bonus/rfm_interactive.html).

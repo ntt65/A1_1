@@ -38,12 +38,17 @@ def run_notebook(notebook_path, output_path):
     manager = KernelManager(kernel_name="python3")
     # 등록된 커널의 'python' 대신 지금 검증 중인 가상환경을 정확히 사용한다.
     manager.kernel_spec.argv[0] = sys.executable
+    def report_progress(cell, cell_index, **kwargs):
+        """원본 출력 대신 성공한 셀 번호만 기록해 장시간 실행 상태를 알린다."""
+        print(f"Notebook code cell {cell_index + 1}: execution finished", flush=True)
     client = NotebookClient(notebook, km=manager, timeout=180, startup_timeout=30,
-                            resources={"metadata": {"path": str(ROOT)}})
+                            resources={"metadata": {"path": str(ROOT)}},
+                            on_cell_executed=report_progress)
     print("Starting a fresh notebook kernel in the current Python environment...", flush=True)
     client.execute(cleanup_kc=True)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    nbformat.write(notebook, output_path)
+    # 플랫폼별 줄바꿈 변환 없이 같은 UTF-8 직렬화 바이트를 보존한다.
+    output_path.write_bytes(nbformat.writes(notebook).encode("utf-8"))
     return output_path
 
 

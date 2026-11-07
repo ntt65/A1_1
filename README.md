@@ -8,11 +8,11 @@
 
 ```powershell
 py -3.11 -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-notebook.txt
+.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-notebook.txt -r requirements-bonus.txt
 .venv\Scripts\python.exe -B -m utils.run_checks
 ```
 
-검증한 분석 패키지: NumPy 2.4.6, Pandas 3.1.1, Matplotlib 3.11.2, Seaborn 0.13.2. 실행 도구는 Notebook 7.6.4, ipykernel 7.4.0, nbclient 0.11.0, nbformat 5.11.1이다. Python 3.11 환경에서 설치·실행을 확인했다.
+검증한 분석 패키지: NumPy 2.4.6, Pandas 3.1.1, Matplotlib 3.11.2, Seaborn 0.13.2. 보너스는 Plotly 7.1.0·narwhals 2.28.0·packaging 26.3을 별도 `requirements-bonus.txt`에 고정했다. Plotly는 인터랙티브 보너스에서만 사용한다. 실행 도구는 Notebook 7.6.4, ipykernel 7.4.0, nbclient 0.11.0, nbformat 5.11.1이다. Python 3.11 환경에서 설치·실행을 확인했다.
 
 ## 비공개 데이터 준비
 
@@ -191,6 +191,62 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 
 세 인사이트의 우선순위와 ROI는 현재 데이터만으로 확정하지 않는다. 이미지 평균·표준편차는 밝기·배경·색상 요약이며 상품 패턴이나 구매 원인을 직접 설명하지 않는다.
 
+## 보너스 3개 실제 구현 결과
+
+이슈 #18에서 구현·검증했다. 노트북의 `NB_BONUS_IMAGES`·`NB_BONUS_COHORT`·`NB_BONUS_PLOTLY`에 실제 코드와 출력이 있으며, 보너스를 포함한 코드 셀 12개가 새 커널에서 모두 실행된다.
+
+### 이미지 히스토그램·엣지 피처
+
+`advanced=True, histogram_bins=8`을 지정하면 이미 읽은 상품 이미지 배치에서 8개 정규화 히스토그램 열 `image_hist_0`~`image_hist_7`과 `image_edge_mean`을 추가한다. 가중 밝기 근사는 `0.2126R+0.7152G+0.0722B`이며 sRGB 선형화나 물리적 휘도 측정을 수행하지 않는다. 히스토그램은 0~1을 8등분하고 마지막 구간에 1을 포함하며, 각 이미지에서 합이 1이다. 엣지는 수평·수직 인접 픽셀 절대차의 평균이다.
+
+실제 관측 상품 200개의 합1·상품/거래 매핑을 확인했다. 평균 엣지 값은 **0.045633**, 범위는 **0.004035~0.162338**이다. 실패·미표본 이미지는 피처를 결측으로 유지하며, 기존 mean/std·원본 이미지·거래금액을 바꾸지 않는다. 밝은 배경·리사이즈의 영향을 받으므로 상품 의미나 정교한 질감 검출로 단정하지 않는다.
+
+![관측 상품 200개 평균 정규화 밝기 히스토그램](docs/results/bonus/image_histogram.png)
+
+### 첫 관찰 구매월 코호트
+
+가입일이 없어 **관찰 기간 내 첫 구매월**을 기준으로 사용한다. 분모는 각 코호트의 M0 고유 고객 수, 분자는 해당 월에 구매한 코호트 고유 고객 수다. 동일 월의 반복 거래는 한 고객으로 센다. 연속 생존율이 아니라 월별 활동 비율이며, 관측 무구매는 0·미래 미관측은 빈칸/NaN으로 표시한다.
+
+| 첫 관찰 구매월 | 고객 수·분모 | M0 | M1 | M2 |
+| --- | ---: | ---: | ---: | ---: |
+| 2020-06 | 550 | 100.0% | 40.7% (224명) | 38.7% (213명) |
+| 2020-07 | 288 | 100.0% | 28.5% (82명) | 미관측 |
+| 2020-08 | 162 | 100.0% | 미관측 | 미관측 |
+
+![첫 관찰 구매월 코호트 활동 비율](docs/results/bonus/cohort_retention.png)
+
+6월 이전 구매 이력을 알 수 없어 실제 신규 가입이나 생애 첫 구매 코호트로 해석하지 않는다. 관찰 길이가 다른 코호트의 미관측 칸을 0으로 채우거나 동기간 없이 직접 비교하지 않는다. 원수·분모·비율 CSV는 `docs/results/bonus/`에 있다.
+
+### Plotly 인터랙티브 RFM
+
+[인터랙티브 RFM HTML](docs/results/bonus/rfm_interactive.html)을 **내려받거나 로컬 파일로 브라우저에서 연다**. GitHub 파일 미리보기는 JavaScript 실행을 지원하지 않는다. 고객 **1,000명·4개 그룹**의 실제 Recency·Frequency·Monetary와 원본 고객 ID를 유지한다. 마우스 드래그로 3D 회전, 스크롤로 확대, 점의 hover로 고객 ID·지표 확인, 범례로 그룹 선택을 할 수 있다. Plotly JS를 내장해 별도 CDN 연결이 필요 없다.
+
+실제 브라우저에서 네트워크를 차단한 채 전체 점 1,000개·범례 필터·3D 카메라 조작을 확인했다. 화면에서 그룹을 선택해도 원본 관측을 삭제하지 않는다. 이미지·코호트·인터랙티브 결과는 앞의 재생성 명령으로 갱신된다. SRC: [이미지 배치](utils/image_features.py), [보너스 함수](utils/bonus.py), [검증 입력](tests/test_bonus.py), [실행 노트북](notebooks/analysis_report.ipynb).
+
+### 실제 실행 화면과 기능 확인
+
+아래는 실제 고객 1,000명으로 실행한 Plotly 화면이다. 위의 히스토그램·코호트 화면과 앞 절의 필수 차트 6종도 실제 분석 결과다.
+
+![실제 Plotly RFM 실행 화면: 고객1000명과4개 그룹](docs/results/bonus/rfm_interactive_preview.png)
+
+| 구현 기능 | 실행 화면에서 확인할 내용 | 구현 위치 |
+| --- | --- | --- |
+| 이미지 고급 피처 | 8구간 비중·합1·평균 엣지, 관측200상품의 피처 표 | `utils/image_features.py::advanced_image_statistics`, NB_BONUS_IMAGES |
+| 코호트 활동 비율 | 첫 구매월별 분모550/288/162, 관측 비율과 미래 빈칸 | `utils/bonus.py::cohort_retention/cohort_figure`, NB_BONUS_COHORT |
+| 인터랙티브 RFM | 드래그 회전·스크롤 확대·범례 선택·고객ID hover | `utils/bonus.py::interactive_rfm`, NB_BONUS_PLOTLY |
+| 원본 결과 보존 | 실제 표·ID·사진·분석 출력을 함께 가진 노트북 | `utils/publish_report.py::preserve_execution` |
+
+아래 명령은 저장소 루트에서 실행한다. 마지막 명령은 Windows에서 실제 HTML 화면을 연다. 원본 거래 표·상품 사진·정제·통계·RFM 결과는 실행 노트북에서도 함께 확인할 수 있다.
+
+```powershell
+.venv\Scripts\python.exe -B -m utils.run_checks --with-sample
+.venv\Scripts\python.exe -B -m utils.publish_report
+.venv\Scripts\python.exe -B -m utils.repository_checks
+Invoke-Item docs/results/bonus/rfm_interactive.html
+```
+
+보너스 포함 검증 결과: 테스트20개 통과, 새 커널 코드12셀 전체 성공, 독립 새 복제본·새 가상환경에서도 보너스를 포함한 분석 JSON 전체 항목 일치. 실제 브라우저에서는 네트워크를 차단하고 점수·필터·카메라 조작을 확인했다.
+
 ## 검증을 직접 재현할 작은 입력
 
 - 텍스트 `Blue cotton shirt` → 17자·3단어.
@@ -222,6 +278,7 @@ SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본�
 | [src/pipeline.py](src/pipeline.py) | DataAnalyzer의 load_data·join_products·validate_transactions·handle_missing_values·detect_outliers·calculate_rfm·summarize |
 | [utils/analytics.py](utils/analytics.py) | clean_transactions·impute_features·iqr_limits·calculate_customer_rfm·segment_profile |
 | [utils/image_features.py](utils/image_features.py) | prepare_image·extract_product_image_features. 픽셀 통계의 NumPy 축 연산 |
+| [utils/bonus.py](utils/bonus.py) | cohort_retention·cohort_figure·interactive_rfm. 코호트와 Plotly 보너스 |
 | [utils/reporting.py](utils/reporting.py) | pair_correlation·monthly_amount·make_figures·write_insights |
 | [utils/run_checks.py](utils/run_checks.py) | 가상 테스트와 현재 Python의 새 커널 실행 |
 | [utils/reproducibility.py](utils/reproducibility.py) | 새 복제본·새 환경·표본 복원과 결과 전체 대조 |
@@ -239,7 +296,7 @@ SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본�
 - 신규 가입·실제 이탈·주문당 객단가·마진·LTV를 추정 없이 단정하지 않는다.
 - 이미지 통계는 촬영 조건을 함께 요약한다. 의미·질감·선호의 직접 측정값이 아니다.
 - 데이터에 접근할 수 없는 평가자도 저장된 원본 실행 출력과 집계를 확인할 수 있다. 재실행에는 표본 ZIP이 필요하다.
-- 모델 학습, 이미지 고급 피처·코호트·Plotly 보너스는 필수 구현과 구분하며 완료했다고 주장하지 않는다.
+- 이미지 고급 피처·첫 관찰 구매월 코호트·Plotly 보너스는 실제 구현했다. 가입일 코호트와 실제 모델 학습은 현재 범위에 포함되지 않는다.
 
 ## 실제 실행 확인 기록
 
@@ -248,7 +305,7 @@ SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본�
 ```text
 Validation status summary, 2026-11-07 Asia/Seoul
 > .venv/Scripts/python.exe -B -m utils.run_checks --with-sample
-Ran 15 tests
+Ran 20 tests
 OK
 Notebook execution: PASS
 > .venv/Scripts/python.exe -B -m utils.repository_checks
@@ -274,6 +331,7 @@ A1_1/
 │   └── pipeline.py                 # DataAnalyzer 클래스와 간단한 로드·조인 CLI
 ├── utils/
 │   ├── __init__.py                  # 공용 도구 패키지
+│   ├── bonus.py                     # 첫 관찰 구매월 코호트·Plotly 보너스
 │   ├── analytics.py                 # 거래 정제·결측 대치·IQR·RFM·그룹 프로파일
 │   ├── image_features.py            # 이미지 정규화·축소·배치 mean/std
 │   ├── reporting.py                 # 통계 상관·월별 집계·6종 차트·인사이트
@@ -288,6 +346,7 @@ A1_1/
 │   └── restore_hm_sample.py         # ZIP 검사와 로컬 표본 복원
 ├── tests/
 │   ├── test_pipeline.py             # 로드·상품 조인·이미지·텍스트
+│   ├── test_bonus.py                # 히스토그램·엣지·코호트·Plotly
 │   ├── test_analytics.py            # 정제·대치·IQR·RFM
 │   ├── test_reporting.py            # 상관·월별 합계 경계
 │   └── test_publication.py          # 원본 필드·실행본 보존
@@ -315,6 +374,7 @@ flowchart LR
     DA --> AN
     DA --> IM
     NB --> RP
+    NB --> BN["utils/bonus.py<br/>cohort_retention / cohort_figure<br/>interactive_rfm (Plotly 보너스)"]
     DA --> NP
     DA --> PD
 ```
@@ -343,8 +403,8 @@ classDiagram
         +validate_transactions(customer_col, date_col, amount_col, settings)
         +join_products(product_path, key, amount_col)
         +extract_text_features(text_column)
-        +extract_image_features(image_column, image_dir, image_size, batch_size)
-        -_extract_image_files(directory, prefix, image_size, batch_size)
+        +extract_image_features(image_column, image_dir, image_size, batch_size, advanced, histogram_bins)
+        -_extract_image_files(directory, prefix, image_size, batch_size, advanced, histogram_bins)
         +handle_missing_values(strategy, group_col, columns, eligible)
         +detect_outliers(column, threshold)
         +clip_outliers(column, threshold)
@@ -371,8 +431,9 @@ flowchart TD
     STATS["NB_STATS<br/>기술통계와 상관 2쌍<br/>상품 단위 / 고객 단위 구분"]
     PLOTS["NB_PLOTS<br/>원금액 월별 집계와 필수 차트 6종<br/>IQR 전후 비교에는 clipped_amount 사용"]
     INSIGHT["비즈니스 해석<br/>write_insights → 근거·실행·검증 3개"]
+    BONUS["NB_BONUS_IMAGES / COHORT / PLOTLY<br/>고급 이미지 피처·첫 구매월 코호트<br/>고객 전체 인터랙티브 탐색"]
     REPRO["NB_REPRO<br/>입력 체크섬·설정·환경·전체 분석 기록<br/>analysis_verification.json / segment_profile.csv"]
-    SET --> LOAD --> FEAT --> CLEAN --> RFM --> STATS --> PLOTS --> INSIGHT --> REPRO
+    SET --> LOAD --> FEAT --> CLEAN --> RFM --> STATS --> PLOTS --> INSIGHT --> BONUS --> REPRO
     CLEAN -. "원본과 별도 보관" .-> EDA
     EDA -. "보정 금액의 분포 비교" .-> PLOTS
     FEAT -. "관측 상품 피처" .-> STATS
@@ -387,7 +448,7 @@ SRC: [실행 노트북](notebooks/analysis_report.ipynb)의 `NB_LOAD`~`NB_REPRO`
 ```mermaid
 flowchart TD
     ZIP["scripts/restore_hm_sample.py<br/>ZIP 검사·표본 복원"]
-    TEST["utils.run_checks --with-sample<br/>회귀 테스트 15개"]
+    TEST["utils.run_checks --with-sample<br/>회귀 테스트 20개"]
     KERNEL["현재 Python의 새 커널<br/>analysis_report.ipynb 전체 실행"]
     LOCAL["data/processed/<br/>실행 노트북·검증 JSON·차트·프로파일"]
     PUB["utils.publish_report<br/>성공한 실행본을 바이트 그대로 복사<br/>원본 차트·집계와 보조 보고서 생성"]

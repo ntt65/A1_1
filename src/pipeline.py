@@ -183,18 +183,23 @@ class DataAnalyzer:
         return segment_profile(rfm)
 
     def extract_image_features(self, image_column: str = "image", *, image_dir=None,
-                               image_size: int = 32, batch_size: int = 32) -> pd.DataFrame:
+                               image_size: int = 32, batch_size: int = 32,
+                               advanced=False, histogram_bins=8) -> pd.DataFrame:
         """이미지 평균·표준편차를 self.df에 추가하고 같은 표를 반환한다.
 
         image_dir가 없으면 기존처럼 image_column의 같은 모양 배열을 계산한다.
         파일 입력은 join_products() 후 상품별 한 번 읽는다. 0~1 RGB 픽셀을
         image_size 정사각형으로 줄여 batch_size장씩 계산한다. 실패 피처는
         NaN으로, 이유는 <image_column>_status 열에 남긴다.
+        파일 입력의 advanced=True는 같은 배치에서 히스토그램·엣지를 추가한다.
         """
         if self.df is None:
             raise ValueError("Data is not loaded. Call load_data() first.")
         if image_dir is not None:
-            return self._extract_image_files(Path(image_dir), image_column, image_size, batch_size)
+            return self._extract_image_files(Path(image_dir), image_column, image_size, batch_size,
+                                             advanced, histogram_bins)
+        if advanced:
+            raise ValueError("Advanced image features require image_dir.")
         if image_column not in self.df.columns:
             raise ValueError(f"Column '{image_column}' not found in data.")
 
@@ -208,12 +213,13 @@ class DataAnalyzer:
 
         return self.df
 
-    def _extract_image_files(self, directory, prefix, image_size, batch_size):
+    def _extract_image_files(self, directory, prefix, image_size, batch_size, advanced=False, histogram_bins=8):
         """재사용 도구의 상품 피처를 거래에 매핑하고 배치 진단을 기록한다."""
         if self.products is None:
             raise ValueError("Call join_products() before extracting image files.")
         features, batch_info = extract_product_image_features(
-            self.products, self.product_key, directory, prefix, image_size, batch_size)
+            self.products, self.product_key, directory, prefix, image_size, batch_size,
+            advanced, histogram_bins)
         keys = self.products[self.product_key]
         # 거래별 이미지 배열 대신 상품별로 계산한 작은 피처만 연결한다.
         for column in features:
