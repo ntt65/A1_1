@@ -29,6 +29,7 @@
 | [utils/reporting.py](utils/reporting.py) | 상관·월별 집계·필수 차트·인사이트 |
 | [utils/reproducibility.py](utils/reproducibility.py) | 새 복제본·새 환경의 전체 결과 대조 |
 | [utils/repository_checks.py](utils/repository_checks.py) | 제출 파일·링크·출력·공개 데이터 제외 검사 |
+| [tests/test_repository_checks.py](tests/test_repository_checks.py) | Markdown 인용 코드·정상 링크·깨진 상대 링크의 회귀 검증 |
 | [tests/test_analytics.py](tests/test_analytics.py) · [tests/test_reporting.py](tests/test_reporting.py) | 손계산·원본 보존·월 누락·상관 경계 검증 |
 | [requirements.txt](requirements.txt) | 검증 버전으로 고정한 분석용 의존성 |
 | [requirements-notebook.txt](requirements-notebook.txt) | 별도 노트북 실행 의존성 |
