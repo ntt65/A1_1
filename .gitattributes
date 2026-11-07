@@ -1,0 +1,4 @@
+# Preserve Plotly's generated standalone bundle verbatim, including vendor whitespace.
+docs/results/bonus/rfm_interactive.html -text -whitespace
+# Keep the executed submission notebook byte-identical to its saved source.
+notebooks/analysis_report.ipynb -text -whitespace

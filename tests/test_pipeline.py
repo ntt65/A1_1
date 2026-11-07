@@ -116,8 +116,12 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(analyzer.image_batch_info["shape"], (2, 32, 32, 3))
         first = analyzer.df[["image_mean", "image_std"]].copy()
         with patch("matplotlib.image.imread", side_effect=read):
-            analyzer.extract_image_features(image_dir=images, batch_size=3)
+            analyzer.extract_image_features(image_dir=images, batch_size=3, advanced=True)
         pd.testing.assert_frame_equal(first, analyzer.df[["image_mean", "image_std"]])
+        histogram = analyzer.products.filter(regex=r"^image_hist_")
+        np.testing.assert_allclose(histogram.iloc[:4].sum(axis=1), 1)
+        self.assertTrue(histogram.iloc[4:].isna().all().all())
+        self.assertEqual(analyzer.df.image_hist_0.iloc[0], analyzer.df.image_hist_0.iloc[-2])
         self.assertTrue(analyzer.df.columns.is_unique)
         with self.assertRaisesRegex(ValueError, "positive integer"):
             analyzer.extract_image_features(image_dir=images, batch_size=0)

@@ -36,7 +36,8 @@ def verify_reproduction():
     python = destination / ".venv" / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
     print("Installing the pinned analysis and notebook dependencies...", flush=True)
     run([python, "-m", "pip", "install", "--quiet", "--disable-pip-version-check", "--no-input",
-         "--cache-dir", base / "pip-cache", "-r", "requirements.txt", "-r", "requirements-notebook.txt"], destination)
+         "--cache-dir", base / "pip-cache", "-r", "requirements.txt", "-r", "requirements-notebook.txt",
+         "-r", "requirements-bonus.txt"], destination)
     run([python, "scripts/restore_hm_sample.py", "--archive", ROOT / "data/raw/hm/hm_sample.zip"], destination)
     run([python, "-B", "-m", "utils.run_checks", "--with-sample"], destination)
     repeated = json.loads((destination / "data/processed/analysis_verification.json").read_text(encoding="utf-8"))

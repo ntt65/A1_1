@@ -32,13 +32,41 @@ def prepare_image(pixels, image_size):
         raise ValueError("Pixels must be finite and within 0..1 after normalization.")
     return np.ascontiguousarray(sampled)
 
-def extract_product_image_features(products, key, directory, prefix="image", image_size=32, batch_size=32):
+def advanced_image_statistics(batch, bins=8):
+    """정규화 RGB 배치의 밝기 히스토그램과 인접 절대차 평균을 반환한다.
+
+    입력은 (N,H,W,3)의 유한한 0~1 배열이다. 히스토그램은 이미지마다 합이
+    1이며 마지막 구간은 밝기 1을 포함한다. 엣지는 수평·수직 인접 쌍의
+    절대차 합/쌍 수다. 픽셀별 Python 반복 없이 계산하며 1x1 엣지는 0이다.
+    """
+    batch = np.asarray(batch)
+    if batch.ndim != 4 or batch.shape[-1] != 3 or min(batch.shape[:3]) < 1:
+        raise ValueError("Expected a nonempty (N,H,W,3) RGB batch.")
+    if isinstance(bins, bool) or not isinstance(bins, int) or bins < 2:
+        raise ValueError("bins must be an integer >= 2.")
+    if not np.isfinite(batch).all() or batch.min() < 0 or batch.max() > 1:
+        raise ValueError("Batch pixels must be finite and within 0..1.")
+    gray = np.clip(batch @ np.array([.2126, .7152, .0722], dtype=np.float32), 0, 1)
+    count, height, width = gray.shape
+    indices = np.minimum((gray * bins).astype(np.intp), bins - 1)
+    offsets = np.arange(count)[:, None, None] * bins
+    histogram = np.bincount((indices + offsets).ravel(), minlength=count * bins).reshape(count, bins)
+    histogram = histogram / (height * width)
+    pairs = height * (width - 1) + (height - 1) * width
+    difference = np.abs(np.diff(gray, axis=1)).sum(axis=(1, 2)) + np.abs(np.diff(gray, axis=2)).sum(axis=(1, 2))
+    edge = difference / pairs if pairs else np.zeros(count)
+    return histogram, edge
+
+
+def extract_product_image_features(products, key, directory, prefix="image", image_size=32, batch_size=32,
+                                   advanced=False, histogram_bins=8):
     """고유 상품 표에서 피처 표와 최대 배치의 메모리 정보를 반환한다.
 
     directory 아래 <ID 앞 3자리>/<ID>.jpg를 읽는다. products의 key는
     비어 있지 않은 고유 문자열이어야 한다. image_size는 최소 원본 크기이자
     변환 크기, batch_size는 동시에 계산할 상품 수 상한이다.
     상태는 ok/missing/not_sampled/corrupt/too_small이며 실패 피처는 NaN이다.
+    advanced=True이면 같은 배치에서 밝기 히스토그램·엣지도 계산한다.
     """
     from matplotlib.image import imread
 
@@ -55,6 +83,13 @@ def extract_product_image_features(products, key, directory, prefix="image", ima
     stds = np.full(len(products), np.nan)
     statuses = np.full(len(products), "missing", dtype=object)
     batch_info = {}
+    if advanced:
+        if isinstance(histogram_bins, bool) or not isinstance(histogram_bins, int) or histogram_bins < 2:
+            raise ValueError("histogram_bins must be an integer >= 2.")
+    advanced_values = {f"{prefix}_hist_{i}": np.full(len(products), np.nan)
+                       for i in range(histogram_bins)} if advanced else {}
+    if advanced:
+        advanced_values[f"{prefix}_edge_mean"] = np.full(len(products), np.nan)
     for start in range(0, len(products), batch_size):
         arrays, positions = [], []
         for position in range(start, min(start + batch_size, len(products))):
@@ -89,10 +124,15 @@ def extract_product_image_features(products, key, directory, prefix="image", ima
             batch = np.stack(arrays)
             means[positions] = batch.mean(axis=(1, 2, 3))
             stds[positions] = batch.std(axis=(1, 2, 3), ddof=0)
+            if advanced:
+                histogram, edges = advanced_image_statistics(batch, histogram_bins)
+                for index in range(histogram_bins):
+                    advanced_values[f"{prefix}_hist_{index}"][positions] = histogram[:, index]
+                advanced_values[f"{prefix}_edge_mean"][positions] = edges
             if batch.nbytes > batch_info.get("nbytes", 0):
                 batch_info = {"shape": batch.shape, "dtype": str(batch.dtype),
                               "strides": batch.strides, "nbytes": batch.nbytes,
                               "c_contiguous": bool(batch.flags.c_contiguous)}
     features = pd.DataFrame({f"{prefix}_mean": means, f"{prefix}_std": stds,
-                             f"{prefix}_status": statuses}, index=keys)
+                             f"{prefix}_status": statuses, **advanced_values}, index=keys)
     return features, batch_info

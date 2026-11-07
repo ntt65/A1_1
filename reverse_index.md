@@ -36,3 +36,9 @@
 | 제출 보고서·실행 오류·그림 검사 | `utils/repository_checks.py` | 실행 노트북·보조 집계·차트6개·data 제외 |
 | 최종 실행 설명·성공 로그·SRC | `README.md` | 이슈 #11·집계·실제 명령 |
 | 소스 파일 트리·클래스 구조·분석/검증 Mermaid 차트 | `README.md`의 소스 구조와 실행 흐름 | `src/pipeline.py`의 실제 속성·메서드·노트북 NB 순서·utils 호출·이슈 #14 |
+
+| 보너스 변경 | 시작 위치 | 함께 확인 |
+| --- | --- | --- |
+| 이미지 히스토그램·인접 절대차 | `utils/image_features.py::advanced_image_statistics` | DataAnalyzer advanced 옵션·NB_BONUS_IMAGES·test_bonus |
+| 코호트 분모·관측 기간·미래NaN | `utils/bonus.py::cohort_retention` | NB_BONUS_COHORT·CSV·히트맵·README 기준 |
+| Plotly 3D·원본ID hover·독립 HTML | `utils/bonus.py::interactive_rfm` | NB_BONUS_PLOTLY·requirements-bonus·원본 결과 보존 |
