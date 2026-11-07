@@ -9,7 +9,7 @@
 | [docs/a1_1_checklist.md](docs/a1_1_checklist.md) | 완료 여부와 검증 증거 |
 | [docs/a1_1_mission.md](docs/a1_1_mission.md) | 미션 원문 |
 | [docs/a1_1_eval.md](docs/a1_1_eval.md) | 평가 기준 Markdown 원본 |
-| [docs/naito_eval_result.md](docs/naito_eval_result.md) | 네이토 평가 원문: 18 PASS·1 FAIL. 대응은 [통합 계획](docs/a1_1_detailed_plan.md#네이토-평가-보완-계획), 완료 상태는 [체크표](docs/a1_1_checklist.md#네이토-재평가-체크표) |
+| [1차 네이토 평가](docs/naito_eval_result.md) · [2차 네이토 평가](docs/naito_eval_result2.md) | 18 PASS에서 17 PASS로 변경. #1 통과, #13·#17 보완 범위는 [통합 계획](docs/a1_1_detailed_plan.md#네이토-평가-보완-계획), 상태는 [체크표](docs/a1_1_checklist.md#네이토-재평가-체크표) |
 | [docs/a1_1_eval_review.md](docs/a1_1_eval_review.md) | PDF·Markdown 자료 대조와 검토 의견 |
 | [docs/a1_1_evaluation_qa.md](docs/a1_1_evaluation_qa.md) | 평가 문항 19개 Q&A·SRC·시연·준비 계획 |
 | [docs/presentation/a1_1_eval_technical_final.pptx](docs/presentation/a1_1_eval_technical_final.pptx) | 질문별 기술 발표31장·실제 결과·보너스·발표자 노트 |
