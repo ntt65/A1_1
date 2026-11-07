@@ -45,7 +45,7 @@ src/pipeline.py > 'self.df[f"{image_column}_mean"] = image_data.mean(axis=reduce
 PASS
 평가 항목 #5
 근거
-README.md > '![동일 금액의 IQR 보정 전후 요약](docs/results/figures/02_boxplot.png)'
+README.md > `![동일 금액의 IQR 보정 전후 요약](docs/results/figures/02_boxplot.png)`
 잘한 점
 IQR 보정 전후 박스플롯 이미지 파일을 명시적으로 포함함
 부족한 점

@@ -17,7 +17,7 @@
 
 ### 1-1. 필수 클래스와 메서드를 구현했나?
 
-**답변:** DataAnalyzer가 거래와 상품의 분석 상태를 관리한다. load_data는 CSV와 자료형, handle_missing_values는 지정 피처 결측, detect_outliers는 IQR 마스크, calculate_rfm은 고객 집계를 담당한다. 조인·요약 통계·피처 메서드도 제공한다.
+**답변:** DataAnalyzer가 거래와 상품의 분석 상태를 관리한다. `load_data()`는 CSV와 자료형, `handle_missing_values()`는 지정 피처 결측, `detect_outliers()`는 IQR 마스크, `calculate_rfm()`은 고객 집계를 담당한다. 네이토 평가의 `handle_missing()`은 같은 인자를 받아 `handle_missing_values()`에 위임하고 같은 대치 표와 `missing_audit`를 제공한다. 조인·요약 통계·피처 메서드도 제공한다.
 
 **SRC/증거:** [src/pipeline.py](../src/pipeline.py)의 `DataAnalyzer`, [노트북](../notebooks/analysis_report.ipynb)의 NB_LOAD·NB_CLEAN·NB_RFM, [테스트](../tests/test_analytics.py).
 

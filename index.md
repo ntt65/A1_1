@@ -9,6 +9,7 @@
 | [docs/a1_1_checklist.md](docs/a1_1_checklist.md) | 완료 여부와 검증 증거 |
 | [docs/a1_1_mission.md](docs/a1_1_mission.md) | 미션 원문 |
 | [docs/a1_1_eval.md](docs/a1_1_eval.md) | 평가 기준 Markdown 원본 |
+| [docs/naito_eval_result.md](docs/naito_eval_result.md) | 네이토 평가 원문: 18 PASS·1 FAIL. 대응은 [통합 계획](docs/a1_1_detailed_plan.md#네이토-평가-보완-계획), 완료 상태는 [체크표](docs/a1_1_checklist.md#네이토-재평가-체크표) |
 | [docs/a1_1_eval_review.md](docs/a1_1_eval_review.md) | PDF·Markdown 자료 대조와 검토 의견 |
 | [docs/a1_1_evaluation_qa.md](docs/a1_1_evaluation_qa.md) | 평가 문항 19개 Q&A·SRC·시연·준비 계획 |
 | [docs/presentation/a1_1_eval_technical_final.pptx](docs/presentation/a1_1_eval_technical_final.pptx) | 질문별 기술 발표31장·실제 결과·보너스·발표자 노트 |
@@ -28,6 +29,7 @@
 | [utils/reporting.py](utils/reporting.py) | 상관·월별 집계·필수 차트·인사이트 |
 | [utils/reproducibility.py](utils/reproducibility.py) | 새 복제본·새 환경의 전체 결과 대조 |
 | [utils/repository_checks.py](utils/repository_checks.py) | 제출 파일·링크·출력·공개 데이터 제외 검사 |
+| [tests/test_repository_checks.py](tests/test_repository_checks.py) | Markdown 인용 코드·정상 링크·깨진 상대 링크의 회귀 검증 |
 | [tests/test_analytics.py](tests/test_analytics.py) · [tests/test_reporting.py](tests/test_reporting.py) | 손계산·원본 보존·월 누락·상관 경계 검증 |
 | [requirements.txt](requirements.txt) | 검증 버전으로 고정한 분석용 의존성 |
 | [requirements-notebook.txt](requirements-notebook.txt) | 별도 노트북 실행 의존성 |

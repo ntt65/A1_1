@@ -45,6 +45,21 @@ class AnalyticsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "group_col"):
             analyzer.handle_missing_values(group_col="absent", columns=["x"])
 
+    def test_naito_missing_alias_preserves_result_and_audit(self):
+        """두 이름의 반환값과 집계를 대조하고 관측·제외 행의 보존을 확인한다."""
+        frame = pd.DataFrame({"category": ["A", "A", "B"], "feature": [10.0, np.nan, np.nan],
+                              "other": [1.0, np.nan, 3.0]})
+        canonical, compatible = self.analyzer(frame), self.analyzer(frame)
+        options = {"columns": ["feature"], "eligible": [True, True, False]}
+        expected = canonical.handle_missing_values("group_mean", "category", **options)
+        actual = compatible.handle_missing("group_mean", "category", **options)
+        pd.testing.assert_frame_equal(actual, expected)
+        self.assertIs(actual, compatible.df)
+        pd.testing.assert_frame_equal(pd.DataFrame(compatible.missing_audit),
+                                      pd.DataFrame(canonical.missing_audit))
+        np.testing.assert_allclose(actual.feature, [10.0, 10.0, np.nan])
+        pd.testing.assert_series_equal(actual.other, frame.other)
+
     def test_iqr_bounds_clip_copy_and_boundaries(self):
         analyzer = self.analyzer(pd.DataFrame({"price": [1, 2, 3, 4, 100]}))
         self.assertEqual(analyzer.detect_outliers("price").tolist(), [False] * 4 + [True])
