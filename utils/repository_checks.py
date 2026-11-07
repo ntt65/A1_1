@@ -45,8 +45,15 @@ def check_repository():
         aggregate = json.loads((ROOT / "docs/results/analysis_aggregates.json").read_text(encoding="utf-8"))
         if "profile" not in aggregate or "monthly" not in aggregate:
             raise ValueError("Missing analysis summary.")
+        if "bonus" in aggregate:
+            for filename in ("cohort_retention.csv", "cohort_counts.csv", "cohort_sizes.csv",
+                             "cohort_retention.png", "image_histogram.png", "rfm_interactive.html"):
+                if not (ROOT / "docs/results/bonus" / filename).is_file():
+                    raise ValueError(f"Missing bonus output: {filename}")
+            if aggregate["bonus"]["plotly"]["points"] != aggregate["customers"]:
+                raise ValueError("Interactive plot does not contain all customers.")
     forbidden = {"cv2", "PIL", "sklearn", "nltk", "ydata_profiling", "pandas_profiling", "sweetviz"}
-    for name in ("src/pipeline.py", "utils/analytics.py", "utils/image_features.py", "utils/reporting.py"):
+    for name in ("src/pipeline.py", "utils/analytics.py", "utils/image_features.py", "utils/reporting.py", "utils/bonus.py"):
         tree = ast.parse((ROOT / name).read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             modules = [alias.name for alias in node.names] if isinstance(node, ast.Import) else [node.module or ""] if isinstance(node, ast.ImportFrom) else []

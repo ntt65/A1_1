@@ -48,6 +48,12 @@ def publish_report():
     pd.Series(source["monthly"], name="Amount").to_csv(output / "monthly_amount.csv")
     for path in (ROOT / "data/processed/figures").glob("*.png"):
         shutil.copyfile(path, output / "figures" / path.name)
+    bonus_source = ROOT / "data/processed/bonus"
+    if "bonus" in source:
+        (output / "bonus").mkdir(exist_ok=True)
+        for path in bonus_source.iterdir():
+            if path.is_file() and path.suffix in {".csv", ".png", ".html"}:
+                shutil.copyfile(path, output / "bonus" / path.name)
     preserve_execution(ROOT / "data/processed/analysis_report.executed.ipynb", ROOT / "notebooks/analysis_report.ipynb")
     write_public_markdown(snapshot, output / "analysis_report.md")
     print("Submission prepared: original executed notebook, unchanged charts and complete analysis records.")
@@ -74,6 +80,11 @@ def write_public_markdown(aggregates, path):
     for name in ["01_histogram", "02_boxplot", "03_bar", "04_heatmap", "05_scatter", "06_line"]:
         sections.append(f"![{name}](figures/{name}.png)")
     sections += ["## 해석과 재현", "금액은 원본 단위이고 전체 고객을 대표하지 않는다. 현재 원본 접근권한 없이도 집계 결과를 확인할 수 있다. 실행·SRC·인사이트는 [README](../../README.md)에 본문으로 정리했다. 같은 입력·설정의 전체 분석과 새 환경 재현은 README의 명령을 사용한다."]
+    if "bonus" in aggregates:
+        sections += ["## 보너스 실행 결과", "8구간 정규화 이미지 히스토그램·인접 절대차 엣지, 첫 관찰 구매월 코호트, Plotly RFM을 실제 실행했다. 가입일이 없어 코호트는 가입 기준이 아니다.",
+                     "![관측 이미지 밝기 히스토그램](bonus/image_histogram.png)",
+                     "![첫 관찰 구매월 코호트](bonus/cohort_retention.png)",
+                     "[인터랙티브 RFM HTML](bonus/rfm_interactive.html): 내려받아 브라우저로 연다. 원본 고객 ID와 전체 관측을 포함하며 Plotly JS를 내장한다."]
     Path(path).write_text("\n\n".join(sections) + "\n", encoding="utf-8")
 
 
