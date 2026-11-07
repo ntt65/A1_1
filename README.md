@@ -2,6 +2,21 @@
 
 실제 거래와 상품·이미지·텍스트를 연결하고 정제, IQR, 통계, 필수 차트 6종과 RFM 고객 세분화를 수행한다. 구현 기준은 [통합 계획](docs/a1_1_detailed_plan.md), 완료 증거는 [체크표](docs/a1_1_checklist.md)다. [파일 안내](index.md) · [기능별 수정 위치](reverse_index.md) · [작업 규칙](AGENTS.md)
 
+## 평가용 실행 증거
+
+**새 커널 전체 실행 성공(PASS).** [평가용 실행 노트북](notebooks/analysis_report.ipynb)에 아래 셀의 코드와 출력이 함께 들어 있다. `NB_*`는 노트북 안에서 검색할 제목이며 괄호 안 값은 코드 셀 ID다.
+
+| 항목 | 실제 결과와 확인 위치 | SRC |
+| --- | --- | --- |
+| 1–3 · 클래스·실행·입력 | 결측 처리 두 이름은 같은 구현을 호출한다. `NB_LOAD` (`1196c1cf`)에 `head()`, `info()`, `describe()`와 조인 후 8,084행·9열을 저장했다. `NB_REPRO`까지 실행됐다. | [DataAnalyzer](src/pipeline.py) · [호환 회귀 테스트](tests/test_analytics.py) |
+| 4 · 파생 피처 | `NB_FEATURES` (`936e811c`)에 `image_mean`, `image_std`, `prod_name_length`, `prod_name_word_count` 및 가상 입력 `Blue cotton shirt`의 17자·3단어가 나온다. 관측 이미지는 상품 200개의 피처다. | [피처 메서드](src/pipeline.py) · [NumPy 이미지 배치](utils/image_features.py) |
+| 5–6 · IQR·그림 | `NB_CLEAN` (`a32f822f`)에서 212행 탐지, 하한 −0.012729·상한 0.061847. `NB_PLOTS` (`87a953b4`)에서 전후 박스플롯과 나머지 다섯 차트를 출력한다. | [clip_outliers](src/pipeline.py) · [make_figures](utils/reporting.py) |
+| 7 · 기술통계·상관 | `NB_STATS` (`333254fa`)에서 상품 200쌍 `r=-0.9435`, 고객 1,000쌍 `r=0.6397`을 표본 수 및 해석과 함께 보여준다. | [summarize](src/pipeline.py) · [pair_correlation](utils/reporting.py) |
+| 8 · 고객군·인사이트 | `NB_RFM` (`b4769e15`)에서 VIP 270명, Churned 499명, New 149명, Loyal 82명. 아래 인사이트 3건은 각 그룹 행을 근거로 삼는다. | [RFM 계산과 분류](utils/analytics.py) · [인사이트](#비즈니스-인사이트) |
+| 9–12 · 책임·축·설정·판단 근거 | 아래 메서드 및 설정 표에 입력과 상태 변화가 있다. `NB_FEATURES`는 이미지 N을 보존하고 H·W·C만 축약한다. `NB_CLEAN`은 EDA 사본, `NB_RFM`은 유효 원금액을 사용한다. | [클래스](src/pipeline.py) · [이미지 집계](utils/image_features.py) · [의사결정 기록](docs/a1_1_detailed_plan.md#q11-분석-의사결정을-노트북에-어떻게-남기는가) |
+| 13–16 · 통계 해석 | `NB_CLEAN`의 이미지 평균 대치 전후 분산은 0.010424 → 0.010130이다. IQR 전후 그림, RFM 동점 검증, NumPy 배치 축 설명도 함께 확인할 수 있다. | [대치·IQR·RFM](utils/analytics.py) · [동점 테스트](tests/test_analytics.py) · [배치 계산](utils/image_features.py) |
+| 17–19 · 메모리·활용·확장 | `NB_FEATURES`의 실제 최대 픽셀 배치는 60 KiB다. 아래 캠페인 표는 대조 실험 가설을, 평가 Q&A는 시점 T와 미래 30일을 분리하는 설계를 설명한다. | [메모리 근거](#실제-실행-결과와-기술통계) · [캠페인 설계](#비즈니스-인사이트) · [평가 Q&A](docs/a1_1_evaluation_qa.md) |
+
 ## 환경과 실행
 
 저장소 루트에서 실행한다. 검증한 Python은 3.11.4다. 새 환경은 `git clone https://github.com/ntt65/A1_1.git` 후 `cd A1_1`에서 시작한다. 현재 PC의 기존 저장소에서는 복제·환경 생성을 반복하지 않아도 된다. 분석 패키지 버전은 `requirements.txt`, 노트북 실행 도구는 `requirements-notebook.txt`에 고정했다.
@@ -45,6 +60,13 @@ py -3.11 -m venv .venv
 | 이미지 | 선별된 상품 이미지만 RGB·0~1·32×32·float32로 처리. 기본 최대 배치 32 |
 | 이미지 통계 | 상품별 한 번 계산. `(N,H,W,C)`의 `axis=(1,2,3)`, 표준편차 `ddof=0` |
 
+| 설정 위치·이름 | 실행값 | 변경 영향 |
+| --- | --- | --- |
+| 표본 manifest와 노트북 `SETTINGS`의 `start_inclusive`, `end_exclusive`, `seed`, `sales_channel` | `2020-06-01`, `2020-09-01`, `42`, `None` | 기간·고객 선정·채널이 달라진다. 표본을 다시 추출하고 manifest와 설정을 맞춘다. |
+| `SETTINGS["image_size"]`, `SETTINGS["batch_size"]` | `32`, `32` | 해상도는 픽셀 통계에 영향을 준다. 배치 크기는 한 번에 처리하는 파일 수와 픽셀 버퍼를 바꾼다. |
+| `SETTINGS["iqr_threshold"]` | `1.5` | 보정 경계와 표시 건수를 바꾼다. RFM의 입력 금액은 그대로 유지한다. |
+| manifest의 `reference_date`, RFM의 `frequency_unit` | `2020-08-31`, `purchase_day` | 기준일은 Recency, 단위는 Frequency에 영향을 준다. 주문 수 모드는 주문 ID가 있는 입력에서 사용한다. |
+
 거래는 고객 누락→날짜 오류→주문 모드의 주문 오류·취소→금액 오류 순으로 정제한다. 금액이 유한한 양수여야 한다. H&M에는 주문/취소 ID가 없어 고객·날짜·금액 기준을 적용하고 동일 값의 구매 행도 유지한다. 이미지나 상품 미매칭을 거래 무효로 처리하지 않는다. 그룹 평균 대치는 지정된 분석용 피처 사본에만 적용하고, 표본 미포함 이미지와 기존 관측값을 보존한다. IQR 보정도 EDA 사본에만 적용한다.
 
 R은 기준일−최종 구매일(기준일 구매=0일), F는 고유 구매일 수, M은 유효 금액 원값 합계다. 주문 ID가 있는 다른 데이터는 주문 수 모드를 선택할 수 있다. R은 내림차순, F·M은 오름차순 평균 순위로 점수를 부여한다. `(평균 순위−0.5)/고객 수`가 0.25/0.50/0.75 이하인지에 따라 1/2/3점, 나머지는 4점이다. 같은 값은 같은 점수를 받는다.
@@ -56,12 +78,19 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 1. 거래 CSV를 읽고 ID·날짜 자료형을 맞춘다. 고객·날짜·주문 모드·금액의 대표 제외 사유를 중복 없이 센다.
 2. 상품 ID의 다대일 왼쪽 조인을 검증하고 거래 행·순서·금액을 대조한다.
 3. 상품별 이미지 mean/std와 상품명 길이·단어 수를 계산해 거래에 연결한다. 원본 이미지 배열을 거래마다 복제하지 않는다.
-4. 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 미표본 이미지·원래 관측값·원문을 보존한다.
+4. `handle_missing_values()`로 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 네이토의 호출명 `handle_missing()`도 같은 인자·반환값·대치 기록을 제공한다. 미표본 이미지·원래 관측값·원문을 보존한다.
 5. `Q1−1.5×IQR`, `Q3+1.5×IQR` 밖을 탐지하고 금액의 EDA 사본만 clip한다. 경계값은 정상 범위에 포함한다.
 6. 원금액으로 RFM과 완전한 월별 합계를 계산하고 그룹 고객·금액 합계를 대조한다.
 7. 분석 단위를 구분한 통계·상관·6종 차트를 만들고 근거·실행·검증 인사이트를 작성한다.
 
 SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 공통 정제·RFM 계산을, `utils/image_features.py`가 이미지 통계를, `utils/reporting.py`가 상관·차트·인사이트를 담당한다.
+
+| 필수 메서드 | 입력 → 반환값·상태 | 기존 시연 |
+| --- | --- | --- |
+| `load_data()` | CSV 경로·필수 열·자료형 → 거래 DataFrame을 `df`에 저장 | `NB_LOAD`의 실제 8,084행 조인 결과 |
+| `handle_missing_values()` / `handle_missing()` | 그룹·대상 피처·대치 대상 마스크 → 갱신된 `df`와 `missing_audit` | `NB_CLEAN`의 대치 전후 집계. 회귀 입력 `[10, NaN, NaN]` → `[10, 10, NaN]`에서 제외 행 보존 |
+| `detect_outliers()` | 수치 열·IQR 배수 → 불리언 마스크와 경계 기록. `clip_outliers()`는 보정 사본을 반환 | `NB_CLEAN` 및 `[1,2,3,4,100]`의 경계 −1·7, 100만 탐지 |
+| `calculate_rfm()` | 고객·날짜·금액·기준일·빈도 단위 → 고객 RFM 표와 집계 기록 | `NB_RFM`의 실제 1,000명. 손계산 예 A `(0,2,60)`, B `(1,1,5)` |
 
 ## 전체 분석과 검증
 
@@ -103,7 +132,9 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 | 이미지 표본 미포함 | 4,496 |
 | 원본 이미지 누락 | 9 |
 
-수치형 금액·피처, 범주/문자열 상품·채널, 날짜형 구매일을 포함한다. 이미지 배열은 상품 배치에서 처리하며 거래에는 숫자 피처를 연결한다. ID는 문자열이므로 수치형 변수로 계산하지 않는다.
+`NB_LOAD`의 실제 `info()`는 `bool(2)`, `datetime64[us](1)`, `float64(1)`, `str(2)`, `string(3)`을 표시한다. 같은 셀의 `head()`에서 원본 행과 조인 결과를 볼 수 있다. 이미지 배열은 상품 배치에서 처리하며 거래에는 숫자 피처를 연결한다.
+
+`NB_FEATURES`의 실제 최대 배치 `(5, 32, 32, 3)`는 `float32`이며 픽셀 버퍼가 61,440 B(60 KiB)다. 설정 상한 32장으로 모두 채우면 384 KiB이고, `1024×1024` RGB `float64`는 한 장에 24 MiB다. 모두 `N×H×W×C×dtype 바이트`로 계산한 픽셀 버퍼 크기다. 디코딩·리사이즈·중간 배열의 메모리는 별도다.
 
 | 변수 | 평균 | 중앙값 | 표준편차 | Q1 | Q3 |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -120,9 +151,13 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 
 금액 IQR 하한은 -0.012729, 상한은 0.061847이며 212행을 표시했다. 이는 구매 오류 확정이 아니다. RFM·월별 합계에는 보정 전 원값을 유지했다.
 
+`NB_CLEAN`의 `missing_audit`에서 이미지 평균의 분산은 0.010424 → 0.010130으로 줄었다. 누락 9건을 그룹 평균으로 채웠고 실제 이미지를 추출하지 않은 4,496개 상품은 결측으로 남겼다. 상관계수 두 쌍의 원본 표와 해석은 `NB_STATS`에 있다.
+
 ## 필수 시각화 6종
 
 아래 그림은 같은 실제 표본에서 만든 원본 분석 결과이다. 실제 거래금액의 이상치 점과 관측 상품별 산점도를 그대로 표시한다. 모든 그림에 제목·축·단위를 표시한다.
+
+`NB_PLOTS`의 `utils/reporting.py::make_figures`가 그림을 출력한다. 입력 단위는 `01_histogram.png`·`02_boxplot.png`가 거래 상품 행, `03_bar.png`·`04_heatmap.png`가 고객, `05_scatter.png`가 이미지 관측 상품, `06_line.png`가 달이다. 박스플롯의 원금액과 EDA 사본은 `NB_CLEAN`의 `DataAnalyzer.clip_outliers()`에서 준비한다.
 
 **1. 거래금액 히스토그램:** 값이 집중된 구간과 긴 꼬리를 본다. 원본 금액을 사용한다.
 
@@ -169,7 +204,7 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 
 ## 비즈니스 인사이트
 
-기준일 2020-08-31. 2020년 6~8월의 선택 고객·전체 판매 채널 표본에 한정한 관측이다. 금액은 H&M 원본 단위이며 통화를 추정하지 않는다. 아래 비중은 고객별 RFM에서 집계했고 원본 행·식별자는 포함하지 않는다. 표 위치는 노트북 `NB_RFM`의 세그먼트 프로파일이다.
+기준일 2020-08-31. 2020년 6~8월의 선택 고객·전체 판매 채널 표본에 한정한 관측이다. 금액은 H&M 원본 단위다. 세 인사이트의 근거는 `NB_RFM`의 VIP·New·Churned 프로파일 행이다. `03_bar.png`는 그룹별 인원, 프로파일 표는 금액 비중과 RFM 중앙값을 보여준다.
 
 ### 1. VIP 유지 실험
 
@@ -190,6 +225,14 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 - **검증:** 무작위 대조군과 순증 구매율·혜택 비용 차감 후 마진을 비교한다. 비용·상품 재고·후속 거래가 필요하며 수익이 늘지 않으면 확대하지 않는다.
 
 세 인사이트의 우선순위와 ROI는 현재 데이터만으로 확정하지 않는다. 이미지 평균·표준편차는 밝기·배경·색상 요약이며 상품 패턴이나 구매 원인을 직접 설명하지 않는다.
+
+| 실험 대상 | 사전 정의할 30일 KPI | 대조군 | 추가 확보할 데이터 |
+| --- | --- | --- | --- |
+| VIP | 구매율·고객당 마진 | VIP 내 무작위 미발송 | 배정·발송 시각, 후속 거래, 상품 마진 |
+| New | 두 번째 구매일 발생률·고객당 마진 | New 내 무작위 미발송 | 연락 동의, 후속 거래의 고객 ID·날짜, 마진 |
+| Churned | 구매율 차이·혜택 비용 차감 마진 | 기존 반복 구매 여부 층별 무작위 미발송 | 배정·발송 시각, 후속 거래, 혜택 비용, 재고 |
+
+30일은 배정 시각부터 관찰하는 실험 설계 예시다. 위 데이터가 확보되면 그룹별 발송군과 대조군을 비교한다.
 
 ## 보너스 3개 실제 구현 결과
 
@@ -275,7 +318,7 @@ SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본�
 
 | SRC 경로 | 주요 함수·책임 |
 | --- | --- |
-| [src/pipeline.py](src/pipeline.py) | DataAnalyzer의 load_data·join_products·validate_transactions·handle_missing_values·detect_outliers·calculate_rfm·summarize |
+| [src/pipeline.py](src/pipeline.py) | DataAnalyzer의 load_data·join_products·validate_transactions·handle_missing_values(네이토 호출명 handle_missing)·detect_outliers·calculate_rfm·summarize |
 | [utils/analytics.py](utils/analytics.py) | clean_transactions·impute_features·iqr_limits·calculate_customer_rfm·segment_profile |
 | [utils/image_features.py](utils/image_features.py) | prepare_image·extract_product_image_features. 픽셀 통계의 NumPy 축 연산 |
 | [utils/bonus.py](utils/bonus.py) | cohort_retention·cohort_figure·interactive_rfm. 코호트와 Plotly 보너스 |
@@ -305,9 +348,9 @@ SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본�
 ```text
 Validation status summary, 2026-11-07 Asia/Seoul
 > .venv/Scripts/python.exe -B -m utils.run_checks --with-sample
-Ran 20 tests
+Ran 22 tests
 OK
-Notebook execution: PASS
+Notebook execution: PASS (12 code cells)
 > .venv/Scripts/python.exe -B -m utils.repository_checks
 Repository checks: PASS
 Original stdout is private. No notebook rows or identifiers are copied here.
@@ -351,7 +394,8 @@ A1_1/
 │   ├── test_bonus.py                # 히스토그램·엣지·코호트·Plotly
 │   ├── test_analytics.py            # 정제·대치·IQR·RFM
 │   ├── test_reporting.py            # 상관·월별 합계 경계
-│   └── test_publication.py          # 원본 필드·실행본 보존
+│   ├── test_publication.py          # 원본 필드·실행본 보존
+│   └── test_repository_checks.py   # 인용 코드·실제 상대 링크 구분
 └── docs/
     ├── results/                    # 실제 차트·집계·보너스·실행 상태
     └── presentation/               # 질문별 기술 PPT와 페이지/재생성 안내
@@ -410,6 +454,7 @@ classDiagram
         +extract_image_features(image_column, image_dir, image_size, batch_size, advanced, histogram_bins)
         -_extract_image_files(directory, prefix, image_size, batch_size, advanced, histogram_bins)
         +handle_missing_values(strategy, group_col, columns, eligible)
+        +handle_missing(strategy, group_col, columns, eligible)
         +detect_outliers(column, threshold)
         +clip_outliers(column, threshold)
         +calculate_rfm(customer_col, date_col, amount_col, reference_date, frequency_unit, order_col, split_inactive)

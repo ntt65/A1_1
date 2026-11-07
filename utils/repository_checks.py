@@ -9,6 +9,32 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def check_local_links(path, root):
+    """Markdown의 실제 상대 링크를 검증하고 코드 예제 안의 경로는 건너뛴다."""
+    prose = []
+    fence = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        marker = re.fullmatch(r" {0,3}(`{3,}|~{3,})(.*)", line)
+        if fence is None:
+            if marker and (marker[1][0] == "~" or "`" not in marker[2]):
+                fence = marker[1]
+                prose.append("")
+            else:
+                prose.append(line)
+        elif marker and marker[1].startswith(fence) and not marker[2].strip():
+            fence = None
+    for paragraph in re.split(r"\n[ \t]*\n", "\n".join(prose)):
+        # A code span closes only with a backtick run of the same length.
+        visible = re.sub(r"(?<!`)(`+)(?!`).*?(?<!`)\1(?!`)", "", paragraph, flags=re.DOTALL)
+        for link in re.findall(r"\]\(([^)]+)\)", visible):
+            if link.startswith(("http:", "https:", "#", "mailto:")):
+                continue
+            target = (path.parent / link.split("#")[0]).resolve()
+            target.relative_to(root)
+            if not target.exists():
+                raise ValueError(f"Broken local link in {path.relative_to(root).as_posix()}: {link}")
+
+
 def check_repository():
     """공개 산출물의 기본 조건을 확인하고 실패하면 원인을 예외로 알린다.
 
@@ -22,14 +48,7 @@ def check_repository():
     if any(name.startswith(("data/", ".venv/")) for name in tracked):
         raise ValueError("Local data/environment is tracked by Git.")
     for name in ["README.md", "index.md", "reverse_index.md", *[str(p.relative_to(ROOT)).replace("\\", "/") for p in (ROOT / "docs").rglob("*.md")]]:
-        path = ROOT / name
-        for link in re.findall(r"\]\(([^)]+)\)", path.read_text(encoding="utf-8")):
-            if link.startswith(("http:", "https:", "#", "mailto:")):
-                continue
-            target = (path.parent / link.split("#")[0]).resolve()
-            target.relative_to(ROOT)
-            if not target.exists():
-                raise ValueError(f"Broken local link in {name}: {link}")
+        check_local_links(ROOT / name, ROOT)
     for path in (ROOT / "notebooks").glob("*.ipynb"):
         notebook = json.loads(path.read_text(encoding="utf-8"))
         for cell in notebook["cells"]:
