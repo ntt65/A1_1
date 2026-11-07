@@ -34,7 +34,7 @@ class DataAnalyzer:
         self.rfm_audit: dict = {}
 
     def load_data(self, *, required_columns=(), date_columns=(), dtype=None) -> pd.DataFrame:
-        """CSV를 읽어 self.df를 교체하고 반환한다.
+        """검증한 CSV를 self.df에 저장해 반환하고 이전 분석 상태를 초기화한다.
 
         required_columns는 필수 열, date_columns는 YYYY-MM-DD 날짜 열이다.
         알려진 ID는 문자열로 읽어 선행 0을 보존한다. dtype으로 다른 열의
@@ -139,7 +139,7 @@ class DataAnalyzer:
         return self.df
 
     def handle_missing(self, strategy="group_mean", group_col=None, *, columns=None, eligible=None):
-        """네이토 평가용 호출명이다. 대치 인자·반환값·상태 변경은 원래 메서드를 따른다."""
+        """피처 대치를 위임해 self.df·missing_audit를 갱신하고 대치 표를 반환한다."""
         return self.handle_missing_values(strategy, group_col, columns=columns, eligible=eligible)
 
     def detect_outliers(self, column, threshold=1.5):

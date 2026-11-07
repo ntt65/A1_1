@@ -1,6 +1,9 @@
 """이미지 입력과 NumPy 배치 통계. 거래 테이블이나 파일을 변경하지 않는다."""
 
 from pathlib import Path
+from io import BytesIO
+from statistics import median
+from time import perf_counter
 
 import numpy as np
 import pandas as pd
@@ -136,3 +139,38 @@ def extract_product_image_features(products, key, directory, prefix="image", ima
     features = pd.DataFrame({f"{prefix}_mean": means, f"{prefix}_std": stds,
                              f"{prefix}_status": statuses, **advanced_values}, index=keys)
     return features, batch_info
+
+
+def profile_jpeg_stages(paths, image_size=32, repeats=3):
+    """JPEG 경로의 파일 읽기·메모리 디코딩·전처리 시간 중앙값을 초로 반환한다.
+
+    지정한 경로를 순차로 계측한다. 워밍업에서 경로·메모리 디코딩 후의
+    피처 입력이 같은지 검사한다. 측정값은 실행 환경에 따라 달라진다.
+    """
+    from matplotlib.image import imread
+
+    paths = tuple(map(Path, paths))
+    if not paths or repeats < 1:
+        raise ValueError("Provide JPEG paths and at least one repetition.")
+    for path in paths:
+        buffered = imread(BytesIO(path.read_bytes()), format="jpeg")
+        np.testing.assert_array_equal(prepare_image(buffered, image_size),
+                                      prepare_image(imread(path), image_size))
+
+    timings = {"Read bytes": [], "Decode JPEG": [], "Prepare pixels": []}
+    for _ in range(repeats):
+        reading = decoding = preparing = 0.0
+        for path in paths:
+            start = perf_counter()
+            encoded = path.read_bytes()
+            read_at = perf_counter()
+            pixels = imread(BytesIO(encoded), format="jpeg")
+            decoded_at = perf_counter()
+            prepare_image(pixels, image_size)
+            reading += read_at - start
+            decoding += decoded_at - read_at
+            preparing += perf_counter() - decoded_at
+        timings["Read bytes"].append(reading)
+        timings["Decode JPEG"].append(decoding)
+        timings["Prepare pixels"].append(preparing)
+    return {stage: median(seconds) for stage, seconds in timings.items()}

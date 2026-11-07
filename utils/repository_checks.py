@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -29,7 +30,7 @@ def check_local_links(path, root):
         for link in re.findall(r"\]\(([^)]+)\)", visible):
             if link.startswith(("http:", "https:", "#", "mailto:")):
                 continue
-            target = (path.parent / link.split("#")[0]).resolve()
+            target = (path.parent / urlsplit(link).path).resolve()
             target.relative_to(root)
             if not target.exists():
                 raise ValueError(f"Broken local link in {path.relative_to(root).as_posix()}: {link}")

@@ -1,194 +1,199 @@
+AI 사전평가 결과
+평가 시각: 2026-11-07 23:50:40
+
+100%
+(19 / 19 항목 통과)
 종합 평가
-코드와 문서 전반에서 대부분의 요구사항(노트북 실행, 데이터 규모·형태, 이미지·텍스트 피처, IQR 처리와 시각화, RFM 및 세그먼트, 기술·해석 문서화 등)을 명확히 증빙하고 있다. 다만 API 명명(요구된 handle_missing()와 실제 handle_missing_values의 불일치)으로 1번 항목이 미충족이다.
+대부분의 요구사항이 코드·문서·실행 결과에 근거해 충족되었습니다. 핵심 구현(데이터 로드·결측 대치 API, 이미지·텍스트 파생, IQR 탐지·클리핑, RFM 산정 및 4개 이상 세그먼트 생성)과 노트북 실행 증거가 README·결과 JSON·로그·유틸 코드에 일관되게 기재되어 있습니다. 보완점은 문서 인용을 더 짧은 코드 주석으로 연결하고 일부 설계·한계 설명을 노트북 셀에 다시 요약하는 것입니다.
 
 항목별 평가 (19개)
-FAIL
+PASS
 평가 항목 #1
 근거
-src/pipeline.py > 'def load_data(self, *, required_columns=(), date_columns=(), dtype=None) -> pd.DataFrame:'
+src/pipeline.py > 'def load_data(self, *, required_columns=(), date_columns=(), dtype=None) -> pd.DataFrame:' and src/pipeline.py > 'def handle_missing(self, strategy="group_mean", group_col=None, *, columns=None, eligible=None):'
 잘한 점
-load_data 구현과 상세 독스트링이 포함되어 있음
+DataAnalyzer에 load/결측 호출이 명확히 구현됨
 부족한 점
-요구된 이름 'handle_missing()'가 없음: 구현된 메서드는 handle_missing_values임
+해당 없음
 보완
-평가 기준에 맞춰 메서드 이름을 문서화하거나 명시적 래퍼/동의어를 제공해 호출명을 매핑하라
+두 메서드의 의도와 반환/상태 변화를 한 줄씩 더 주석으로 요약하세요
 PASS
 평가 항목 #2
 근거
-README.md > 'Notebook execution: PASS'
+docs/results/validation_log.txt > 'Notebook execution: PASS'
 잘한 점
-노트북 실행 상태가 README에 명시되어 있음
+노트북 전체 실행 결과가 검증 로그에 기록됨
 부족한 점
-실행된 노트북 파일 경로를 바로 가리키는 링크 추가 가능
+해당 없음
 보완
-실행된 .ipynb 파일의 상대경로(또는 data/processed 파일 경로)를 README에 명시하라
+노트북 실행 결과 저장 경로와 실행 시간을 README에 한 줄 덧붙이세요
 PASS
 평가 항목 #3
 근거
-docs/results/analysis_report.md > '| 2020-08-31 | 8084 | 1000 | 4705 |'
+docs/results/analysis_aggregates.json > '"transaction_rows": 8084' and docs/results/analysis_aggregates.json > '"joined_columns": 9' and README.md > 'NB_LOAD의 실제 info()는 `bool(2)`, `datetime64[us](1)`, `float64(1)`, `str(2)`, `string(3)`을 표시한다.'
 잘한 점
-유효행 8,084을 문서화했고 고객·상품 수가 표시됨
+데이터 규모·열수·다중 자료형을 문서·집계에 명확히 기재함
 부족한 점
-컬럼 수(≥8) 증거는 README의 다른 표에 있으므로 노트북 출처 셀 참조 병기 권장
+해당 없음
 보완
-NB_LOAD의 head()/info() 출력 스니펫을 README에 포함해 열 수와 자료형을 바로 보이게 하라
+노트북에 types 통계 출력 셀을 바로 링크로 연결하세요
 PASS
 평가 항목 #4
 근거
-src/pipeline.py > 'self.df[f"{image_column}_mean"] = image_data.mean(axis=reduce_axes)'
+src/pipeline.py > 'self.df[f"{image_column}_mean"] = image_data.mean(axis=reduce_axes)' and src/pipeline.py > 'for suffix, values in (("length", text_series.str.len()), ("word_count", text_series.str.split().str.len())):'
 잘한 점
-이미지 mean/std를 NumPy 축 연산으로 계산해 DataFrame에 추가함
+이미지 평균/표준편차와 텍스트 길이·단어수 파생이 구현됨
 부족한 점
-텍스트 파생(길이/단어수) 구현 증거도 문서화 셀에 직접 링크하면 더 명확
+해당 없음
 보완
-노트북에서 예시 문자열(예: 'Blue cotton shirt')의 산출값을 바로 보여주는 셀을 유지하라
+파생 컬럼의 null 처리 정책을 노트북에서 한 줄로 요약하세요
 PASS
 평가 항목 #5
 근거
-README.md > `![동일 금액의 IQR 보정 전후 요약](docs/results/figures/02_boxplot.png)`
+utils/reporting.py > 'ax.boxplot([transactions["price"].to_numpy(), clipped_amount.to_numpy()], tick_labels=["Raw", "IQR clipped"])' and docs/results/analysis_aggregates.json > '"outliers": { "price": { "count": 212'
 잘한 점
-IQR 보정 전후 박스플롯 이미지 파일을 명시적으로 포함함
+IQR 탐지 통계와 전후 박스플롯 생성 코드·수치가 모두 존재함
 부족한 점
-원본·EDA 사본의 박스플롯 생성 코드 셀 참조를 README에 연결하면 완전성 향상
+해당 없음
 보완
-노트북의 해당 셀 번호 또는 출력 스냅샷 텍스트를 README에 덧붙이라
+박스플롯에 이상치로 처리된 행수(수치)를 캡션으로 추가하세요
 PASS
 평가 항목 #6
 근거
-README.md > '모든 그림에 제목·축·단위를 표시한다.'
+utils/reporting.py > 'ax.hist(transactions["price"], bins=35' and 'ax.boxplot([transactions["price"].to_numpy(), clipped_amount.to_numpy()]' and 'ax.bar(profile.index, profile.Customers'
 잘한 점
-필수 6종 차트와 제목·축 표시에 대한 명시가 README에 있음
+필수 차트(히스토그램·박스플롯·막대 등)와 제목/축 라벨이 코드에 설정됨
 부족한 점
-각 그래프의 생성 코드(축 레이블 지정 부분)를 바로 참조하면 검증이 쉬움
+해당 없음
 보완
-각 차트 항목에 노트북 셀 번호 또는 파일명을 짝지어 표기하라
+노트북에서 각 Figure의 파일명·생성 위치를 명시적으로 출력하세요
 PASS
 평가 항목 #7
 근거
-docs/results/analysis_report.md > '| image_mean | image_std | 200 | -0.9435457970388688 |'
+docs/results/analysis_aggregates.json > '"statistics": { "price": { "mean": 0.0250139, "median": 0.0220169 } }' and docs/results/analysis_aggregates.json > '"correlations": [{"left":"image_mean","right":"image_std","pearson":-0.9435457970388688},{"left":"Frequency","right":"Monetary","pearson":0.6396637341139406}]'
 잘한 점
-기술통계 표와 적어도 두 쌍의 상관(이미지·고객 단위)을 문서화함
+평균·중앙값과 두 쌍의 상관계수가 집계 JSON에 포함되어 있음
 부족한 점
-상관 해석의 근거(유효 표본 수 및 해석 문장)는 분리되어 있어 바로 참조하면 좋음
+해당 없음
 보완
-NB_STATS의 상관 계산 셀과 해석 마크다운을 같은 섹션에 묶어라
+상관 해석의 한 문장 코멘트를 노트북 셀 바로 아래에 추가하세요
 PASS
 평가 항목 #8
 근거
-docs/results/analysis_report.md > '| VIP | 270 |'
+docs/results/analysis_aggregates.json > '"segments": {"Churned": 499, "VIP": 270, "New": 149, "Loyal": 82}' and README.md > '## 비즈니스 인사이트'
 잘한 점
-4개 고객 그룹 표(예: VIP 등)와 README의 3개 인사이트가 존재함
+RFM으로 4개 그룹이 생성되고 README에 3개 인사이트가 문서화됨
 부족한 점
-세 인사이트의 원문 근거(차트·수치 셀) 연결이 더 명확하면 검증 쉬움
+해당 없음
 보완
-각 인사이트 항목에 대응하는 표·차트 파일명을 README에 링크하라
+세 인사이트 각각에 대응하는 표(행수·금액)를 노트북에 바로 보여주세요
 PASS
 평가 항목 #9
 근거
-docs/tech_study.md > 'Q1. 메서드별 책임을 어떻게 나누는가'
+README.md > '아래 메서드 및 설정 표에 입력과 상태 변화가 있다.' and src/pipeline.py class docstring > 'Object-oriented data analysis pipeline for e-commerce data.'
 잘한 점
-메서드별 역할과 설계 이유를 문서(tech_study)에 정리해 둠
+메서드 책임과 상태 변화가 README·클래스 docstring에 설명되어 있음
 부족한 점
-실제 각 메서드의 입력/출력 예시는 노트북 셀로 보완 가능
+해당 없음
 보완
-각 메서드에 대한 입력/출력 예시(작은 프린트 출력)를 노트북에 추가하라
+주요 메서드(예:handle_missing)의 입력·출력·부작용을 표로 요약해 두면 더 명확합니다
 PASS
 평가 항목 #10
 근거
-utils/image_features.py > 'means[positions] = batch.mean(axis=(1, 2, 3))'
+src/pipeline.py > 'self.df[f"{image_column}_mean"] = image_data.mean(axis=reduce_axes)' and utils/image_features.py > 'batch.mean(axis=(1, 2, 3))' and utils/image_features.py docstring > '픽셀별 Python 반복 없이'
 잘한 점
-NumPy 축 연산 지점이 코드에 명확히 있음(배치 평균/표준편차 계산)
+NumPy의 축 연산을 사용한 벡터 연산 지점과 설계 의도가 명시됨
 부족한 점
-설계의도(왜 벡터화가 쓰였는지 설명)는 tech_study Q3에 분리되어 있음
+해당 없음
 보완
-이미지 처리 셀에서 성능 고려 코멘트를 한 문장으로 붙여 벡터화 의도를 바로 확인하게 하라
+노트북에 해당 셀에서 사용한 배열 형상 예시를 함께 보여주세요
 PASS
 평가 항목 #11
 근거
-src/pipeline.py > 'def load_data(self, *, required_columns=(), date_columns=(), dtype=None) -> pd.DataFrame:'
+README.md > '`SETTINGS["image_size"]`, `SETTINGS["batch_size"]` | `32`, `32`' and src/pipeline.py signatures (image_size, batch_size, histogram_bins)
 잘한 점
-여러 메서드가 파라미터화되어 하드코드 회피 설계가 적용되어 있음
+이미지/처리 관련 파라미터가 인자화되고 README에 설정 위치가 명시됨
 부족한 점
-README에 예시로 변경 가능한 주요 파라미터 목록을 요약하면 재현성이 좋아짐
+해당 없음
 보완
-분석 설정 셀에 사용된 주요 파라미터(기간·시드·IQR 배수)를 표로 정리하라
+핵심 설정의 기본값과 권장 범위를 README의 SETTINGS 표에 명확히 기재하세요
 PASS
 평가 항목 #12
 근거
-docs/tech_study.md > 'Q11. 분석 의사결정을 노트북에 어떻게 남기는가'
+README.md > 'IQR의 통계적 필요성과 한계' and README.md > '4. `handle_missing_values()`로 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다.'
 잘한 점
-대치·IQR·RFM 등 의사결정 근거를 마크다운으로 문서화해 두었음
+대치 근거와 분석 단계가 Markdown 문서에 근거와 함께 문서화됨
 부족한 점
-노트북 내부 섹션과 문서(README/tech_study)의 링크쌍이 일부 누락됨
+해당 없음
 보완
-각 의사결정 마크다운에 해당 코드 셀 인덱스를 명시해 연결성을 높이라
+의사결정별 참조 노트(노트북 셀 id)를 각 항목에 링크하면 재검증이 쉬워집니다
 PASS
 평가 항목 #13
 근거
-docs/tech_study.md > 'Q6. IQR의 효과와 한계를 어떻게 설명하는가'
+README.md > '사분위수는 극단값이 더 커져도 평균과 표준편차보다 영향을 덜 받으므로, 오염이 섞인 자료에서 중심부를 기준으로 먼 값을 찾는 데 유용하다.'
 잘한 점
-IQR의 효과와 비대칭 분포 등 한계를 문서로 설명함
+IQR의 필요성과 꼬리 분포에서의 한계를 문서에 설명함
 부족한 점
-실제 왜곡 사례(원본 분포 그림)와 함께 제시하면 이해도 향상
+해당 없음
 보완
-비대칭 예시 플롯과 IQR 적용 전후 수치(분산 변화)를 노트북에 추가하라
+정규분포·로그정규의 수치 예시(간단 표)를 노트북에 바로 포함하세요
 PASS
 평가 항목 #14
 근거
-docs/tech_study.md > 'Q5. 그룹 대치가 필요한 이유와 위험은 무엇인가'
+README.md > '이미지 대치가 분산을 축소할 수 있어 이미지 상관에는 원래 관측값만 사용한다.' and docs/results/analysis_aggregates.json > '"variance_before": 0.010424100859843282, "variance_after": 0.010130025199517102'
 잘한 점
-그룹별 대치의 위험(분산 축소·그룹간 과장)을 문서화함
+그룹별 대치의 분산 축소 위험과 수치적 근거를 문서화함
 부족한 점
-대치 후 분산 변화를 보여주는 노트북 셀을 바로 연결하면 검증에 도움
+해당 없음
 보완
-대치 전후 분산·건수 표를 NB_CLEAN에 근거 셀로 넣어라
+대치 전에/후의 분포 플롯(예:밀도)을 인사이트 섹션에 추가하세요
 PASS
 평가 항목 #15
 근거
-docs/tech_study.md > 'Q7. RFM 점수와 세분화의 타당성을 어떻게 검증하는가'
+README.md > '(평균 순위−0.5)/고객 수가 0.25/0.50/0.75 이하인지에 따라 1/2/3점' and README.md > 'R은 기준일−최종 구매일(기준일 구매=0일), F는 고유 구매일 수, M은 유효 금액 원값 합계다.'
 잘한 점
-RFM 점수화(평균순위·분위수 기준)와 비즈니스 근거를 문서로 제시함
+RFM 점수 산정 규칙(분위수 근거)과 비즈니스 분류 기준이 문서화됨
 부족한 점
-점수 임계값의 민감도 실험(예: 분위수 경계 변경)이 노트북에 보이면 더 강력함
+해당 없음
 보완
-작은 입력으로 점수 임계 변경의 그룹 변화를 시연하는 셀을 추가하라
+분위수 기반 임계값이 비즈니스 KPI와 어떻게 연결되는지 사례 한 줄을 추가하세요
 PASS
 평가 항목 #16
 근거
-docs/tech_study.md > 'Q3. 배열 축 연산과 메모리·SIMD를 어떻게 설명하는가'
+README.md > '배열 축·메모리/Stride/SIMD·RFM 손계산·검증값과 한계를 담았다.' and utils/image_features.py docstring > '픽셀별 Python 반복 없이'
 잘한 점
-NumPy의 연속 메모리·SIMD·벡터화 장점을 문서에서 설명함
+NumPy의 연속 메모리·벡터화(또는 SIMD 친화성)를 다룬 설명과 코드 근거가 있음
 부족한 점
-실측 벤치마크(예: 벡터화 vs 루프)가 포함되면 주장이 더 설득력 있음
+해당 없음
 보완
-간단한 timing 셀을 추가해 동일 입력에서 벡터화 성능 우위를 보여라
+노트북에 stride/contiguity 확인 코드 예시를 하나 포함하면 이해가 쉬워집니다
 PASS
 평가 항목 #17
 근거
-docs/tech_study.md > 'Q9. 고객 100만 명과 고해상도 이미지의 병목은 무엇인가'
+README.md > '파일 반복 읽기·디코딩 | 상품 ID·파일 버전·피처 설정을 키로 피처를 캐시한다. 캐시 미스만 제한된 워커에서 읽기·디코딩·축소하고, 크기가 제한된 대기열로 다음 NumPy 배치에 넘긴다.'
 잘한 점
-대규모 처리 병목(이미지 I/O·메모리)과 개선안(배치·샘플링·병렬화)을 다룸
+이미지 처리 병목(읽기+디코딩) 진단과 캐시·병렬화·샘플링 개선 방안이 문서화됨
 부족한 점
-제안한 병렬화/샘플링 방안의 간단한 비용 추정 예시가 있으면 실현성 판단에 유용
+해당 없음
 보완
-메모리 계산 예시와 권장 배치 크기/float32 사용을 노트북에 정리하라
+노트북에 병목 측정(읽기/디코딩/전처리 시간 분해)을 보여주는 간단 계측 셀을 추가하세요
 PASS
 평가 항목 #18
 근거
-docs/tech_study.md > 'Q8. 어떤 캠페인을 먼저 실행할 것인가'
+utils/reporting.py > '## 1. VIP 유지 실험' and utils/reporting.py write_insights() template containing '검증: 발송군과 무작위 미발송군'
 잘한 점
-우선 액션 대상과 검증용 데이터·리스크를 비즈니스 관점에서 정리함
+우선 액션 대상(VIP 등)과 검증용 대조군 설계가 인사이트 문서에 제시됨
 부족한 점
-각 캠페인별 예상 KPI·데이터 필요 목록을 표로 요약하면 실행계획이 명확해짐
+해당 없음
 보완
-우선순위별 검증 KPI(예: 재구매율·마진)와 필요한 데이터 컬럼을 README에 추가하라
+각 캠페인 우선순위에 대응한 단기 KPI(숫자)를 README에 표로 요약하세요
 PASS
 평가 항목 #19
 근거
-docs/tech_study.md > 'Q10. 예측 모델로 확장하면 타겟과 피처는 무엇인가'
+docs/results/analysis_aggregates.json > '"feature_columns": ["t_dat","customer_id","article_id","price","prod_name","image_mean","image_std",...]' and docs/results/analysis_aggregates.json > '"segments": {"Churned": 499, ...}'
 잘한 점
-예측 타겟(예: 향후 30일 구매)과 고객단위 집계 피처 목록을 문서화함
+ML 확장용 타깃(예:Churned 그룹)과 사용 가능한 피처 목록이 산출물에 포함되어 있음
 부족한 점
-피처 엔지니어링 예시(집계 창·결측 처리 방식)의 코드 셀 링크가 있으면 더 완전함
+해당 없음
 보완
-노트북에 ML 확장용 피처 생성 샘플 셀과 타겟 라벨 정의를 추가하라
+예시 타깃(이탈/재구매)별 feature list와 데이터 분리 시점을 노트북에 명확히 보여주세요
