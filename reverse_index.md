@@ -24,7 +24,7 @@
 | 새 복제본·새 가상환경 비교 | `utils/reproducibility.py` | 고정 의존성·로컬 입력·NB_REPRO |
 | 제출 파일·링크·Git 제외 검사 | `utils/repository_checks.py` | README·공개 노트북·data 제외 |
 | PDF 평가 기준과 현재 Markdown 내용 검토 | `docs/a1_1_eval_review.md` | 원본 PDF·평가 문항·가상 참고 예시 구분 |
-| 네이토 FAIL 원인·재평가 보완 | `docs/a1_1_detailed_plan.md`의 네이토 평가 보완 계획 | `docs/naito_eval_result.md`·재평가 체크표·`DataAnalyzer.handle_missing_values`·README 증거 |
+| 네이토 FAIL 원인·재평가 보완 | `docs/a1_1_detailed_plan.md`의 네이토 평가 보완 계획 | `docs/naito_eval_result.md`·재평가 체크표·`DataAnalyzer.handle_missing` → `handle_missing_values`·README 증거 |
 | 평가 예상 질문·답변·시연 | `docs/a1_1_evaluation_qa.md` | 19개 문항·SRC·실행 기록·이슈 #6 |
 | 평가 PPT·질문별 원고·발표자 노트·도식 | `utils/eval_presentation_content.mjs`·`utils/build_eval_presentation.mjs` | docs/presentation·실제 분석 JSON/그림·질문별 페이지·이슈 #17 |
 | 기술·용어·원리 학습 | `docs/tech_study.md` | 미션 필수·선택·제약·코드·QA |

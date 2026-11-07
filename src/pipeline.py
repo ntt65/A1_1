@@ -138,6 +138,10 @@ class DataAnalyzer:
         self.df, self.missing_audit = result, audit
         return self.df
 
+    def handle_missing(self, strategy="group_mean", group_col=None, *, columns=None, eligible=None):
+        """네이토 평가용 호출명이다. 대치 인자·반환값·상태 변경은 원래 메서드를 따른다."""
+        return self.handle_missing_values(strategy, group_col, columns=columns, eligible=eligible)
+
     def detect_outliers(self, column, threshold=1.5):
         """원본을 바꾸지 않고 IQR 경계 밖 마스크를 반환하고 경계를 기록한다."""
         if self.df is None:

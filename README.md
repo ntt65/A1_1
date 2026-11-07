@@ -56,7 +56,7 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 1. 거래 CSV를 읽고 ID·날짜 자료형을 맞춘다. 고객·날짜·주문 모드·금액의 대표 제외 사유를 중복 없이 센다.
 2. 상품 ID의 다대일 왼쪽 조인을 검증하고 거래 행·순서·금액을 대조한다.
 3. 상품별 이미지 mean/std와 상품명 길이·단어 수를 계산해 거래에 연결한다. 원본 이미지 배열을 거래마다 복제하지 않는다.
-4. 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 미표본 이미지·원래 관측값·원문을 보존한다.
+4. `handle_missing_values()`로 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 네이토의 호출명 `handle_missing()`도 같은 인자·반환값·대치 기록을 제공한다. 미표본 이미지·원래 관측값·원문을 보존한다.
 5. `Q1−1.5×IQR`, `Q3+1.5×IQR` 밖을 탐지하고 금액의 EDA 사본만 clip한다. 경계값은 정상 범위에 포함한다.
 6. 원금액으로 RFM과 완전한 월별 합계를 계산하고 그룹 고객·금액 합계를 대조한다.
 7. 분석 단위를 구분한 통계·상관·6종 차트를 만들고 근거·실행·검증 인사이트를 작성한다.
@@ -275,7 +275,7 @@ SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본�
 
 | SRC 경로 | 주요 함수·책임 |
 | --- | --- |
-| [src/pipeline.py](src/pipeline.py) | DataAnalyzer의 load_data·join_products·validate_transactions·handle_missing_values·detect_outliers·calculate_rfm·summarize |
+| [src/pipeline.py](src/pipeline.py) | DataAnalyzer의 load_data·join_products·validate_transactions·handle_missing_values(네이토 호출명 handle_missing)·detect_outliers·calculate_rfm·summarize |
 | [utils/analytics.py](utils/analytics.py) | clean_transactions·impute_features·iqr_limits·calculate_customer_rfm·segment_profile |
 | [utils/image_features.py](utils/image_features.py) | prepare_image·extract_product_image_features. 픽셀 통계의 NumPy 축 연산 |
 | [utils/bonus.py](utils/bonus.py) | cohort_retention·cohort_figure·interactive_rfm. 코호트와 Plotly 보너스 |
@@ -410,6 +410,7 @@ classDiagram
         +extract_image_features(image_column, image_dir, image_size, batch_size, advanced, histogram_bins)
         -_extract_image_files(directory, prefix, image_size, batch_size, advanced, histogram_bins)
         +handle_missing_values(strategy, group_col, columns, eligible)
+        +handle_missing(strategy, group_col, columns, eligible)
         +detect_outliers(column, threshold)
         +clip_outliers(column, threshold)
         +calculate_rfm(customer_col, date_col, amount_col, reference_date, frequency_unit, order_col, split_inactive)
