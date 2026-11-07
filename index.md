@@ -11,6 +11,9 @@
 | [docs/a1_1_eval.md](docs/a1_1_eval.md) | 평가 기준 Markdown 원본 |
 | [docs/a1_1_eval_review.md](docs/a1_1_eval_review.md) | PDF·Markdown 자료 대조와 검토 의견 |
 | [docs/a1_1_evaluation_qa.md](docs/a1_1_evaluation_qa.md) | 평가 문항 19개 Q&A·SRC·시연·준비 계획 |
+| [docs/presentation/a1_1_eval_technical_final.pptx](docs/presentation/a1_1_eval_technical_final.pptx) | 질문별 기술 발표31장·실제 결과·보너스·발표자 노트 |
+| [docs/presentation/README.md](docs/presentation/README.md) | 질문-페이지 매핑·발표·PPT 재생성 안내 |
+| [utils/build_eval_presentation.mjs](utils/build_eval_presentation.mjs) · [utils/eval_presentation_content.mjs](utils/eval_presentation_content.mjs) | 현재 실행 결과를 활용한 재사용 PPT 작성·검증과 질문별 원고 |
 | [docs/tech_study.md](docs/tech_study.md) | 미션·평가 용어와 기술 원리·예시·구현 위치 |
 | [docs/ai1_1_mission.pdf](docs/ai1_1_mission.pdf) · [docs/a1_1_eval.pdf](docs/a1_1_eval.pdf) | 원본 PDF |
 | [src/pipeline.py](src/pipeline.py) | DataAnalyzer 상태·로드·조인·피처·정제·RFM 및 CLI |
