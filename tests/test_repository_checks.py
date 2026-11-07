@@ -23,9 +23,10 @@ class RepositoryLinkTests(unittest.TestCase):
                 "[still fenced](missing.md)\n~~~~\n"
                 "```md\n[another example](missing.md)\n```\n"
                 "![actual figure](figure.png)\n"
+                "[figure source](figure.png?plain=1#L1)\n"
             )
             report.write_text(content, encoding="utf-8")
             check_local_links(report, root)
-            report.write_text(content + "[broken](unavailable.md)\n", encoding="utf-8")
+            report.write_text(content + "[broken](unavailable.md?plain=1#L1)\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, r"report\.md: unavailable\.md"):
                 check_local_links(report, root)

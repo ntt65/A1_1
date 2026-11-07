@@ -24,7 +24,7 @@
 | 새 복제본·새 가상환경 비교 | `utils/reproducibility.py` | 고정 의존성·로컬 입력·NB_REPRO |
 | 제출 파일·링크·Git 제외 검사 | `utils/repository_checks.py` | `tests/test_repository_checks.py`·README·공개 노트북·data 제외 |
 | PDF 평가 기준과 현재 Markdown 내용 검토 | `docs/a1_1_eval_review.md` | 원본 PDF·평가 문항·가상 참고 예시 구분 |
-| 네이토 판정 대조·다음 제출 | `docs/a1_1_detailed_plan.md`의 네이토 평가 보완 계획 | `docs/naito_eval_result.md`·`docs/naito_eval_result2.md`·재평가 체크표·README 평가 증거 |
+| 네이토 최종 판정·권고 자체 검증 | `docs/a1_1_checklist.md`의 최종 권고와 자체 점검 | `docs/naito_eval_result.md`·`docs/naito_eval_result2.md`·통합 계획·README 평가 증거 |
 | 네이토 #13 IQR 이론·표본 전후 비교 / #17 이미지 병목 설계 | 통합 계획 R1·R2 | README·`NB_CLEAN`·`NB_FEATURES`·평가 Q&A 3-1·4-1·`utils/analytics.py`·`utils/image_features.py` |
 | 평가 예상 질문·답변·시연 | `docs/a1_1_evaluation_qa.md` | 19개 문항·SRC·실행 기록·이슈 #6 |
 | 평가 PPT·질문별 원고·발표자 노트·도식 | `utils/eval_presentation_content.mjs`·`utils/build_eval_presentation.mjs` | docs/presentation·실제 분석 JSON/그림·질문별 페이지·이슈 #17 |
@@ -43,5 +43,6 @@
 | 보너스 변경 | 시작 위치 | 함께 확인 |
 | --- | --- | --- |
 | 이미지 히스토그램·인접 절대차 | `utils/image_features.py::advanced_image_statistics` | DataAnalyzer advanced 옵션·NB_BONUS_IMAGES·test_bonus |
+| JPEG 읽기·디코딩·전처리 시간 | `utils/image_features.py::profile_jpeg_stages` | NB_TIMING·README 병목 설계. 실행 환경별 관측값은 집계 JSON과 분리 |
 | 코호트 분모·관측 기간·미래NaN | `utils/bonus.py::cohort_retention` | NB_BONUS_COHORT·CSV·히트맵·README 기준 |
 | Plotly 3D·원본ID hover·독립 HTML | `utils/bonus.py::interactive_rfm` | NB_BONUS_PLOTLY·requirements-bonus·원본 결과 보존 |

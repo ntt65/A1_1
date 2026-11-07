@@ -62,11 +62,13 @@ py -3.11 -m venv .venv
 | 이미지 | 선별된 상품 이미지만 RGB·0~1·32×32·float32로 처리. 기본 최대 배치 32 |
 | 이미지 통계 | 상품별 한 번 계산. `(N,H,W,C)`의 `axis=(1,2,3)`, 표준편차 `ddof=0` |
 
-| 설정 위치·이름 | 실행값 | 변경 영향 |
+| 설정 위치·이름 | 기본 실행값 | 탐색 권장 범위와 변경 영향 |
 | --- | --- | --- |
 | 표본 manifest와 노트북 `SETTINGS`의 `start_inclusive`, `end_exclusive`, `seed`, `sales_channel` | `2020-06-01`, `2020-09-01`, `42`, `None` | 기간·고객 선정·채널이 달라진다. 표본을 다시 추출하고 manifest와 설정을 맞춘다. |
-| `SETTINGS["image_size"]`, `SETTINGS["batch_size"]` | `32`, `32` | 해상도는 픽셀 통계에 영향을 준다. 배치 크기는 한 번에 처리하는 파일 수와 픽셀 버퍼를 바꾼다. |
-| `SETTINGS["iqr_threshold"]` | `1.5` | 보정 경계와 표시 건수를 바꾼다. RFM의 입력 금액은 그대로 유지한다. |
+| `SETTINGS["image_size"]` | `32` | 탐색은 16~64에서 시작하되 같은 상품을 비교하려면 공통 원본의 최소 변 길이 이하로 고른다. 해상도에 따라 통계와 작은 이미지의 제외 범위가 달라질 수 있다. |
+| `SETTINGS["batch_size"]` | `32` | 메모리가 빠듯하면 8~32에서 시작해 처리량과 최대 메모리를 함께 측정한다. 원래 입력이 같으면 이미지당 계산 결과는 같아야 한다. |
+| `SETTINGS["iqr_threshold"]` | `1.5` | 분포 민감도 검토는 1.5~3에서 시작한다. 경계와 표시 건수를 바꾸며 RFM은 원금액을 사용한다. |
+| 이미지 호출의 `histogram_bins` | `8` | 보너스 밝기 분포는 8~16에서 시작한다. 비교할 때 구간 수와 이미지 크기를 맞춘다. |
 | manifest의 `reference_date`, RFM의 `frequency_unit` | `2020-08-31`, `purchase_day` | 기준일은 Recency, 단위는 Frequency에 영향을 준다. 주문 수 모드는 주문 ID가 있는 입력에서 사용한다. |
 
 거래는 고객 누락→날짜 오류→주문 모드의 주문 오류·취소→금액 오류 순으로 정제한다. 금액이 유한한 양수여야 한다. H&M에는 주문/취소 ID가 없어 고객·날짜·금액 기준을 적용하고 동일 값의 구매 행도 유지한다. 이미지나 상품 미매칭을 거래 무효로 처리하지 않는다. 그룹 평균 대치는 지정된 분석용 피처 사본에만 적용하고, 표본 미포함 이미지와 기존 관측값을 보존한다. IQR 보정도 EDA 사본에만 적용한다.
@@ -75,24 +77,26 @@ R은 기준일−최종 구매일(기준일 구매=0일), F는 고유 구매일 
 
 VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F원값=1) → Churned(R≤2) → Potential 순으로 배정한다. New는 신규 가입을, Churned는 실제 이탈 확정을 의미하지 않는다.
 
+예를 들어 VIP의 Monetary 점수 3 이상은 평균 순위 비율이 0.50보다 큰 고객을 우선 검토하는 기준이다. 이 컷오프의 실무 타당성은 후보군 크기와 대조군 대비 30일 재구매율·고객당 마진으로 확인한다.
+
 ## 분석 흐름과 원본 보존
 
-1. 거래 CSV를 읽고 ID·날짜 자료형을 맞춘다. 고객·날짜·주문 모드·금액의 대표 제외 사유를 중복 없이 센다.
-2. 상품 ID의 다대일 왼쪽 조인을 검증하고 거래 행·순서·금액을 대조한다.
-3. 상품별 이미지 mean/std와 상품명 길이·단어 수를 계산해 거래에 연결한다. 원본 이미지 배열을 거래마다 복제하지 않는다.
-4. `handle_missing_values()`로 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 네이토의 호출명 `handle_missing()`도 같은 인자·반환값·대치 기록을 제공한다. 미표본 이미지·원래 관측값·원문을 보존한다.
-5. `Q1−1.5×IQR`, `Q3+1.5×IQR` 밖을 탐지하고 금액의 EDA 사본만 clip한다. 경계값은 정상 범위에 포함한다.
-6. 원금액으로 RFM과 완전한 월별 합계를 계산하고 그룹 고객·금액 합계를 대조한다.
-7. 분석 단위를 구분한 통계·상관·6종 차트를 만들고 근거·실행·검증 인사이트를 작성한다.
+1. 거래 CSV를 읽고 ID·날짜 자료형을 맞춘다. 고객·날짜·주문 모드·금액의 대표 제외 사유를 중복 없이 센다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L92)
+2. 상품 ID의 다대일 왼쪽 조인을 검증하고 거래 행·순서·금액을 대조한다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L92)
+3. 상품별 이미지 mean/std와 상품명 길이·단어 수를 계산해 거래에 연결한다. 원본 이미지 배열을 거래마다 복제하지 않는다. [NB_FEATURES · `936e811c`](notebooks/analysis_report.ipynb?plain=1#L735)
+4. `handle_missing_values()`로 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 네이토의 호출명 `handle_missing()`도 같은 인자·반환값·대치 기록을 제공한다. 미표본 이미지·원래 관측값·원문을 보존한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1103)
+5. `Q1−1.5×IQR`, `Q3+1.5×IQR` 밖을 탐지하고 금액의 EDA 사본만 clip한다. 경계값은 정상 범위에 포함한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1103)
+6. 원금액으로 RFM과 완전한 월별 합계를 계산하고 그룹 고객·금액 합계를 대조한다. [NB_RFM · `b4769e15`](notebooks/analysis_report.ipynb?plain=1#L1367)
+7. 분석 단위를 구분한 통계·상관·6종 차트를 만들고 근거·실행·검증 인사이트를 작성한다. [NB_STATS · `333254fa`](notebooks/analysis_report.ipynb?plain=1#L1526) · [NB_PLOTS · `87a953b4`](notebooks/analysis_report.ipynb?plain=1#L1771)
 
 SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 공통 정제·RFM 계산을, `utils/image_features.py`가 이미지 통계를, `utils/reporting.py`가 상관·차트·인사이트를 담당한다.
 
-| 필수 메서드 | 입력 → 반환값·상태 | 기존 시연 |
-| --- | --- | --- |
-| `load_data()` | CSV 경로·필수 열·자료형 → 거래 DataFrame을 `df`에 저장 | `NB_LOAD`의 실제 8,084행 조인 결과 |
-| `handle_missing_values()` / `handle_missing()` | 그룹·대상 피처·대치 대상 마스크 → 갱신된 `df`와 `missing_audit` | `NB_CLEAN`의 대치 전후 집계. 회귀 입력 `[10, NaN, NaN]` → `[10, 10, NaN]`에서 제외 행 보존 |
-| `detect_outliers()` | 수치 열·IQR 배수 → 불리언 마스크와 경계 기록. `clip_outliers()`는 보정 사본을 반환 | `NB_CLEAN` 및 `[1,2,3,4,100]`의 경계 −1·7, 100만 탐지 |
-| `calculate_rfm()` | 고객·날짜·금액·기준일·빈도 단위 → 고객 RFM 표와 집계 기록 | `NB_RFM`의 실제 1,000명. 손계산 예 A `(0,2,60)`, B `(1,1,5)` |
+| 필수 메서드 | 입력 | 반환 | 상태 변화 | 기존 시연 |
+| --- | --- | --- | --- | --- |
+| `load_data()` | 인스턴스의 CSV 경로·필수 열·자료형 | 거래 DataFrame | 성공 시 `df` 교체, 이전 상품·검증 상태 초기화 | `NB_LOAD`의 실제 8,084행 조인 결과 |
+| `handle_missing_values()` / `handle_missing()` | 대치 전략·그룹·대상 피처·행 마스크 | 대치한 DataFrame | `df`와 `missing_audit` 갱신 | `NB_CLEAN` 및 `[10, NaN, NaN]` → `[10, 10, NaN]` |
+| `detect_outliers()` / `clip_outliers()` | 수치 열·IQR 배수 | 탐지 마스크 / 보정 Series | `outlier_audit` 갱신, `df`의 원금액 보존 | `NB_CLEAN` 및 `[1,2,3,4,100]`의 경계 −1·7, 100만 탐지 |
+| `calculate_rfm()` | 고객·날짜·금액·기준일·빈도 단위 | 고객별 RFM 표 | `rfm_audit` 갱신, 거래 `df` 보존 | `NB_RFM`의 실제 1,000명과 손계산 A `(0,2,60)`, B `(1,1,5)` |
 
 ## 전체 분석과 검증
 
@@ -103,6 +107,7 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 
 새 커널의 실행 결과는 다음 로컬 파일에서 확인한다.
 
+- 2026-11-08 로컬에서 새 커널의 첫 코드 셀 시작부터 마지막 코드 셀 종료까지 **8.67초**가 걸렸다. 코드 셀 13개의 관측값이며 커널 시작과 실행본 저장 시간은 별도다.
 - `data/processed/analysis_report.executed.ipynb`: 실행된 전체 보고서
 - `data/processed/analysis_verification.json`: 입력 체크섬·환경·정제·피처·RFM·월별 합계
 - `data/processed/figures/`: 히스토그램·박스플롯·막대·히트맵·산점도·라인차트
@@ -134,7 +139,7 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 | 이미지 표본 미포함 | 4,496 |
 | 원본 이미지 누락 | 9 |
 
-`NB_LOAD`의 실제 `info()`는 `bool(2)`, `datetime64[us](1)`, `float64(1)`, `str(2)`, `string(3)`을 표시한다. 같은 셀의 `head()`에서 원본 행과 조인 결과를 볼 수 있다. 이미지 배열은 상품 배치에서 처리하며 거래에는 숫자 피처를 연결한다.
+`NB_LOAD`의 실제 `info()`는 `bool(2)`, `datetime64[us](1)`, `float64(1)`, `str(2)`, `string(3)`을 표시한다. 같은 셀의 `head()`에서 원본 행과 조인 결과를 볼 수 있다. 이미지 배열은 상품 배치에서 처리하며 거래에는 숫자 피처를 연결한다. [열별 dtype 출력 코드](notebooks/analysis_report.ipynb?plain=1#L702)
 
 `NB_FEATURES`의 실제 최대 배치 `(5, 32, 32, 3)`는 `float32`이며 픽셀 버퍼가 61,440 B(60 KiB)다. 설정 상한 32장으로 모두 채우면 384 KiB이고, `1024×1024` RGB `float64`는 한 장에 24 MiB다. 모두 `N×H×W×C×dtype 바이트`로 계산한 픽셀 버퍼 크기다. 디코딩·리사이즈·중간 배열의 메모리는 별도다.
 
@@ -169,7 +174,7 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 
 ### 대규모 이미지 처리의 병목과 개선 설계
 
-`extract_product_image_features()`는 고유 상품마다 `imread()`로 순차 읽기·디코딩하고, 축소·정규화한 배열을 쌓아 NumPy 통계를 계산한다. 2026-11-07 로컬에서 실제 이미지 200장, 출력 32×32 RGB `float32`, 배치 상한 32, 보너스 피처 활성화 조건으로 워밍업 1회 후 3회 계측했다. 전체 중앙값은 **2.115초**, `imread()`의 읽기+디코딩 중앙값은 **1.797초**, 실행별 비중의 중앙값은 **84.9%**였다. 같은 피처·상태가 반환됐다. 이 시간은 해당 PC의 워밍업된 표본 계측이며 `imread()` 내부의 읽기와 디코딩 시간은 합산돼 있다. [순차 처리 경로](utils/image_features.py#L93)
+`extract_product_image_features()`는 고유 상품마다 `imread()`로 순차 읽기·디코딩하고, 축소·정규화한 배열을 쌓아 NumPy 통계를 계산한다. 2026-11-07 로컬에서 실제 이미지 200장, 출력 32×32 RGB `float32`, 배치 상한 32, 보너스 피처 활성화 조건으로 워밍업 1회 후 3회 계측했다. 전체 중앙값은 **2.115초**, `imread()`의 읽기+디코딩 중앙값은 **1.797초**, 실행별 비중의 중앙값은 **84.9%**였다. 같은 피처·상태가 반환됐다. 이 시간은 해당 PC의 워밍업된 표본 계측이며 `imread()` 내부의 읽기와 디코딩 시간은 합산돼 있다. [순차 처리 경로](utils/image_features.py#L96)
 
 | 병목 | 확장 설계 | 확인 방법 |
 | --- | --- | --- |
@@ -179,6 +184,8 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 | 고객 100만 명의 거래 | 필요한 열만 청크로 읽는다. 고객별 금액 합계·최종일은 청크별 집계를 병합하고, 구매일 수는 청크 간 중복 `(고객, 구매일)`을 제거한다. 이미지 비용은 고객 수와 별도로 고유 상품 이미지 수로 산정한다. | 전체 고객 수·금액 합계·최종 구매일·고유 구매일 수를 기존 경로와 비교한다. |
 
 워커 비교는 확장 설계의 검증 절차다. 위 실측은 현재 순차 경로에 대한 값이다.
+
+`NB_TIMING`은 이미지 12장으로 파일 바이트 읽기·메모리 JPEG 디코딩·픽셀 전처리를 분리했다. 워밍업 후 3회에서 단계별 중앙값은 각각 **7.45 ms**, **124.32 ms**, **3.38 ms**였다. 메모리 디코딩 후 피처 입력이 기존 파일 경로와 일치하는지 검사했다. 이 수치는 파일 캐시가 워밍업된 소규모 실험의 관측값이다. [계측 셀 · `image-timing`](notebooks/analysis_report.ipynb?plain=1#L4865)
 
 ## 필수 시각화 6종
 
@@ -190,7 +197,7 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 
 ![거래금액 히스토그램](docs/results/figures/01_histogram.png)
 
-**2. IQR 전후 박스플롯:** 같은 축에서 원값·EDA 사본의 분포를 비교한다. 일반적인 IQR 수염과 실제 이상치 점을 포함해 보정 전후를 같은 축에서 비교한다.
+**2. IQR 전후 박스플롯.** 원래 IQR 경계 밖 212행을 EDA 사본에서 보정했다. 원금액과 보정 사본에 동일한 금액 축을 적용했다.
 
 ![동일 금액의 IQR 보정 전후 요약](docs/results/figures/02_boxplot.png)
 
@@ -253,13 +260,13 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 
 세 인사이트의 우선순위와 ROI는 현재 데이터만으로 확정하지 않는다. 이미지 평균·표준편차는 밝기·배경·색상 요약이며 상품 패턴이나 구매 원인을 직접 설명하지 않는다.
 
-| 실험 대상 | 사전 정의할 30일 KPI | 대조군 | 추가 확보할 데이터 |
+| 검토 순서·대상 | 30일 목표의 예시 | 대조군 | 추가 확보할 데이터 |
 | --- | --- | --- | --- |
-| VIP | 구매율·고객당 마진 | VIP 내 무작위 미발송 | 배정·발송 시각, 후속 거래, 상품 마진 |
-| New | 두 번째 구매일 발생률·고객당 마진 | New 내 무작위 미발송 | 연락 동의, 후속 거래의 고객 ID·날짜, 마진 |
-| Churned | 구매율 차이·혜택 비용 차감 마진 | 기존 반복 구매 여부 층별 무작위 미발송 | 배정·발송 시각, 후속 거래, 혜택 비용, 재고 |
+| 1 · VIP 유지 | 구매율 +3%p 이상, 고객당 마진 차이 ≥0 | VIP 내 무작위 미발송 | 배정·발송 시각, 후속 거래, 상품 마진 |
+| 2 · New 추가 구매 | 두 번째 구매일 발생률 +2%p 이상, 고객당 마진 차이 ≥0 | New 내 무작위 미발송 | 연락 동의, 후속 거래의 고객 ID·날짜, 마진 |
+| 3 · Churned 재활성화 | 구매율 +1%p 이상, 혜택 비용 차감 후 고객당 마진 차이 >0 | 기존 반복 구매 여부 층별 무작위 미발송 | 배정·발송 시각, 후속 거래, 혜택 비용, 재고 |
 
-30일은 배정 시각부터 관찰하는 실험 설계 예시다. 위 데이터가 확보되면 그룹별 발송군과 대조군을 비교한다.
+30일은 배정 시각부터 센다. 표의 수치는 대조군 대비 차이의 **사전 목표 예시**이며 실제 효과와 실행 순서는 기준 구매율·표본 크기·비용을 확인한 뒤 판단한다. 노트북에는 각 대상의 실제 고객 수·거래 행 수·구매금액과 이미지 대치 전후 밀도 그림, 예측 타깃별 피처와 날짜 기준을 표시한다. [인사이트 출력](notebooks/analysis_report.ipynb?plain=1#L2037) · [예측 시점 분리](notebooks/analysis_report.ipynb?plain=1#L2203)
 
 ## 보너스 3개 실제 구현 결과
 
@@ -347,7 +354,7 @@ SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본�
 | --- | --- |
 | [src/pipeline.py](src/pipeline.py) | DataAnalyzer의 load_data·join_products·validate_transactions·handle_missing_values(네이토 호출명 handle_missing)·detect_outliers·calculate_rfm·summarize |
 | [utils/analytics.py](utils/analytics.py) | clean_transactions·impute_features·iqr_limits·calculate_customer_rfm·segment_profile |
-| [utils/image_features.py](utils/image_features.py) | prepare_image·extract_product_image_features. 픽셀 통계의 NumPy 축 연산 |
+| [utils/image_features.py](utils/image_features.py) | `prepare_image`·`extract_product_image_features`로 픽셀 통계를 계산하고 `profile_jpeg_stages`로 읽기·디코딩·전처리를 계측 |
 | [utils/bonus.py](utils/bonus.py) | cohort_retention·cohort_figure·interactive_rfm. 코호트와 Plotly 보너스 |
 | [utils/reporting.py](utils/reporting.py) | pair_correlation·monthly_amount·make_figures·write_insights |
 | [utils/run_checks.py](utils/run_checks.py) | 가상 테스트와 현재 Python의 새 커널 실행 |
@@ -370,14 +377,14 @@ SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본�
 
 ## 실제 실행 확인 기록
 
-2026-11-07 실제 검증의 성공 상태를 기록했다. 아래는 테스트 수·종료 성공·검증 상태 요약이며, 전체 분석 출력은 실행 노트북에서 확인할 수 있다. 이 블록은 실행 결과이며 복사 실행할 명령은 앞 절의 PowerShell 블록이다.
+2026-11-08 실제 검증의 성공 상태를 기록했다. 아래는 테스트 수·종료 성공·검증 상태 요약이며, 전체 분석 출력은 실행 노트북에서 확인할 수 있다. 이 블록은 실행 결과이며 복사 실행할 명령은 앞 절의 PowerShell 블록이다.
 
 ```text
-Validation status summary, 2026-11-07 Asia/Seoul
+Validation status summary, 2026-11-08 Asia/Seoul
 > .venv/Scripts/python.exe -B -m utils.run_checks --with-sample
 Ran 22 tests
 OK
-Notebook execution: PASS (12 code cells)
+Notebook execution: PASS (13 code cells)
 > .venv/Scripts/python.exe -B -m utils.repository_checks
 Repository checks: PASS
 Original stdout is private. No notebook rows or identifiers are copied here.
@@ -509,13 +516,14 @@ flowchart TD
     INSIGHT["비즈니스 해석<br/>write_insights → 근거·실행·검증 3개"]
     BONUS["NB_BONUS_IMAGES / COHORT / PLOTLY<br/>고급 이미지 피처·첫 구매월 코호트<br/>고객 전체 인터랙티브 탐색"]
     REPRO["NB_REPRO<br/>입력 체크섬·설정·환경·전체 분석 기록<br/>analysis_verification.json / segment_profile.csv"]
-    SET --> LOAD --> FEAT --> CLEAN --> RFM --> STATS --> PLOTS --> INSIGHT --> BONUS --> REPRO
+    TIMING["NB_TIMING<br/>JPEG 읽기·디코딩·전처리 계측"]
+    SET --> LOAD --> FEAT --> CLEAN --> RFM --> STATS --> PLOTS --> INSIGHT --> BONUS --> REPRO --> TIMING
     CLEAN -. "원본과 별도 보관" .-> EDA
     EDA -. "보정 금액의 분포 비교" .-> PLOTS
     FEAT -. "관측 상품 피처" .-> STATS
 ```
 
-SRC: [실행 노트북](notebooks/analysis_report.ipynb)의 `NB_LOAD`~`NB_REPRO`, [DataAnalyzer](src/pipeline.py), [보고서 공용 함수](utils/reporting.py). `NB_REPRO`는 실행 기록을 저장하는 셀이며, 아래의 새 복제본·새 환경 검증은 별도 명령으로 수행한다.
+SRC: [실행 노트북](notebooks/analysis_report.ipynb)의 `NB_LOAD`~`NB_TIMING`, [DataAnalyzer](src/pipeline.py), [보고서 공용 함수](utils/reporting.py). `NB_REPRO`는 분석 재현 기록을 저장하고 `NB_TIMING`은 환경별 계측 결과를 노트북에 표시한다.
 
 ### 5. 검증·제출 실행 차트
 
@@ -524,7 +532,7 @@ SRC: [실행 노트북](notebooks/analysis_report.ipynb)의 `NB_LOAD`~`NB_REPRO`
 ```mermaid
 flowchart TD
     ZIP["scripts/restore_hm_sample.py<br/>ZIP 검사·표본 복원"]
-    TEST["utils.run_checks --with-sample<br/>회귀 테스트 20개"]
+    TEST["utils.run_checks --with-sample<br/>회귀 테스트 22개"]
     KERNEL["현재 Python의 새 커널<br/>analysis_report.ipynb 전체 실행"]
     LOCAL["data/processed/<br/>실행 노트북·검증 JSON·차트·프로파일"]
     PUB["utils.publish_report<br/>성공한 실행본을 바이트 그대로 복사<br/>원본 차트·집계와 보조 보고서 생성"]
