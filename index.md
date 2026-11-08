@@ -12,9 +12,13 @@
 | [2차 네이토 평가](docs/naito_eval_result2.md) · [최종 네이토 평가](docs/naito_eval_result.md) | 17/19에서 19/19로 변경. 1차 이력과 대응은 [통합 계획](docs/a1_1_detailed_plan.md#네이토-평가-보완-계획), 권고 반영은 [체크표](docs/a1_1_checklist.md#최종-권고와-자체-점검) |
 | [docs/a1_1_eval_review.md](docs/a1_1_eval_review.md) | PDF·Markdown 자료 대조와 검토 의견 |
 | [docs/a1_1_evaluation_qa.md](docs/a1_1_evaluation_qa.md) | 평가 문항 19개 Q&A·SRC·시연·준비 계획 |
-| [docs/presentation/a1_1_eval_technical_final.pptx](docs/presentation/a1_1_eval_technical_final.pptx) | 질문별 기술 발표31장·실제 결과·보너스·발표자 노트 |
+| [미션 설명 PPTX](docs/presentation/a1_1_mission_explanation.pptx) · [PDF](docs/presentation/a1_1_mission_explanation.pdf) | 미션 설명 22장·실제 결과·수식·발표자 노트 |
+| [평가 Q&A PPTX](docs/presentation/a1_1_evaluation_qa.pptx) · [PDF](docs/presentation/a1_1_evaluation_qa.pdf) | 필수 19문항·보너스·꼬리질문 답변 35장 |
+| [공통 작성 도구](utils/build_split_presentations.mjs) · [미션 원고](utils/mission_presentation_content.mjs) · [평가 원고](utils/evaluation_qa_content.mjs) | 두 발표자료의 원고·PPTX 작성·검증·PDF 변환 |
+| [PowerPoint PDF 변환](utils/export_presentation_pdfs.ps1) | Windows의 PowerPoint로 두 최종 PPTX를 열람용 PDF로 저장 |
+| [docs/presentation/a1_1_eval_technical_final.pptx](docs/presentation/a1_1_eval_technical_final.pptx) | 이전 31장 평가 발표자료, 최신 자료는 위의 두 덱 |
 | [docs/presentation/README.md](docs/presentation/README.md) | 질문-페이지 매핑·발표·PPT 재생성 안내 |
-| [utils/build_eval_presentation.mjs](utils/build_eval_presentation.mjs) · [utils/eval_presentation_content.mjs](utils/eval_presentation_content.mjs) | 현재 실행 결과를 활용한 재사용 PPT 작성·검증과 질문별 원고 |
+| [utils/build_eval_presentation.mjs](utils/build_eval_presentation.mjs) · [utils/eval_presentation_content.mjs](utils/eval_presentation_content.mjs) | 이전 평가 PPT 작성 도구와 재사용하는 질문별 기본 원고 |
 | [docs/tech_study.md](docs/tech_study.md) | 미션·평가 용어와 기술 원리·예시·구현 위치 |
 | [docs/ai1_1_mission.pdf](docs/ai1_1_mission.pdf) · [docs/a1_1_eval.pdf](docs/a1_1_eval.pdf) | 원본 PDF |
 | [src/pipeline.py](src/pipeline.py) | DataAnalyzer 상태·로드·조인·피처·정제·RFM 및 CLI |

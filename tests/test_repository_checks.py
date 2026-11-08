@@ -26,7 +26,7 @@ class RepositoryLinkTests(unittest.TestCase):
                 "[figure source](figure.png?plain=1#L1)\n"
             )
             report.write_text(content, encoding="utf-8")
-            check_local_links(report, root)
+            check_local_links(report, root)	# 실제 상대 링크의 존재를 확인하되 코드 안의 예제 링크는 제외한다.
             report.write_text(content + "[broken](unavailable.md?plain=1#L1)\n", encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, r"report\.md: unavailable\.md"):
-                check_local_links(report, root)
+            with self.assertRaisesRegex(ValueError, r"report\.md: unavailable\.md"):	# 실제 깨진 링크의 문서명과 대상 경로가 오류에 포함돼야 한다.
+                check_local_links(report, root)	# 실제 상대 링크의 존재를 확인하되 코드 안의 예제 링크는 제외한다.

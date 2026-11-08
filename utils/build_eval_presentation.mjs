@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { evaluationSlides } from './eval_presentation_content.mjs';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');	// 작업 디렉터리와 무관하게 이 저장소의 파일을 찾는다.
 const options = Object.fromEntries(process.argv.slice(2).reduce((pairs, value, index, all) => {
   if (value.startsWith('--')) pairs.push([value.slice(2), all[index + 1]]);
   return pairs;
@@ -16,104 +16,104 @@ const options = Object.fromEntries(process.argv.slice(2).reduce((pairs, value, i
 for (const name of ['modules', 'skill-dir', 'python']) {
   if (!options[name]) throw Error(`Missing --${name}`);
 }
-const BUILD = path.resolve(ROOT, options.build || 'data/presentation-build');
-const FINAL = path.resolve(ROOT, options.output || 'docs/presentation/a1_1_eval_technical_final.pptx');
+const BUILD = path.resolve(ROOT, options.build || 'data/presentation-build');	// 임시 그림·검증 기록을 최종 발표 파일과 분리한다.
+const FINAL = path.resolve(ROOT, options.output || 'docs/presentation/a1_1_eval_technical_final.pptx');	// 기존 31장 발표자료의 최종 저장 위치를 결정한다.
 const requireRuntime = createRequire(path.join(path.resolve(options.modules), 'entry.cjs'));
 process.env.RUNTIME_NODE_MODULES = path.resolve(options.modules);
 const { Presentation, PresentationFile, FileBlob } = await import(pathToFileURL(requireRuntime.resolve('@oai/artifact-tool')).href);
 const { finalizePresentation, applyPresentationChartFont } = await import(pathToFileURL(path.join(options['skill-dir'], 'container_tools/artifact_tool_utils.mjs')).href);
-const FONT = 'Malgun Gothic';
+const FONT = 'Malgun Gothic';	// 한글 본문과 편집 차트에 동일한 설치 글꼴을 적용한다.
 const C = { ink: '#102B46', blue: '#176CA1', teal: '#007C83', orange: '#B85925', muted: '#536477', pale: '#EFF5FA', line: '#CAD5DF', white: '#FFFFFF' };
-const W = 1600, H = 900;
+const W = 1600, H = 900;	// 16:9 좌표계를 사용해 두 자료의 배치 기준을 통일한다.
 await fs.mkdir(BUILD, { recursive: true });
 await fs.mkdir(path.dirname(FINAL), { recursive: true });
-const data = JSON.parse(await fs.readFile(path.join(ROOT, 'docs/results/analysis_aggregates.json'), 'utf8'));
-const specifications = evaluationSlides(data);
-const evalText = (await fs.readFile(path.join(ROOT, 'docs/a1_1_eval.md'), 'utf8')).replace(/\r\n/g, '\n');
+const data = JSON.parse(await fs.readFile(path.join(ROOT, 'docs/results/analysis_aggregates.json'), 'utf8'));	// 확정된 실제 집계를 읽어 원고의 수치와 차트 입력을 맞춘다.
+const specifications = evaluationSlides(data);	// 슬라이드별 내용·배치 종류·노트를 한 묶음으로 관리한다.
+const evalText = (await fs.readFile(path.join(ROOT, 'docs/a1_1_eval.md'), 'utf8')).replace(/\r\n/g, '\n');	// 평가 문항을 임의 요약하지 않고 원문에서 읽는다.
 const questions = {};
 for (let section = 1; section <= 4; section++) {
   const block = evalText.split(`### 항목 ${section}\n`)[1]?.split(`### 항목 ${section + 1}`)[0];
   if (!block) throw Error('Missing evaluation section ' + section);
   block.split('\n').filter(line => line.startsWith('- ')).forEach((line, i) => questions[`${section}-${i + 1}`] = line.slice(2));
 }
-if (Object.keys(questions).length !== 19) throw Error('Expected 19 mandatory questions');
+if (Object.keys(questions).length !== 19) throw Error('Expected 19 mandatory questions');	// 필수 평가 문항 누락을 작성 단계에서 바로 탐지한다.
 for (const id of Object.keys(questions)) {
-  if (!specifications.some(slide => slide.id === id)) throw Error('Missing question slide: ' + id);
+  if (!specifications.some(slide => slide.id === id)) throw Error('Missing question slide: ' + id);	// 모든 필수 문항에 대응하는 발표 페이지가 있는지 확인한다.
 }
 const presentation = Presentation.create({ slideSize: { width: W, height: H } });
-const tableOwners = [], chartOwners = [];
-let sequence = 0;
+const tableOwners = [], chartOwners = [];	// 최종 검증에서 표·차트가 편집 객체로 남았는지 확인할 쪽을 기록한다.
+let sequence = 0;	// 같은 발표자료 안에서 도형 이름이 겹치지 않도록 순번을 관리한다.
 
-/** 지정 영역에 편집 가능한 텍스트를 배치하고 글꼴·여백을 통일한다. */
+/** 슬라이드·문자열·영역·서식을 받아 텍스트 도형을 반환한다. 대상 슬라이드와 도형 번호를 변경한다. */
 function text(slide, value, x, y, width, height, size = 28, color = C.ink, bold = false, alignment = 'left') {
   const shape = slide.shapes.add({ geometry: 'textbox', name: `text-${++sequence}`,
     position: { left: x, top: y, width, height }, fill: 'none', line: { fill: 'none', width: 0 } });
-  shape.text = value;
+  shape.text = value;	// 원고를 그림으로 굳히지 않고 편집 가능한 문자로 남긴다.
   shape.text.style = { typeface: FONT, fontSize: size, color, bold, alignment,
     verticalAlignment: 'top', wrap: 'square', autoFit: 'none', insets: 0 };
   return shape;
 }
 
-/** 기술 도식의 실제 데이터 노드를 편집 가능한 도형으로 배치한다. */
+/** 슬라이드·문자열·영역·색상을 받아 처리 단계 도형을 반환한다. 대상 슬라이드와 도형 번호를 변경한다. */
 function node(slide, value, x, y, width, height, color = C.blue) {
   const shape = slide.shapes.add({ geometry: 'rect', name: `node-${++sequence}`,
     position: { left: x, top: y, width, height }, fill: C.pale, line: { fill: color, width: 2 } });
-  shape.text = value;
+  shape.text = value;	// 원고를 그림으로 굳히지 않고 편집 가능한 문자로 남긴다.
   shape.text.style = { typeface: FONT, fontSize: 27, color: C.ink, alignment: 'center',
     verticalAlignment: 'middle', wrap: 'square', autoFit: 'none', insets: 12 };
   return shape;
 }
 
-/** 도식 노드를 가로 또는 꺾인 연결선으로 연결한다. */
+/** 시작·끝 도형과 꺾임 여부를 받아 연결선을 반환한다. 입력 슬라이드에 방향 화살표를 추가한다. */
 function connect(slide, from, to, elbow = false) {
   return slide.shapes.connect(from, to, { kind: elbow ? 'elbow' : 'straight', fromSide: 'right', toSide: 'left',
     line: { fill: C.muted, width: 2 }, tail: { type: 'arrow', width: 'med', length: 'med' } });
 }
 
-/** 같은 순서의 처리 단계를 한 줄의 호출 흐름으로 표현한다. */
+/** 단계 문자열 배열과 배치 영역을 받아 도형·연결선을 슬라이드에 추가한다. 별도 반환값은 없다. */
 function flow(slide, steps, y = 235, height = 140) {
-  const gap = 44, width = (1460 - gap * (steps.length - 1)) / steps.length;
-  const shapes = steps.map((value, i) => node(slide, value, 70 + i * (width + gap), y, width, height));
-  shapes.slice(1).forEach((shape, i) => connect(slide, shapes[i], shape));
+  const gap = 44, width = (1460 - gap * (steps.length - 1)) / steps.length;	// 단계 수에 맞춰 폭을 나누되 도형 사이 연결 공간을 확보한다.
+  const shapes = steps.map((value, i) => node(slide, value, 70 + i * (width + gap), y, width, height));	// 각 처리 단계를 순서가 유지되는 도형 배열로 만든다.
+  shapes.slice(1).forEach((shape, i) => connect(slide, shapes[i], shape));	// 바로 앞 단계와 다음 단계를 연결해 호출 순서를 표시한다.
 }
 
-/** 원고·설명에 필요한 코드를 원문 그대로 편집 가능한 텍스트로 표시한다. */
+/** 슬라이드·코드 문자열·영역을 받아 코드 텍스트 도형을 반환한다. 배경과 본문을 슬라이드에 추가한다. */
 function code(slide, value, x, y, width, height, size = 25) {
   slide.shapes.add({ geometry: 'rect', position: { left: x, top: y, width, height }, fill: C.ink, line: { fill: 'none', width: 0 } });
   return text(slide, value, x + 24, y + 22, width - 48, height - 44, size, C.white);
 }
 
-/** 행·열·수치가 편집 가능한 native PowerPoint 표를 만든다. */
+/** 머리글·행 배열·영역·서식을 받아 편집 가능한 PowerPoint 표를 반환한다. 슬라이드와 표 소유 쪽 기록을 변경한다. */
 function table(slide, headers, rows, x = 70, y = 225, width = 1460, height = 490, widths = null, size = 26) {
   const values = [headers, ...rows].map(row => row.map(String));
   const result = slide.tables.add({ rows: values.length, columns: headers.length, left: x, top: y, width, height,
     columnWidths: widths || Array(headers.length).fill(width / headers.length), values });
-  result.borders.assign({ style: 'solid', fill: C.line, width: 1 });
+  result.borders.assign({ style: 'solid', fill: C.line, width: 1 });	// 표의 행과 열을 얇은 동일 색상 경계로 구분한다.
   for (let r = 0; r < values.length; r++) {
-    result.rows[r].height = height / values.length;
+    result.rows[r].height = height / values.length;	// 행 수가 달라도 지정된 전체 표 높이를 유지한다.
     for (let c = 0; c < headers.length; c++) {
       const cell = result.getCell(r, c);
-      cell.fill = r === 0 ? C.ink : r % 2 ? C.white : C.pale;
+      cell.fill = r === 0 ? C.ink : r % 2 ? C.white : C.pale;	// 머리글과 교차 행을 구분해 긴 표의 판독성을 확보한다.
       cell.text.style = { typeface: FONT, fontSize: size, bold: r === 0, color: r === 0 ? C.white : C.ink };
     }
   }
-  tableOwners.push(presentation.slides.items.length);
+  tableOwners.push(presentation.slides.items.length);	// 표가 그림으로 바뀌지 않았는지 최종 검사할 페이지를 기록한다.
   return result;
 }
 
-/** 실제 집계값으로 편집 가능한 차트를 만들고 차트 자체의 글꼴도 지정한다. */
+/** 슬라이드·차트 종류·계열 설정을 받아 편집 가능한 차트를 반환한다. 슬라이드와 차트 소유 쪽 기록을 변경한다. */
 function chart(slide, type, config) {
-  // Excel의 15자리 제약 안에서 편집 차트 값을 표현한다. 분석 JSON 원값은 유지한다.
-  const series = config.series.map(item => ({ ...item,
+
+  const series = config.series.map(item => ({ ...item,	// 차트 표시값만 유효 자릿수로 제한하며 분석 집계 원값은 보존한다.
     values: item.values.map(value => value == null ? null : Number(Number(value).toPrecision(12))) }));
   const result = slide.charts.add(type, { chartFill: C.white, plotAreaFill: C.white,
     titleTextStyle: { fontSize: 26, fill: C.ink }, ...config, series });
-  applyPresentationChartFont(result, { fontFamily: FONT });
-  chartOwners.push(presentation.slides.items.length);
+  applyPresentationChartFont(result, { fontFamily: FONT });	// 차트 내부 제목·축·범례에도 같은 한글 글꼴을 지정한다.
+  chartOwners.push(presentation.slides.items.length);	// 차트가 편집 가능한 객체인지 최종 검사할 페이지를 기록한다.
   return result;
 }
 
-/** 원본 실행 그림의 비율을 유지해 실제 결과 이미지로 넣는다. */
+/** 파일 경로와 배치 영역을 받아 비율을 보존한 이미지 객체를 반환한다. 파일을 읽고 슬라이드에 추가하며 원본은 수정하지 않는다. */
 async function picture(slide, filename, x, y, width, height) {
   const bytes = await fs.readFile(filename);
   return slide.images.add({ blob: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
@@ -121,20 +121,23 @@ async function picture(slide, filename, x, y, width, height) {
     position: { left: x, top: y, width, height } });
 }
 
-/** 표시 형식만 반올림하고 계산은 입력 집계의 원값을 유지한다. */
+/** 수치와 소수 자릿수를 받아 표시 문자열을 반환한다. 원본 수치와 외부 상태를 변경하지 않는다. */
 const fixed = (value, digits = 6) => Number(value).toFixed(digits);
+/** 비율을 받아 백분율 표시 문자열을 반환한다. 외부 상태는 변경하지 않는다. */
 const percent = value => (Number(value) * 100).toFixed(1) + '%';
+/** 그림 파일명을 받아 필수 차트의 절대 경로를 반환한다. 파일을 읽거나 변경하지 않는다. */
 const fig = name => path.join(ROOT, 'docs/results/figures', name);
+/** 그림 파일명을 받아 보너스 결과의 절대 경로를 반환한다. 파일을 읽거나 변경하지 않는다. */
 const bonus = name => path.join(ROOT, 'docs/results/bonus', name);
 const sourceNotebook = JSON.parse(await fs.readFile(path.join(ROOT, 'notebooks/analysis_report.ipynb'), 'utf8'));
-const gallery = sourceNotebook.cells.flatMap(cell => cell.outputs || []).find(output => output.data?.['image/png']);
-if (!gallery) throw Error('Original product gallery output missing');
+const gallery = sourceNotebook.cells.flatMap(cell => cell.outputs || []).find(output => output.data?.['image/png']);	// 노트북에 보존된 실제 상품 사진 출력을 그대로 재사용한다.
+if (!gallery) throw Error('Original product gallery output missing');	// 원본 사진 출력이 없으면 다른 이미지로 대체하지 않고 중단한다.
 const galleryPath = path.join(BUILD, 'original-product-gallery.png');
-await fs.writeFile(galleryPath, Buffer.from(gallery.data['image/png'].join?.('') || gallery.data['image/png'], 'base64'));
+await fs.writeFile(galleryPath, Buffer.from(gallery.data['image/png'].join?.('') || gallery.data['image/png'], 'base64'));	// 원본 노트북을 수정하지 않고 발표용 임시 이미지 사본을 만든다.
 
 for (const [index, spec] of specifications.entries()) {
-  const slide = presentation.slides.add();
-  slide.background.fill = C.white;
+  const slide = presentation.slides.add();	// 원고의 배열 순서와 실제 발표 순서를 일치시킨다.
+  slide.background.fill = C.white;	// 차트와 이미지의 흰 배경이 본문과 자연스럽게 이어지게 한다.
   if (spec.kind !== 'cover') {
     text(slide, `${spec.id ? spec.id + '  ' : ''}${spec.title}`, 70, 45, 1460, 66, 44, C.ink, true);
     text(slide, spec.subtitle, 70, 125, 1460, 72, 27, C.muted);
@@ -286,7 +289,7 @@ const map = Object.entries(questions).map(([id, question]) => ({ id, question,
   slides: specifications.flatMap((slide, i) => slide.id === id ? [i + 1] : []) }));
 await fs.writeFile(path.join(BUILD, 'question-map.json'), JSON.stringify({ slideCount: specifications.length, questions: map }, null, 2));
 for (const [index, slide] of presentation.slides.items.entries()) {
-  const png = await presentation.export({ slide, format: 'png', scale: 1 });
+  const png = await presentation.export({ slide, format: 'png', scale: 1 });	// 실제 슬라이드 화면을 이미지로 만들어 눈으로 검토할 수 있게 한다.
   await fs.writeFile(path.join(BUILD, `slide-${String(index + 1).padStart(2, '0')}.png`), new Uint8Array(await png.arrayBuffer()));
   console.log(`Rendered slide ${index + 1}/${specifications.length}`);
 }
@@ -300,12 +303,12 @@ const result = await finalizePresentation({ workspaceDir: ROOT, candidatePath: p
   requiredNativeTableOwnerSlides: [...new Set(tableOwners)], requiredNativeChartOwnerSlides: [...new Set(chartOwners)],
   materializeLiteralChartWorkbooks: true,
   fontPolicy: { basis: 'design', families: [FONT] }, verifyArtifactToolImport: true,
-  receiptPath: path.join(BUILD, `${path.basename(FINAL)}.validation.json`) });
+  receiptPath: path.join(BUILD, `${path.basename(FINAL)}.validation.json`) });	// 검증 결과를 저장해 성공한 산출물과 근거를 연결한다.
 await fs.writeFile(path.join(BUILD, 'finalizer-result.json'), JSON.stringify(result, null, 2));
 const delivered = await PresentationFile.importPptx(await FileBlob.load(FINAL));
-if (delivered.slides.items.length !== specifications.length) throw Error('Final slide count changed');
+if (delivered.slides.items.length !== specifications.length) throw Error('Final slide count changed');	// 최종 패키지를 다시 읽었을 때 페이지 손실이 없는지 확인한다.
 for (const [index, slide] of delivered.slides.items.entries()) {
-  const png = await delivered.export({ slide, format: 'png', scale: 1 });
+  const png = await delivered.export({ slide, format: 'png', scale: 1 });	// 실제 슬라이드 화면을 이미지로 만들어 눈으로 검토할 수 있게 한다.
   await fs.writeFile(path.join(BUILD, `final-slide-${String(index + 1).padStart(2, '0')}.png`), new Uint8Array(await png.arrayBuffer()));
 }
 console.log('Final PPTX:', FINAL);

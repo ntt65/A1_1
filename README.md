@@ -81,13 +81,13 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 
 ## 분석 흐름과 원본 보존
 
-1. 거래 CSV를 읽고 ID·날짜 자료형을 맞춘다. 고객·날짜·주문 모드·금액의 대표 제외 사유를 중복 없이 센다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L92)
-2. 상품 ID의 다대일 왼쪽 조인을 검증하고 거래 행·순서·금액을 대조한다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L92)
+1. 거래 CSV를 읽고 ID·날짜 자료형을 맞춘다. 고객·날짜·주문 모드·금액의 대표 제외 사유를 중복 없이 센다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L93)
+2. 상품 ID의 다대일 왼쪽 조인을 검증하고 거래 행·순서·금액을 대조한다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L93)
 3. 상품별 이미지 mean/std와 상품명 길이·단어 수를 계산해 거래에 연결한다. 원본 이미지 배열을 거래마다 복제하지 않는다. [NB_FEATURES · `936e811c`](notebooks/analysis_report.ipynb?plain=1#L735)
-4. `handle_missing_values()`로 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 네이토의 호출명 `handle_missing()`도 같은 인자·반환값·대치 기록을 제공한다. 미표본 이미지·원래 관측값·원문을 보존한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1103)
-5. `Q1−1.5×IQR`, `Q3+1.5×IQR` 밖을 탐지하고 금액의 EDA 사본만 clip한다. 경계값은 정상 범위에 포함한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1103)
-6. 원금액으로 RFM과 완전한 월별 합계를 계산하고 그룹 고객·금액 합계를 대조한다. [NB_RFM · `b4769e15`](notebooks/analysis_report.ipynb?plain=1#L1367)
-7. 분석 단위를 구분한 통계·상관·6종 차트를 만들고 근거·실행·검증 인사이트를 작성한다. [NB_STATS · `333254fa`](notebooks/analysis_report.ipynb?plain=1#L1526) · [NB_PLOTS · `87a953b4`](notebooks/analysis_report.ipynb?plain=1#L1771)
+4. `handle_missing_values()`로 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 네이토의 호출명 `handle_missing()`도 같은 인자·반환값·대치 기록을 제공한다. 미표본 이미지·원래 관측값·원문을 보존한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1101)
+5. `Q1−1.5×IQR`, `Q3+1.5×IQR` 밖을 탐지하고 금액의 EDA 사본만 clip한다. 경계값은 정상 범위에 포함한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1101)
+6. 원금액으로 RFM과 완전한 월별 합계를 계산하고 그룹 고객·금액 합계를 대조한다. [NB_RFM · `b4769e15`](notebooks/analysis_report.ipynb?plain=1#L1363)
+7. 분석 단위를 구분한 통계·상관·6종 차트를 만들고 근거·실행·검증 인사이트를 작성한다. [NB_STATS · `333254fa`](notebooks/analysis_report.ipynb?plain=1#L1521) · [NB_PLOTS · `87a953b4`](notebooks/analysis_report.ipynb?plain=1#L1766)
 
 SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 공통 정제·RFM 계산을, `utils/image_features.py`가 이미지 통계를, `utils/reporting.py`가 상관·차트·인사이트를 담당한다.
 
@@ -185,7 +185,7 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 
 워커 비교는 확장 설계의 검증 절차다. 위 실측은 현재 순차 경로에 대한 값이다.
 
-`NB_TIMING`은 이미지 12장으로 파일 바이트 읽기·메모리 JPEG 디코딩·픽셀 전처리를 분리했다. 워밍업 후 3회에서 단계별 중앙값은 각각 **7.45 ms**, **124.32 ms**, **3.38 ms**였다. 메모리 디코딩 후 피처 입력이 기존 파일 경로와 일치하는지 검사했다. 이 수치는 파일 캐시가 워밍업된 소규모 실험의 관측값이다. [계측 셀 · `image-timing`](notebooks/analysis_report.ipynb?plain=1#L4865)
+`NB_TIMING`은 이미지 12장으로 파일 바이트 읽기·메모리 JPEG 디코딩·픽셀 전처리를 분리했다. 워밍업 후 3회에서 단계별 중앙값은 각각 **7.45 ms**, **124.32 ms**, **3.38 ms**였다. 메모리 디코딩 후 피처 입력이 기존 파일 경로와 일치하는지 검사했다. 이 수치는 파일 캐시가 워밍업된 소규모 실험의 관측값이다. [계측 셀 · `image-timing`](notebooks/analysis_report.ipynb?plain=1#L4862)
 
 ## 필수 시각화 6종
 
@@ -266,7 +266,7 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 | 2 · New 추가 구매 | 두 번째 구매일 발생률 +2%p 이상, 고객당 마진 차이 ≥0 | New 내 무작위 미발송 | 연락 동의, 후속 거래의 고객 ID·날짜, 마진 |
 | 3 · Churned 재활성화 | 구매율 +1%p 이상, 혜택 비용 차감 후 고객당 마진 차이 >0 | 기존 반복 구매 여부 층별 무작위 미발송 | 배정·발송 시각, 후속 거래, 혜택 비용, 재고 |
 
-30일은 배정 시각부터 센다. 표의 수치는 대조군 대비 차이의 **사전 목표 예시**이며 실제 효과와 실행 순서는 기준 구매율·표본 크기·비용을 확인한 뒤 판단한다. 노트북에는 각 대상의 실제 고객 수·거래 행 수·구매금액과 이미지 대치 전후 밀도 그림, 예측 타깃별 피처와 날짜 기준을 표시한다. [인사이트 출력](notebooks/analysis_report.ipynb?plain=1#L2037) · [예측 시점 분리](notebooks/analysis_report.ipynb?plain=1#L2203)
+30일은 배정 시각부터 센다. 표의 수치는 대조군 대비 차이의 **사전 목표 예시**이며 실제 효과와 실행 순서는 기준 구매율·표본 크기·비용을 확인한 뒤 판단한다. 노트북에는 각 대상의 실제 고객 수·거래 행 수·구매금액과 이미지 대치 전후 밀도 그림, 예측 타깃별 피처와 날짜 기준을 표시한다. [인사이트 출력](notebooks/analysis_report.ipynb?plain=1#L2031) · [예측 시점 분리](notebooks/analysis_report.ipynb?plain=1#L2195)
 
 ## 보너스 3개 실제 구현 결과
 
@@ -409,8 +409,12 @@ A1_1/
 ├── utils/
 │   ├── __init__.py                  # 공용 도구 패키지
 │   ├── bonus.py                     # 첫 관찰 구매월 코호트·Plotly 보너스
-│   ├── build_eval_presentation.mjs   # 평가 PPT 작성·렌더·파일 검증
-│   ├── eval_presentation_content.mjs # 질문별 기술 원고·발표자 노트
+│   ├── build_split_presentations.mjs # 미션·평가 PPTX 작성·렌더·검증
+│   ├── mission_presentation_content.mjs # 미션 설명 원고·발표자 노트
+│   ├── evaluation_qa_content.mjs     # 최신 평가 Q&A 원고·꼬리질문 답변
+│   ├── export_presentation_pdfs.ps1  # PowerPoint의 PDF 변환
+│   ├── build_eval_presentation.mjs   # 이전 31장 평가 PPT 작성 도구
+│   ├── eval_presentation_content.mjs # 재사용하는 질문별 기본 원고
 │   ├── analytics.py                 # 거래 정제·결측 대치·IQR·RFM·그룹 프로파일
 │   ├── image_features.py            # 이미지 정규화·축소·배치 mean/std
 │   ├── reporting.py                 # 통계 상관·월별 집계·6종 차트·인사이트
@@ -432,7 +436,7 @@ A1_1/
 │   └── test_repository_checks.py   # 인용 코드·실제 상대 링크 구분
 └── docs/
     ├── results/                    # 실제 차트·집계·보너스·실행 상태
-    └── presentation/               # 질문별 기술 PPT와 페이지/재생성 안내
+    └── presentation/               # 미션·평가 PPTX/PDF와 페이지·재생성 안내
 ```
 
 `data/raw/hm/`은 재실행용 표본, `data/processed/`는 실행 중 생성하는 결과의 로컬 경로다. 파일별 자세한 위치는 [index.md](index.md), 기능을 바꿀 때 함께 확인할 위치는 [reverse_index.md](reverse_index.md)에 있다.
@@ -555,6 +559,6 @@ SRC: [표본 복원](scripts/restore_hm_sample.py) → [검증 실행](utils/run
 
 ## 평가 기술 발표자료
 
-[질문별 기술 발표 PPT](docs/presentation/a1_1_eval_technical_final.pptx)는 **31장**이며, 평가서 필수 질문 **19개를 각각 최소 한 장**으로 설명한다. 질문 번호1-1~4-3을 표시하고 실제 구현·코드·수식·배열 축·메모리/Stride/SIMD·RFM 손계산·검증값과 한계를 담았다. 보너스3개는 B-1~B-3에서 실제 결과로 설명한다. 각 장의 발표자 노트에는 질문 원문·설명·코드 시연·꼬리 질문·SRC/출처가 있다.
+[미션 설명 PPTX](docs/presentation/a1_1_mission_explanation.pptx)·[PDF](docs/presentation/a1_1_mission_explanation.pdf)는 **22장**으로 요구사항, 표본과 분석 단위, 피처·정제·통계·RFM의 계산 원리와 실제 결과를 설명한다. [평가 Q&A PPTX](docs/presentation/a1_1_evaluation_qa.pptx)·[PDF](docs/presentation/a1_1_evaluation_qa.pdf)는 **35장**으로 필수 **19문항**과 보너스 3개를 다룬다. 원문 문항 번호, 코드·수식·배열 축·메모리·RFM 손계산·검증 근거와 한계를 연결했고 최신 IQR·이미지 병목 계측·표본 선택의 시간 누수 설명을 반영했다. 상세 설명·시연·꼬리 질문 답변·출처는 PPTX의 발표자 노트에 있다.
 
-필수 분석과 보너스의 실제 실행 화면, 편집 가능한 표·차트·기술 도식을 함께 사용했다. [질문별 페이지·발표/재생성 안내](docs/presentation/README.md)에서 필요한 질문을 찾을 수 있다. 관련 이슈는 #17이며, 보너스 구현은 별도 #18에서 관리했다.
+원본 실행 사진·차트와 편집 가능한 표·추가 차트를 함께 사용했다. PDF는 같은 슬라이드의 열람용이다. [발표 순서·질문별 페이지·재생성 안내](docs/presentation/README.md)에서 두 자료의 위치와 이전 31장 버전을 확인할 수 있다. 관련 이슈는 #17이며, 보너스 구현은 별도 #18에서 관리했다.
