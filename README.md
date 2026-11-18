@@ -23,10 +23,10 @@
 
 저장소 루트에서 실행한다. 검증한 Python은 3.11.4다. 새 환경은 `git clone https://github.com/ntt65/A1_1.git` 후 `cd A1_1`에서 시작한다. 현재 PC의 기존 저장소에서는 복제·환경 생성을 반복하지 않아도 된다. 분석 패키지 버전은 `requirements.txt`, 노트북 실행 도구는 `requirements-notebook.txt`에 고정했다.
 
-```powershell
-py -3.11 -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-notebook.txt -r requirements-bonus.txt
-.venv\Scripts\python.exe -B -m utils.run_checks
+```bash
+python3.11 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt -r requirements-notebook.txt -r requirements-bonus.txt
+.venv/bin/python -B -m utils.run_checks
 ```
 
 검증한 분석 패키지: NumPy 2.4.6, Pandas 3.1.1, Matplotlib 3.11.2, Seaborn 0.13.2. 보너스는 Plotly 7.1.0·narwhals 2.28.0·packaging 26.3을 별도 `requirements-bonus.txt`에 고정했다. Plotly는 인터랙티브 보너스에서만 사용한다. 실행 도구는 Notebook 7.6.4, ipykernel 7.4.0, nbclient 0.11.0, nbformat 5.11.1이다. Python 3.11 환경에서 설치·실행을 확인했다.
@@ -35,8 +35,8 @@ py -3.11 -m venv .venv
 
 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)의 규정에 동의한 계정으로 표본을 준비한다. 기존 작업자는 본인만 접근하는 Drive의 `A1_1_hm_sample.zip`을 사용한다. 새 표본은 [Kaggle 추출 노트북](notebooks/prepare_hm_sample.ipynb)에서 기간·고객·이미지만 선별해 만든다. 전체 대회 ZIP이나 전체 거래 CSV는 로컬로 받지 않는다.
 
-```powershell
-.venv\Scripts\python.exe scripts/restore_hm_sample.py --archive "C:\Downloads\A1_1_hm_sample.zip"
+```bash
+.venv/bin/python scripts/restore_hm_sample.py --archive "$HOME/Downloads/A1_1_hm_sample.zip"
 ```
 
 파일은 `data/raw/hm/transactions_sample.csv`, `articles_sample.csv`, `sample_manifest.json`, `images/<ID 앞 3자리>/<ID>.jpg`에 복원된다. `data/raw/hm/hm_sample.zip`을 보관하면 `--archive`를 생략할 수 있다. 복원은 구성·추출 기록과 기존 파일 충돌을 검증한다. 개인 Drive 설정이 있으면 SHA-256도 대조한다. 새 환경에는 개인 설정이나 인증 정보를 복사할 필요가 없다.
@@ -45,8 +45,8 @@ py -3.11 -m venv .venv
 
 기존 PC처럼 ZIP이 `data/raw/hm/hm_sample.zip`에 있으면 아래 명령으로 재검증·복원한다. 동일 파일 재실행은 허용하고 다른 내용의 기존 파일은 덮어쓰지 않는다.
 
-```powershell
-.venv\Scripts\python.exe scripts/restore_hm_sample.py
+```bash
+.venv/bin/python scripts/restore_hm_sample.py
 ```
 
 ## 입력과 계산 기준
@@ -100,9 +100,9 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 
 ## 전체 분석과 검증
 
-```powershell
-.venv\Scripts\python.exe -B -m utils.run_checks --with-sample
-.venv\Scripts\python.exe -B -m utils.repository_checks
+```bash
+.venv/bin/python -B -m utils.run_checks --with-sample
+.venv/bin/python -B -m utils.repository_checks
 ```
 
 새 커널의 실행 결과는 다음 로컬 파일에서 확인한다.
@@ -113,14 +113,14 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 - `data/processed/figures/`: 히스토그램·박스플롯·막대·히트맵·산점도·라인차트
 - `data/processed/insights.md`, `segment_profile.csv`: 실제 집계 기반 해석과 그룹 표
 
-```powershell
-.venv\Scripts\python.exe -m notebook data/processed/analysis_report.executed.ipynb
+```bash
+.venv/bin/python -m notebook data/processed/analysis_report.executed.ipynb
 ```
 
 새 복제본·새 가상환경·새 커널에서 비교하려면 기준 실행 후 다음을 실행한다. 고정 의존성을 설치하기 위한 네트워크 접근과 원본 표본 ZIP이 필요하다. 새 복제본에는 원본 데이터나 개인 Drive 설정이 들어 있지 않으며 ZIP을 검증해 복원한다.
 
-```powershell
-.venv\Scripts\python.exe -B -m utils.reproducibility
+```bash
+.venv/bin/python -B -m utils.reproducibility
 ```
 
 비교 결과는 `data/processed/reproduction_verification.json`에 저장한다. 자료형·동점·순서·대치·IQR·월 누락 등의 작은 입력 검증과 실제 조인·금액 대조를 함께 수행한다.
@@ -313,13 +313,13 @@ SRC: `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 �
 | 인터랙티브 RFM | 드래그 회전·스크롤 확대·범례 선택·고객ID hover | `utils/bonus.py::interactive_rfm`, NB_BONUS_PLOTLY |
 | 원본 결과 보존 | 실제 표·ID·사진·분석 출력을 함께 가진 노트북 | `utils/publish_report.py::preserve_execution` |
 
-아래 명령은 저장소 루트에서 실행한다. 마지막 명령은 Windows에서 실제 HTML 화면을 연다. 원본 거래 표·상품 사진·정제·통계·RFM 결과는 실행 노트북에서도 함께 확인할 수 있다.
+아래 명령은 저장소 루트에서 실행한다. 마지막 명령은 macOS에서 실제 HTML 화면을 연다. 원본 거래 표·상품 사진·정제·통계·RFM 결과는 실행 노트북에서도 함께 확인할 수 있다.
 
-```powershell
-.venv\Scripts\python.exe -B -m utils.run_checks --with-sample
-.venv\Scripts\python.exe -B -m utils.publish_report
-.venv\Scripts\python.exe -B -m utils.repository_checks
-Invoke-Item docs/results/bonus/rfm_interactive.html
+```bash
+.venv/bin/python -B -m utils.run_checks --with-sample
+.venv/bin/python -B -m utils.publish_report
+.venv/bin/python -B -m utils.repository_checks
+open docs/results/bonus/rfm_interactive.html
 ```
 
 보너스 포함 검증 결과: 테스트20개 통과, 새 커널 코드12셀 전체 성공, 독립 새 복제본·새 가상환경에서도 보너스를 포함한 분석 JSON 전체 항목 일치. 실제 브라우저에서는 네트워크를 차단하고 점수·필터·카메라 조작을 확인했다.
@@ -340,10 +340,10 @@ Invoke-Item docs/results/bonus/rfm_interactive.html
 
 보조 집계 자료는 `docs/results/analysis_aggregates.json`, `segment_profile.csv`, `monthly_amount.csv`, `analysis_report.md`다. 그림은 원본 분석에서 생성한 PNG를 그대로 복사한다. 원본 CSV·ZIP·전체 JPG 묶음과 개인 인증 설정은 Git에 넣지 않는다.
 
-```powershell
-.venv\Scripts\python.exe -B -m utils.run_checks --with-sample
-.venv\Scripts\python.exe -B -m utils.publish_report
-.venv\Scripts\python.exe -B -m utils.repository_checks
+```bash
+.venv/bin/python -B -m utils.run_checks --with-sample
+.venv/bin/python -B -m utils.publish_report
+.venv/bin/python -B -m utils.repository_checks
 ```
 
 SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본을 바이트 그대로 복사하며 표·ID·이미지를 삭제하지 않는다. 오류가 있거나 실행되지 않은 셀이 있으면 제출본 보존을 중단한다. 검증 도구는 실행 오류·제출 파일·상대 링크·허용 라이브러리와 원본 데이터 파일의 Git 제외를 확인한다.
@@ -377,7 +377,7 @@ SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본�
 
 ## 실제 실행 확인 기록
 
-2026-11-08 실제 검증의 성공 상태를 기록했다. 아래는 테스트 수·종료 성공·검증 상태 요약이며, 전체 분석 출력은 실행 노트북에서 확인할 수 있다. 이 블록은 실행 결과이며 복사 실행할 명령은 앞 절의 PowerShell 블록이다.
+2026-11-08 실제 검증의 성공 상태를 기록했다. 아래는 테스트 수·종료 성공·검증 상태 요약이며, 전체 분석 출력은 실행 노트북에서 확인할 수 있다. 이 블록은 실행 결과이며 복사 실행할 명령은 앞 절의 터미널(zsh/bash) 블록이다.
 
 ```text
 Validation status summary, 2026-11-08 Asia/Seoul
