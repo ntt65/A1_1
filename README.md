@@ -28,8 +28,23 @@ python3.11 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt -r requirements-notebook.txt -r requirements-bonus.txt
 .venv/bin/python -B -m utils.run_checks
 ```
+utils/run_checks.py를 실행해 코드 회귀 테스트(단위 테스트)를 돌리는 명령입니다.
+- 각 부분의 의미는 다음과 같습니다.
+
+    .venv/bin/python: 가상환경(.venv)에 설치된 Python 실행
+    -B: __pycache__(.pyc 캐시 파일)를 생성하지 않음
+    -m utils.run_checks: tests/ 폴더의 전체 단위 테스트(unittest discover -s tests -v) 실행
+
+- 옵션 유무에 따른 차이:
+
+    그냥 실행 (.venv/bin/python -B -m utils.run_checks): 가상 입력 데이터만 쓰는 단위 테스트만 실행하므로 data/raw/hm/ 표본이 없어도 실행할 수 있습니다.
+    --with-sample 추가 (.venv/bin/python -B -m utils.run_checks --with-sample): 단위 테스트 통과 후, 실제 data/raw/hm/ 표본으로 analysis_report.ipynb를 새 커널에서 전체 실행해 data/processed/analysis_report.executed.ipynb로 저장합니다.
 
 검증한 분석 패키지: NumPy 2.4.6, Pandas 3.1.1, Matplotlib 3.11.2, Seaborn 0.13.2. 보너스는 Plotly 7.1.0·narwhals 2.28.0·packaging 26.3을 별도 `requirements-bonus.txt`에 고정했다. Plotly는 인터랙티브 보너스에서만 사용한다. 실행 도구는 Notebook 7.6.4, ipykernel 7.4.0, nbclient 0.11.0, nbformat 5.11.1이다. Python 3.11 환경에서 설치·실행을 확인했다.
+
+표본 데이터 재실행이 필요하면 Kaggle 로그인 후 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data) 규정에 동의하고 [Kaggle 표본 추출 노트북](https://www.kaggle.com/code/ntt6551/a1-1-h-m-sample-extractor/notebook)([로컬 노트북](notebooks/prepare_hm_sample.ipynb))으로 표본 ZIP을 준비한다(자세한 복원 방법은 아래 [비공개 데이터 준비](#비공개-데이터-준비) 참고).
+
+표본 데이터 재실행이 필요하면 Kaggle 로그인 후 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data) 규정에 동의하고 [Kaggle 표본 추출 노트북](https://www.kaggle.com/code/ntt6551/a1-1-h-m-sample-extractor/notebook)([로컬 노트북](notebooks/prepare_hm_sample.ipynb))으로 표본 ZIP을 준비한다(자세한 복원 방법은 아래 [비공개 데이터 준비](#비공개-데이터-준비) 참고).
 
 ## 비공개 데이터 준비
 
@@ -42,6 +57,28 @@ python3.11 -m venv .venv
 파일은 `data/raw/hm/transactions_sample.csv`, `articles_sample.csv`, `sample_manifest.json`, `images/<ID 앞 3자리>/<ID>.jpg`에 복원된다. `data/raw/hm/hm_sample.zip`을 보관하면 `--archive`를 생략할 수 있다. 복원은 구성·추출 기록과 기존 파일 충돌을 검증한다. 개인 Drive 설정이 있으면 SHA-256도 대조한다. 새 환경에는 개인 설정이나 인증 정보를 복사할 필요가 없다.
 
 데이터 출처는 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)다. 사용자 지시에 따라 평가 노트북 `notebooks/analysis_report.ipynb`에는 원본 행·고객/상품 ID·원본 이미지 예시와 실행 결과를 숨기거나 치환하지 않고 저장했다. CSV·전체 이미지·ZIP 자체는 기존 Drive·로컬 보관 방식을 유지한다. 다음 명령으로 같은 원본 실행본을 다시 만들 수 있다.
+
+### Kaggle에서 `hm_sample.zip` 추출·다운로드 절차
+
+1. Kaggle 노트북 오른쪽 사이드바에서 **Session options**를 연다.
+
+   ![Kaggle Session options](docs/pics/kaggle_ssession_option.png)
+
+2. **Internet** 토글을 **Internet on**으로 확인한다.
+
+   ![Kaggle Internet on 설정](docs/pics/kaggle_ssession_internet.png)
+
+3. 상단 툴바의 **Run All**을 눌러 전체 셀을 실행한다.
+
+   ![Kaggle Run All 실행](docs/pics/run_all.png)
+
+4. 오른쪽 **Output** 패널의 `/kaggle/working` 아래에 `hm_sample.zip`이 생성되었는지 확인한다(안 보이면 새로고침 아이콘 클릭).
+
+   ![Kaggle Output hm_sample.zip 확인](docs/pics/kaggle_output.png)
+
+5. `hm_sample.zip`의 메뉴에서 **Download**를 눌러 로컬 `Downloads` 폴더로 내려받은 뒤 위의 `restore_hm_sample.py` 명령으로 복원한다.
+
+   ![Kaggle hm_sample.zip 다운로드](docs/pics/kaggle_download.png)
 
 기존 PC처럼 ZIP이 `data/raw/hm/hm_sample.zip`에 있으면 아래 명령으로 재검증·복원한다. 동일 파일 재실행은 허용하고 다른 내용의 기존 파일은 덮어쓰지 않는다.
 
