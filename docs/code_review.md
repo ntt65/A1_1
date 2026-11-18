@@ -11,16 +11,94 @@
 
 분석 상태와 파이프라인 인터페이스는 [`DataAnalyzer`](../src/pipeline.py#L20) 클래스가 담당하고, 상태에 의존하지 않는 순수 계산·검증 로직은 `utils/` 모듈로 분리되어 있습니다. 노트북은 설정·메서드 호출·결과 해석만 수행합니다.
 
-```text
-Kaggle 표본 추출 (prepare_hm_sample.ipynb)
-  └─▶ 로컬 복원·검증 (scripts/restore_hm_sample.py → data/raw/hm/)
-        └─▶ 메인 분석 노트북 (notebooks/analysis_report.ipynb)
-              ├─▶ 상태·파이프라인 제어: src/pipeline.py (DataAnalyzer)
-              ├─▶ 정제·대치·IQR·RFM: utils/analytics.py
-              ├─▶ 이미지 배치 피처·계측: utils/image_features.py
-              ├─▶ 상관·월별 집계·차트·인사이트: utils/reporting.py
-              └─▶ 코호트·Plotly 보너스: utils/bonus.py
-                    └─▶ 검증·보존: utils/run_checks.py · publish_report.py · repository_checks.py
+### 1-1. 전체 실행 순서도 (Flowchart)
+
+```mermaid
+flowchart TD
+    S0["Step 0. Kaggle 표본 추출 (prepare_hm_sample.ipynb)"] --> R0["로컬 복원·검증 (restore_hm_sample.py -> data/raw/hm/)"]
+    R0 --> S1["Step 1. 설정·manifest 대조 (analysis_report.ipynb)"]
+    S1 --> S2["Step 2. NB_LOAD: load_data -> validate_transactions -> join_products"]
+    S2 --> S3["Step 3. NB_FEATURES: extract_text_features / extract_image_features"]
+    S3 --> S4["Step 4. NB_CLEAN: handle_missing_values (EDA 사본) / clip_outliers"]
+    S4 --> S5["Step 5. NB_RFM: calculate_rfm (원금액) -> profile_segments"]
+    S5 --> S6["Step 6. NB_STATS & NB_PLOTS: summarize / pair_correlation / make_figures / write_insights"]
+    S6 --> S7["Step 7. NB_BONUS & NB_REPRO: cohort_retention / interactive_rfm / profile_jpeg_stages"]
+    S7 --> S8["Step 8. 검증·보존: run_checks -> publish_report -> repository_checks"]
+```
+
+### 1-2. DataAnalyzer 클래스 및 유틸리티 연결도 (Class Diagram)
+
+```mermaid
+classDiagram
+    class DataAnalyzer {
+        +str data_path
+        +DataFrame df
+        +DataFrame products
+        +str product_key
+        +dict join_summary
+        +dict image_batch_info
+        +dict transaction_audit
+        +dict missing_audit
+        +dict outlier_audit
+        +dict rfm_audit
+        +load_data(required_columns, date_columns, dtype)
+        +validate_transactions(customer_col, date_col, amount_col, settings)
+        +join_products(product_path, key, amount_col)
+        +extract_text_features(text_column)
+        +extract_image_features(image_column, image_dir, image_size, batch_size, advanced, histogram_bins)
+        -_extract_image_files(directory, prefix, image_size, batch_size, advanced, histogram_bins)
+        +handle_missing_values(strategy, group_col, columns, eligible)
+        +handle_missing(strategy, group_col, columns, eligible)
+        +detect_outliers(column, threshold)
+        +clip_outliers(column, threshold)
+        +calculate_rfm(customer_col, date_col, amount_col, reference_date, frequency_unit, order_col, split_inactive)
+        +summarize(columns)
+        +profile_segments(rfm)$
+    }
+    class UtilsAnalytics {
+        +clean_transactions()
+        +impute_features()
+        +iqr_limits()
+        +calculate_customer_rfm()
+        +segment_profile()
+    }
+    class UtilsImageFeatures {
+        +prepare_image()
+        +advanced_image_statistics()
+        +extract_product_image_features()
+        +profile_jpeg_stages()
+    }
+    class UtilsReportingAndBonus {
+        +pair_correlation()
+        +monthly_amount()
+        +make_figures()
+        +write_insights()
+        +cohort_retention()
+        +cohort_figure()
+        +interactive_rfm()
+    }
+    DataAnalyzer --> UtilsAnalytics : "정제·대치·IQR·RFM 위임"
+    DataAnalyzer --> UtilsImageFeatures : "상품 이미지 배치 피처 위임"
+```
+
+### 1-3. 메서드별 함수 호출 연결도 (Function Call Graph)
+
+```mermaid
+flowchart LR
+    NB["analysis_report.ipynb"] --> DA["DataAnalyzer (src/pipeline.py)"]
+    NB --> RP1["pair_correlation / monthly_amount"]
+    NB --> RP2["make_figures / write_insights"]
+    NB --> BN["cohort_retention / cohort_figure / interactive_rfm"]
+    NB --> IM4["profile_jpeg_stages"]
+
+    DA -- "validate_transactions()" --> AN1["clean_transactions (utils/analytics.py)"]
+    DA -- "handle_missing_values()" --> AN2["impute_features (utils/analytics.py)"]
+    DA -- "detect_outliers() / clip_outliers()" --> AN3["iqr_limits (utils/analytics.py)"]
+    DA -- "calculate_rfm()" --> AN4["calculate_customer_rfm (utils/analytics.py)"]
+    DA -- "profile_segments()" --> AN5["segment_profile (utils/analytics.py)"]
+    DA -- "_extract_image_files()" --> IM1["extract_product_image_features (utils/image_features.py)"]
+    IM1 --> IM2["prepare_image"]
+    IM1 --> IM3["advanced_image_statistics"]
 ```
 
 | 구분 | 상대 경로 | 핵심 역할 |
