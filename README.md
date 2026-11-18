@@ -52,6 +52,7 @@ utils/run_checks.py를 실행해 코드 회귀 테스트(단위 테스트)를 �
 
 ```bash
 .venv/bin/python scripts/restore_hm_sample.py --archive "$HOME/Downloads/A1_1_hm_sample.zip"
+Verified 203 H&M sample files in /Users/mpeg46551/A1_1/data/raw/hm.
 ```
 
 파일은 `data/raw/hm/transactions_sample.csv`, `articles_sample.csv`, `sample_manifest.json`, `images/<ID 앞 3자리>/<ID>.jpg`에 복원된다. `data/raw/hm/hm_sample.zip`을 보관하면 `--archive`를 생략할 수 있다. 복원은 구성·추출 기록과 기존 파일 충돌을 검증한다. 개인 Drive 설정이 있으면 SHA-256도 대조한다. 새 환경에는 개인 설정이나 인증 정보를 복사할 필요가 없다.
