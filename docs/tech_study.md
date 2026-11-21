@@ -28,6 +28,15 @@
 
 SRC: [src/pipeline.py](../src/pipeline.py)의 DataAnalyzer가 상태와 순서를, [분석 노트북](../notebooks/analysis_report.ipynb)이 실행과 해석을 담당한다.
 
+### EDA(탐색적 데이터 분석)의 4단계 풀이와 코드 연결
+
+EDA는 결론이나 모델을 만들기 전에 **데이터를 먼저 눈으로 확인하고 검증할 가설을 세우는 사전 점검**이다. 이 프로젝트에서는 다음 네 단계가 순서대로 코드에 구현되어 있다.
+
+1. **구조 확인** (*행·열 수와 자료형 확인*): [`DataAnalyzer.load_data()`](../src/pipeline.py#L36)와 [`join_products()`](../src/pipeline.py#L71)로 데이터를 읽은 뒤 [분석 노트북](../notebooks/analysis_report.ipynb)의 `NB_LOAD`에서 `head()`, `info()`, `describe()`로 **8,084행·9열**과 ID·날짜 자료형을 먼저 확인한다.
+2. **결측 확인** (*비어 있는 값의 위치와 원인 파악*): [`extract_image_features()`](../src/pipeline.py#L189) 실행 후 4,705개 상품 중 관측 성공(`ok`) 200개, 원본 누락(`missing`) 9개, 표본 미포함(`not_sampled`) 4,496개를 구분하고 [`handle_missing_values()`](../src/pipeline.py#L129)로 **EDA 사본에만** 대치한다.
+3. **분포 확인** (*값의 쏠림과 극단값 파악*): [`summarize()`](../src/pipeline.py#L177), [`clip_outliers()`](../src/pipeline.py#L156), [`make_figures()`](../utils/reporting.py#L35)로 `price`의 오른쪽 긴 꼬리와 `1.5×IQR` 상한 초과 **212행**을 확인한다.
+4. **관계 확인 → 가설 수립** (*변수 간 연관에서 실험 아이디어 도출*): [`pair_correlation()`](../utils/reporting.py#L8)으로 `Frequency`–`Monetary`(`r = 0.6397`) 등의 선형 연관을 확인한 뒤, [`write_insights()`](../utils/reporting.py#L73)에서 VIP 우선 알림이나 New 추가 구매 유도 같은 **대조 실험 가설**을 만든다.
+
 ## 2. 표와 자료형
 
 | 용어 | 의미·예시·주의점 |
@@ -392,3 +401,33 @@ SRC: [AGENTS.md](../AGENTS.md), [utils/run_checks.py](../utils/run_checks.py), [
 ### 인터랙티브 탐색과 원본 관측
 
 `interactive_rfm`은 Recency·Frequency·Monetary 3축과 세그먼트 색상, 원본 고객ID hover를 가진 Plotly scatter3d를 생성한다. 독립 HTML에 JS를 내장하며 회전·확대·범례 필터를 제공한다. 범례는 화면 표시를 선택하는 기능이고 원본 고객을 제거하지 않는다. Plotly7은 숫자 배열을 이진 표현으로 전송할 수 있으므로 브라우저 검증은 해석된 실제 좌표를 확인한다. 실제1000고객·4그룹과 네트워크 차단 상태의 필터/카메라 조작을 검증했다. Plotly는 이 보너스에서만 import한다. SRC: [보너스 함수](../utils/bonus.py), [독립 HTML](results/bonus/rfm_interactive.html).
+
+## 16. 핵심 약자·수식·비즈니스 맥락 보충
+
+초보 학습자를 위해 프로젝트에서 가장 자주 쓰이는 7가지 핵심 약어와 수식, 비즈니스 적용 맥락을 **정의 → 기술 원리 → 비즈니스 의미** 순서로 정리했다. (기존 `tech_study1.md`에서 중복·구버전 내용을 정리해 통합했다.)
+
+### 핵심 약자 7선 요약표
+
+| 약자 / 용어 | 풀네임 (Full Name) | 프로젝트 내 핵심 역할 및 코드 위치 |
+| --- | --- | --- |
+| **RFM** | Recency, Frequency, Monetary | 최근 구매일·고유 구매일 수·유효 구매 금액 기반 세분화 ([`calculate_rfm`](../src/pipeline.py#L162)) |
+| **OOP** | Object-Oriented Programming | `DataAnalyzer` 클래스 중심의 상태·메서드 캡슐화 ([`DataAnalyzer`](../src/pipeline.py#L20)) |
+| **EDA** | Exploratory Data Analysis | `head()`, `info()`, `describe()`, 시각화 6종으로 구조·결측·분포·관계 파악 |
+| **IQR** | Interquartile Range | 사분위수 범위($Q_3 - Q_1$) 기반 이상치 탐지·EDA 사본 보정 ([`detect_outliers`](../src/pipeline.py#L145)) |
+| **RGB / Mean / Std** | Red-Green-Blue / Mean / Std | 정규화(`0~1`)된 3차원 이미지 픽셀의 밝기(평균)·대비(표준편차) 피처 ([`extract_image_features`](../src/pipeline.py#L189)) |
+| **KPI** | Key Performance Indicator | 캠페인 실행 후 성과를 검증하는 핵심 지표(재구매율, 고객당 마진 등) |
+| **LTV** | Lifetime Value | 한 고객이 유지 기간 동안 기업에 기여하는 생애 총 가치(현재 데이터만으로 단정하지 않음) |
+
+### 수식과 비즈니스 맥락 보충
+
+1. **RGB 픽셀 평균($\mu$)과 표준편차($\sigma$)** — [`extract_product_image_features`](../utils/image_features.py#L64)
+   - $H \times W \times C$ 픽셀을 `0~1` 실수로 정규화한 뒤, **평균($\mu$)**은 이미지 전반의 밝기 톤을, **표준편차($\sigma$, `ddof=0`)**는 밝고 어두운 명암 대비·패턴 퍼짐을 요약한다.
+   $$\mu = \frac{1}{H \cdot W \cdot C} \sum_{h,w,c} I(h,w,c), \qquad \sigma = \sqrt{\frac{1}{H \cdot W \cdot C} \sum_{h,w,c} (I(h,w,c) - \mu)^2}$$
+   - **비즈니스 의미:** 딥러닝 비전 모델 없이도 밝은 배경·대비 등 시각적 요약 피처를 빠르게 추출해 상품군별 분포 탐색에 활용할 수 있다.
+
+2. **2단계 계층적 결측 대치를 쓰는 비즈니스 이유** — [`handle_missing_values`](../src/pipeline.py#L129) → [`impute_features`](../utils/analytics.py#L71)
+   - 고가 아우터 카테고리의 결측치를 양말 등이 섞인 전체 상품 평균으로 채우면 카테고리 고유 특성이 왜곡된다. 따라서 1단계로 `product_type_name` 그룹 평균을 먼저 적용하고, 그룹 전체가 비어 있는 경우에만 2단계로 대치 전 전체 관측 평균(fallback)을 사용한다.
+
+3. **KPI와 LTV 개념** — [`write_insights`](../utils/reporting.py#L73)
+   $$\text{캠페인 재구매율(\%)} = \frac{\text{캠페인 후 재구매 고객 수}}{\text{전체 대상 고객 수}} \times 100, \qquad \text{LTV 개념식} = \text{평균 구매 금액} \times \text{평균 구매 빈도} \times \text{고객 유지 기간}$$
+   - 비즈니스 인사이트는 항상 **(근거: 정량 수치/차트) → (실행: 타겟 세그먼트·액션) → (검증: 대조군 대비 KPI·추가 데이터)** 3단계로 작성해 가설과 검증된 효과를 구분한다.

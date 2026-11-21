@@ -2,7 +2,7 @@
 
 이 문서는 `A1_1` 저장소의 전체 코드 구조와 **실행 순서별 호출 흐름**을 정리한 코드 리뷰 문서입니다. 모든 파일·함수 링크는 GitHub 및 로컬 환경에서 바로 이동할 수 있도록 `docs/` 기준 상대 경로로 작성했습니다.
 
-- 용어·수식·배열 원리 해설: [기술 학습서 (tech_study.md)](tech_study.md) · [핵심 용어·약자 해설 (tech_study1.md)](tech_study1.md)
+- 용어·수식·배열 원리 해설: [기술 학습서 (tech_study.md)](tech_study.md)
 - 프로젝트 실행 및 결과 요약: [README.md](../README.md) · [파일 안내 (index.md)](../index.md) · [평가 Q&A (a1_1_evaluation_qa.md)](a1_1_evaluation_qa.md)
 
 ---
@@ -150,7 +150,7 @@ flowchart LR
 3. **상품 조인** — [`DataAnalyzer.join_products()`](../src/pipeline.py#L71-L119)
    - Pandas가 `NA` 키끼리 조인하는 것을 막기 위해 상품 표의 `null` 키를 먼저 제거하고, 중복 상품 키와 열 이름 충돌을 검사합니다.
    - `validate="many_to_one"`, `sort=False`로 왼쪽 조인을 수행한 뒤 **조인 전후 거래 행 수와 거래 금액 합계 보존**을 검증해 `join_summary`에 남깁니다.
-   - 관련 학습: [tech_study.md §2~3](tech_study.md) · [tech_study1.md §3.1 멀티모달 데이터](tech_study1.md)
+   - 관련 학습: [tech_study.md §2~3·§16](tech_study.md)
 
 ---
 
@@ -161,7 +161,7 @@ flowchart LR
 2. **이미지 배치 피처** — [`DataAnalyzer.extract_image_features()`](../src/pipeline.py#L189-L218) → [`_extract_image_files()`](../src/pipeline.py#L220-L234) → [`extract_product_image_features()`](../utils/image_features.py#L64)
    - [`prepare_image()`](../utils/image_features.py#L11)로 각 상품 이미지를 `32×32` RGB `float32`(0~1 범위)로 정규화하고, `batch_size=32` 단위로 쌓아 `(N, H, W, C)`의 `axis=(1, 2, 3)` 기준 평균(`image_mean`)과 표준편차(`image_std`, `ddof=0`)를 계산합니다.
    - `advanced=True, histogram_bins=8`일 때 [`advanced_image_statistics()`](../utils/image_features.py#L38)가 동일 배치에서 8구간 정규화 밝기 히스토그램(`image_hist_0`~`7`)과 인접 픽셀 절대차 평균(`image_edge_mean`)을 함께 계산합니다.
-   - 관련 학습: [tech_study.md §4~5](tech_study.md) · [tech_study1.md §2.5·§3.2](tech_study1.md)
+   - 관련 학습: [tech_study.md §4~5·§16](tech_study.md)
 
 ---
 
@@ -172,7 +172,7 @@ flowchart LR
    - `eligible=False`(`not_sampled`) 상품과 기존 관측값은 건드리지 않고, 결측 행만 `product_type_name` 그룹 평균 → 대치 전 전체 관측 평균 순으로 채운 뒤 `missing_audit`에 기록합니다.
 2. **IQR 이상치 탐지·보정** — [`DataAnalyzer.detect_outliers()`](../src/pipeline.py#L145-L154) · [`clip_outliers()`](../src/pipeline.py#L156-L160) → [`iqr_limits()`](../utils/analytics.py#L117)
    - `Q1 - 1.5×IQR`, `Q3 + 1.5×IQR` 경계 밖 행을 탐지하고 `outlier_audit`에 기록합니다. `clip_outliers()`는 `self.df["price"]` 원금액을 그대로 보존한 채 EDA 분포 비교용 `clipped_amount` Series만 반환합니다.
-   - 관련 학습: [tech_study.md §6~7](tech_study.md) · [tech_study1.md §2.4·§3.3](tech_study1.md)
+   - 관련 학습: [tech_study.md §6~7·§16](tech_study.md)
 
 ---
 
@@ -182,7 +182,7 @@ flowchart LR
   - 보정되지 않은 **유효 거래 원금액**과 `manifest["reference_date"]`(`2020-08-31`) 기준으로 고객별 Recency(경과일), Frequency(고유 구매일 수), Monetary(원금액 합계)를 계산합니다.
   - R은 내림차순, F·M은 오름차순 평균 순위 비율 `(평균 순위 - 0.5) / 고객 수`로 1~4점을 부여하고, `VIP → Loyal → New → Churned → Potential` 순서로 세그먼트를 배정합니다.
 - [`DataAnalyzer.profile_segments()`](../src/pipeline.py#L184-L187) → [`segment_profile()`](../utils/analytics.py#L171)로 세그먼트별 고객 수·비중·중앙값·금액 비중을 요약합니다.
-- 관련 학습: [tech_study.md §9](tech_study.md) · [tech_study1.md §2.1·§4.1~4.2](tech_study1.md)
+- 관련 학습: [tech_study.md §9](tech_study.md)
 
 ---
 
@@ -192,7 +192,7 @@ flowchart LR
    - 상품 단위(`image_mean`–`image_std`, 관측 200상품)와 고객 단위(`Frequency`–`Monetary`, 1,000명)를 분리해 Pearson 상관계수를 계산합니다.
 2. **월별 집계·차트 6종·인사이트** — [`monthly_amount()`](../utils/reporting.py#L19) · [`make_figures()`](../utils/reporting.py#L35) · [`write_insights()`](../utils/reporting.py#L73)
    - 완전한 세 달(`2020-06`, `2020-07`, `2020-08`) 금액 합계가 RFM 입력 총액과 일치하는지 확인하고, 히스토그램·IQR 전후 박스플롯·세그먼트 막대·RFM 히트맵·이미지 산점도·월별 라인차트를 출력·저장합니다.
-   - 관련 학습: [tech_study.md §8·§10](tech_study.md) · [tech_study1.md §3.4·§4.3](tech_study1.md)
+   - 관련 학습: [tech_study.md §8·§10·§16](tech_study.md)
 
 ---
 
