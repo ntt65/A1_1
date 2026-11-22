@@ -488,29 +488,35 @@ Original stdout is private. No notebook rows or identifiers are copied here.
 
 `NB_PLOTS`의 `utils/reporting.py::make_figures`가 그림을 출력한다. 입력 단위는 `01_histogram.png`·`02_boxplot.png`가 거래 상품 행, `03_bar.png`·`04_heatmap.png`가 고객, `05_scatter.png`가 이미지 관측 상품, `06_line.png`가 달이다. 박스플롯의 원금액과 EDA 사본은 `NB_CLEAN`의 `DataAnalyzer.clip_outliers()`에서 준비한다.
 
-**1. 거래금액 히스토그램:** 값이 집중된 구간과 긴 꼬리를 본다. 원본 금액을 사용한다.
+**1. 거래금액 히스토그램:** 값이 집중된 구간과 긴 꼬리를 본다. 원본 금액을 사용하며, 오른쪽으로 긴 비대칭 분포(왜도 `+1.554`)를 눈으로 확인해 평균과 중앙값을 함께 보고 IQR 기준을 선택하는 출발점으로 삼는다.
 
-![거래금액 히스토그램](docs/results/figures/01_histogram.png)
+![거래금액 히스토그램](docs/results/figures/01_histogram.png)  
+*▲ 그림 1. 거래금액 히스토그램 (`01_histogram.png`)*
 
-**2. IQR 전후 박스플롯.** 원래 IQR 경계 밖 212행을 EDA 사본에서 보정했다. 원금액과 보정 사본에 동일한 금액 축을 적용했다.
+**2. IQR 전후 박스플롯.** 원래 IQR 경계 밖 212행을 EDA 사본에서 보정했다. 원금액과 보정 사본에 동일한 금액 축을 적용했다. 클리핑 값을 매출·RFM에 쓰면 실제 소비가 왜곡되므로, 여기서는 사본의 분포·분산 안정화(`−17.21%`) 효과를 비교하는 용도로만 사용한다.
 
-![동일 금액의 IQR 보정 전후 요약](docs/results/figures/02_boxplot.png)
+![동일 금액의 IQR 보정 전후 요약](docs/results/figures/02_boxplot.png)  
+*▲ 그림 2. IQR 보정 전후 박스플롯 (`02_boxplot.png`)*
 
-**3. 세그먼트 막대그래프:** 고객 단위 그룹 규모다. 상품 구매 행 수와 구분한다.
+**3. 세그먼트 막대그래프:** 클리핑 사본이 아닌 **원금액(`Raw`)**으로 RFM을 계산한 고객 1,000명 단위 그룹 규모다. 상품 구매 행 수와 구분한다.
 
-![고객 세그먼트별 인원](docs/results/figures/03_bar.png)
+![고객 세그먼트별 인원](docs/results/figures/03_bar.png)  
+*▲ 그림 3. 고객 세그먼트별 인원 막대그래프 (`03_bar.png`)*
 
-**4. RFM 상관 히트맵:** 고객 지표의 선형 연관을 본다. 상관은 캠페인 효과·인과를 증명하지 않는다.
+**4. RFM 상관 히트맵:** 고객 1,000명의 `Recency`, `Frequency`, `Monetary` 지표 간 선형 상관 행렬(`−1~1`)을 본다. `Frequency`–`Monetary`(`0.64`) 등 동반 경향을 요약하며 캠페인 효과·인과를 증명하지 않는다.
 
-![고객 RFM 상관 히트맵](docs/results/figures/04_heatmap.png)
+![고객 RFM 상관 히트맵](docs/results/figures/04_heatmap.png)  
+*▲ 그림 4. 고객 RFM 상관 히트맵 (`04_heatmap.png`)*
 
-**5. 이미지 통계 산점도:** 이미지를 실제로 읽은 상품 각각의 평균·표준편차를 점으로 표시한다. 임의 구간화나 점 제거를 하지 않는다. 표본에 없는 상품으로 일반화하지 않는다.
+**5. 이미지 통계 산점도:** 이미지를 실제로 읽은 200개 상품 각각의 평균·표준편차를 점으로 표시한다. `(0, 0)`이나 `(1, 0)`에 뚝 튀는 깨진/빈 이미지 없이 매끈한 곡선을 이루어 정상 추출을 확인할 수 있다. 밝은 배경·촬영 조건을 반영한 요약이므로 상품 질감이나 매출 원인으로 해석하지 않고, 표본에 없는 상품으로 일반화하지 않는다.
 
-![관측 상품별 이미지 통계 산점도](docs/results/figures/05_scatter.png)
+![관측 상품별 이미지 통계 산점도](docs/results/figures/05_scatter.png)  
+*▲ 그림 5. 관측 상품 이미지 통계 산점도 (`05_scatter.png`)*
 
-**6. 월별 금액 라인차트:** 관측 범위의 완전한 세 달을 표시하고 거래·RFM 합계와 대조한다.
+**6. 월별 금액 라인차트:** 관측 범위의 완전한 세 달을 표시하고 거래·RFM 합계(`202.212746`)와 일치하는지 교차 검증한다. 선택 고객 1,000명의 기간 내 관측이므로 전체 회사 매출 추이로 일반화하지 않고 표본 선택·계절성 한계를 함께 확인한다.
 
-![완전한 월의 표본 금액 합계](docs/results/figures/06_line.png)
+![완전한 월의 표본 금액 합계](docs/results/figures/06_line.png)  
+*▲ 그림 6. 월별 구매금액 합계 라인차트 (`06_line.png`)*
 
 | 월 | 구매금액 합계·원본 단위 |
 | --- | ---: |
