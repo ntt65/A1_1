@@ -101,6 +101,19 @@ flowchart LR
     IM1 --> IM3["advanced_image_statistics"]
 ```
 
+### 1-4. `DataAnalyzer` 핵심 메서드별 설계 포인트 요약
+
+실제 [`src/pipeline.py`](../src/pipeline.py#L20)의 구현 기준으로 주요 메서드의 설계 의도는 다음과 같습니다.
+
+| 메서드 (실제 시그니처) | 핵심 설계 포인트 |
+| --- | --- |
+| [`load_data(*, required_columns=(), date_columns=(), dtype=None)`](../src/pipeline.py#L36) | `customer_id`·`article_id`·`sales_channel_id`를 `string`으로 읽어 선행 `0`을 보존하고, 재로드 시 기존 감사(`*_audit`) 상태를 초기화합니다. |
+| [`extract_image_features(image_column="image", *, image_dir=None, ...)`](../src/pipeline.py#L189) | OpenCV·딥러닝 없이 순수 NumPy 축 연산(`axis=(1,2,3)`)으로 `image_mean`, `image_std`를 추출합니다(파일 입력 시 상품별 1회만 계산 후 매핑). |
+| [`extract_text_features(text_column)`](../src/pipeline.py#L236) | 원문을 보존한 채 결측만 빈 문자열로 취급해 `{text_column}_length`, `{text_column}_word_count`를 생성합니다. |
+| [`handle_missing_values(strategy="group_mean", group_col=None, ...)`](../src/pipeline.py#L129) | 1단계 그룹 평균 → 2단계 전체 평균 fallback 대치를 수행하며, 호환 별칭 [`handle_missing()`](../src/pipeline.py#L141)을 함께 제공합니다. |
+| [`detect_outliers(column, threshold=1.5)`](../src/pipeline.py#L145) / [`clip_outliers(...)`](../src/pipeline.py#L156) | `IQR = Q3 - Q1` 기준 불리언 마스크를 반환하고, 원금액(`self.df`)은 보존한 채 보정된 EDA 사본 `Series`만 별도 반환합니다. |
+| [`calculate_rfm(customer_col, date_col, amount_col, ...)`](../src/pipeline.py#L162) | 평균 순위 기반 1~4점과 우선순위 규칙(`np.select`)으로 `VIP`, `Loyal`, `New`, `Churned`, `Potential` 5개 세그먼트를 산출합니다. |
+
 | 구분 | 상대 경로 | 핵심 역할 |
 | --- | --- | --- |
 | 표본 추출 | [notebooks/prepare_hm_sample.ipynb](../notebooks/prepare_hm_sample.ipynb) | Kaggle `/kaggle/input`에서 기간·고객·이미지 표본만 청크 추출해 `hm_sample.zip` 생성 |
