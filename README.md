@@ -18,48 +18,52 @@
 
 - **업태 배경(H&B)과 적용 데이터:** **H&B**는 Health & Beauty(헬스 앤 뷰티)의 약자로, 의약외품·건강기능식품(Health)과 화장품·미용용품(Beauty)을 중심으로 생활용품·식품 등을 함께 판매하는 드러그스토어(Drugstore) 형태의 소매 유통 업태를 뜻합니다. 본 미션은 이러한 이커머스 플랫폼의 상품명(텍스트), 가격(수치), 카테고리(범주), 구매일(날짜), 상품 이미지(배열) 등 [**멀티모달 데이터**](docs/tech_study.md#1-미션-전체의-구조)를 통합 분석하는 과제이며, 이 저장소에서는 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data) 표본 데이터를 사용해 전체 파이프라인을 구현·검증했습니다.
 - **핵심 과제 3가지:**
-  1. **[OOP (Object-Oriented Programming · 객체지향 프로그래밍)](docs/tech_study.md#12-pythonoop라이브러리와-실행) 파이프라인:** [멀티모달 데이터](docs/tech_study.md#1-미션-전체의-구조)(수치 + 텍스트 + 이미지 배열)를 [NumPy 벡터 연산](docs/tech_study.md#4-numpy-배열벡터화메모리)으로 통합 처리하는 [`DataAnalyzer`](src/pipeline.py#L20) 클래스를 구축한다([소스 구조](#소스-구조와-실행-흐름)).
-  2. [**완전한 EDA**](docs/tech_study.md#eda탐색적-데이터-분석의-4단계-풀이와-코드-연결): [IQR 이상치 탐지](#iqr의-통계적-필요성과-한계), [그룹별 결측치 대치](utils/analytics.py#L71), [기술통계·상관](#실제-실행-결과와-기술통계) 및 [필수 차트 6종 시각화](#필수-시각화-6종)를 수행한다([실행 노트북](notebooks/analysis_report.ipynb)).
-  3. [**RFM 세분화 및 전략**](docs/tech_study.md#9-rfm점수세분화): [RFM 분석·고객 그룹](#실제-고객-그룹-요약)으로 고객을 4개 이상 세그먼트로 분류하고, 데이터 근거 기반의 [비즈니스 인사이트 3건 이상](#비즈니스-인사이트)을 제안한다([실행 노트북](notebooks/analysis_report.ipynb)).
+  1. **[OOP (Object-Oriented Programming · 객체지향 프로그래밍)](docs/tech_study.md#12-pythonoop라이브러리와-실행) 파이프라인**
+     - [멀티모달 데이터](docs/tech_study.md#1-미션-전체의-구조)(수치 + 텍스트 + 이미지 배열)를 [NumPy 벡터 연산](docs/tech_study.md#4-numpy-배열벡터화메모리)으로 통합 처리
+     - [`DataAnalyzer`](src/pipeline.py#L20) 클래스 구축 ([소스 구조](#소스-구조와-실행-흐름))
+  2. [**완전한 EDA**](docs/tech_study.md#eda탐색적-데이터-분석의-4단계-풀이와-코드-연결) ([실행 노트북](notebooks/analysis_report.ipynb))
+     - [IQR 이상치 탐지](#iqr의-통계적-필요성과-한계)
+     - [그룹별 결측치 대치](utils/analytics.py#L71)
+     - [기술통계·상관 분석](#실제-실행-결과와-기술통계)
+     - [필수 차트 6종 시각화](#필수-시각화-6종)
+  3. [**RFM 세분화 및 전략**](docs/tech_study.md#9-rfm점수세분화) ([실행 노트북](notebooks/analysis_report.ipynb))
+     - [RFM 분석·고객 그룹](#실제-고객-그룹-요약)으로 고객을 4개 이상 세그먼트로 분류
+     - 데이터 근거 기반의 [비즈니스 인사이트 3건 이상](#비즈니스-인사이트) 제안
 - **학습·달성 목표 5가지:** NumPy 반복문 없는 벡터 연산 설명, 이미지 평균·표준편차 수치 피처 변환 원리 이해, IQR 이상치 탐지 구현·설명, RFM 기반 고객 세분화 및 전략 제안, `Class` 기반 재사용 파이프라인 설계.
 
 ### 기능 구현 요약
 
-#### 1. 데이터 로드 · 정제 · 조인
+#### 과제 1. OOP 파이프라인 구축 & 멀티모달 피처 통합
 - **데이터 로드**: ID 문자열(`string`) 선행 `0` 보존 및 날짜 파싱 — [`DataAnalyzer.load_data`](src/pipeline.py#L36)
 - **거래 정제 (파이프라인)**: 유효 거래 필터링 및 `transaction_audit` 상태 갱신 — [`DataAnalyzer.validate_transactions`](src/pipeline.py#L121)
 - **거래 정제 (공용 함수)**: 고객 누락·날짜 오류·주문·금액 오류 상호 배타 집계 — [`clean_transactions`](utils/analytics.py#L7)
 - **상품 다대일 조인**: null·중복 키 검증 및 조인 전후 거래 행 수·금액 합계 보존 — [`DataAnalyzer.join_products`](src/pipeline.py#L71)
-
-#### 2. 멀티모달 피처 엔지니어링 (텍스트 · 이미지)
 - **텍스트 피처 추출**: 상품명 원문 보존 및 글자 수·단어 수 파생 열 생성 — [`DataAnalyzer.extract_text_features`](src/pipeline.py#L236)
 - **이미지 피처 추출 (진입점)**: 인메모리 배열 또는 디스크 이미지 폴더 분기 처리 — [`DataAnalyzer.extract_image_features`](src/pipeline.py#L189)
 - **이미지 피처 매핑 (내부)**: 상품 단위 이미지 피처를 거래 표에 매핑 — [`DataAnalyzer._extract_image_files`](src/pipeline.py#L220)
 - **이미지 리사이즈·정규화**: 32×32 [RGB (Red-Green-Blue · 적녹청 색상 채널)](docs/tech_study.md#5-이미지와-텍스트-피처) `float32` (`0~1`) 변환 — [`prepare_image`](utils/image_features.py#L11)
 - **이미지 배치 통계 계산**: 상품별 1회 읽기 및 배치 `(N,H,W,C)` `mean`/`std` 산출 — [`extract_product_image_features`](utils/image_features.py#L64)
 
-#### 3. 결측치 대치 · IQR 이상치 처리
+#### 과제 2. 완전한 EDA (결측 대치 · IQR · 통계 · 시각화 6종)
 - **결측치 대치 (파이프라인)**: [EDA (Exploratory Data Analysis · 탐색적 데이터 분석)](docs/tech_study.md#eda탐색적-데이터-분석의-4단계-풀이와-코드-연결) 사본 대치 및 `missing_audit` 갱신 — [`DataAnalyzer.handle_missing_values`](src/pipeline.py#L129)
 - **결측치 대치 (호환 별칭)**: 평가 호환 호출명(`handle_missing`) 위임 연결 — [`DataAnalyzer.handle_missing`](src/pipeline.py#L141)
 - **결측치 대치 (공용 함수)**: `product_type_name` 그룹 평균 → 전체 평균 fallback 대치 — [`impute_features`](utils/analytics.py#L71)
 - **이상치 경계 계산**: 사분위수(`Q1`, `Q3`) 기반 `1.5×IQR` 하한·상한 산출 — [`iqr_limits`](utils/analytics.py#L117)
 - **이상치 탐지**: 원금액 보존하며 IQR 경계 밖 불리언 마스크 반환 — [`DataAnalyzer.detect_outliers`](src/pipeline.py#L145)
 - **이상치 보정**: 분포 비교용 EDA 사본 `Series` 클리핑 반환 — [`DataAnalyzer.clip_outliers`](src/pipeline.py#L156)
-
-#### 4. 기술통계 · 상관 · 필수 시각화 6종
 - **기술통계 요약**: 주요 수치 열 건수·평균·중앙값·표준편차·사분위수 요약 — [`DataAnalyzer.summarize`](src/pipeline.py#L177)
 - **상관관계 계산**: 상품·고객 분석 단위별 완전 관측 쌍 Pearson 상관 산출 — [`pair_correlation`](utils/reporting.py#L8)
 - **월별 매출 집계**: 관찰 기간 내 완전한 월별 원금액 합계 산출 — [`monthly_amount`](utils/reporting.py#L19)
 - **필수 차트 6종 생성**: 히스토그램·박스플롯·막대·히트맵·산점도·라인차트 생성 — [`make_figures`](utils/reporting.py#L35)
 
-#### 5. RFM 고객 세분화 · 비즈니스 인사이트
+#### 과제 3. RFM 고객 세분화 · 비즈니스 인사이트
 - **RFM 계산 (파이프라인)**: 원금액 기준 고객 RFM 호출 및 `rfm_audit` 기록 — [`DataAnalyzer.calculate_rfm`](src/pipeline.py#L162)
 - **RFM 계산 (공용 함수)**: 평균 순위 기반 R·F·M 1~4점 및 5대 세그먼트 분류 — [`calculate_customer_rfm`](utils/analytics.py#L128)
 - **세그먼트 요약 (파이프라인)**: 고객 RFM 표 요약 정적 메서드 — [`DataAnalyzer.profile_segments`](src/pipeline.py#L184)
 - **세그먼트 요약 (공용 함수)**: 그룹별 고객 수·비중·중앙값·금액 비중 집계 — [`segment_profile`](utils/analytics.py#L171)
 - **비즈니스 인사이트 작성**: `(근거)-(실행)-(검증)` 구조의 대조 실험 가설 3건 생성 — [`write_insights`](utils/reporting.py#L73)
 
-#### 6. 보너스 3종 (선택 구현)
+#### 보너스. 선택 과제 3종
 - **보너스 ① 이미지 고급 피처**: 8구간 정규화 밝기 히스토그램 및 평균 엣지 강도 계산 — [`advanced_image_statistics`](utils/image_features.py#L38)
 - **보너스 ② 코호트 집계**: 첫 관찰 구매월 기준 월별 활동 고객 수·비율 산출 — [`cohort_retention`](utils/bonus.py#L9)
 - **보너스 ② 코호트 히트맵**: 코호트 활동 비율 시각화 차트 생성 — [`cohort_figure`](utils/bonus.py#L44)
