@@ -177,6 +177,35 @@ SRC: [src/pipeline.py](../src/pipeline.py)의 `extract_text_features`, `extract_
 
 SRC: [utils/analytics.py](../utils/analytics.py)의 `clean_transactions`, `impute_features`; [tests/test_analytics.py](../tests/test_analytics.py).
 
+### 계층적 카테고리 그룹 결측치 대치(Hierarchical Imputation)와 분산 보존 원리
+
+#### 1. 결측치 대치 전략 개요
+* **문제 배경:** 수치형 거래·상품 피처에 결측치(`NaN`)가 발생했을 때 행을 일괄 삭제(Drop)하면 표본 손실과 선택 편향이 발생하며, 반대로 전체 데이터셋의 단일 평균(Global Mean)으로 일괄 대치하면 모든 결측치가 하나의 평균으로 몰려 **표본분산이 과도하게 축소(Variance Shrinkage)되고 카테고리별 고유 특성이 소실**된다.
+* **해결 구조 (2단계 계층적 대치 + 미표본 이미지 격리):**
+  1. **1단계 — 동일 카테고리 그룹 평균 우선 대치:** 상품군(`product_type_name`)별로 그룹화하여 해당 그룹 내부의 관측 평균으로 결측치를 우선 대치한다.
+  2. **2단계 — 전체 평균 폴백(Global Mean Fallback):** 특정 희소 카테고리의 모든 행이 결측이어서 그룹 평균 자체를 산출할 수 없는 경우(`NaN` 잔존)에 한해 대치 전 전체 관측 평균으로 2차 보완한다.
+  3. **미표본 이미지 피처 격리(`eligible=False`):** 이미지 표본에 포함되지 않은 상품(`not_sampled` `4,496`개)의 픽셀 통계량(`image_mean`, `image_std`)은 인위적 평균값으로 채우지 않고 `eligible=False`로 관측 대상에서 격리하여 합성 노이즈 유입을 차단한다.
+
+#### 2. 통계적 분산 보존 원리 (총분산 분해 관점)
+* 전체 데이터의 총분산(Total Variance)은 **집단 내 분산(Within-Group Variance)**과 **집단 간 분산(Between-Group Variance)**의 합으로 구성된다.
+  $$\text{Var}(X) = \mathbb{E}[\text{Var}(X \mid G)] + \text{Var}(\mathbb{E}[X \mid G])$$
+* **단일 전체 평균($\mu_{\text{global}}$) 대치 시:** 결측치가 모두 $\mu_{\text{global}}$로 치환되므로 집단 내 분산뿐 아니라 **집단 간 분산($\text{Var}(\mathbb{E}[X \mid G])$)까지 0으로 붕괴**하여 전체 분포가 인위적으로 뾰족해진다.
+* **카테고리 그룹 평균($\mu_g$) 대치 시:** 각 상품군 고유의 평균 위치($\mu_g$)가 유지되므로 **집단 간 분산이 보존**되며, 전체 분포의 왜곡과 분산 축소 폭을 최소한으로 통제할 수 있다.
+
+#### 3. 프로젝트(`A1_1`) 실측 검증 수치
+
+| 검증 항목 | 실측 수치 | 비고 |
+| :--- | :--- | :--- |
+| **보정 전 표본분산** | `0.010424` | `image_mean` 대치 적용 직전(`NB_CLEAN`, 관측 상품 200개 기준) |
+| **보정 후 표본분산** | `0.010130` | 누락 9건에 2단계 계층적 그룹 평균 대치 적용 후(209개 기준) |
+| **분산 변화율** | **`-2.82%`** | $(0.010130 - 0.010424) / 0.010424 \times 100$ (극단적 분산 붕괴 억제) |
+| **대치 대상 / 표본 미포함 격리** | `209`개(`ok` 200 + `missing` 9) / `4,496`개 | 전체 상품 `4,705`개 중 미표본(`not_sampled`) `4,496`개는 평균 대치 제외 |
+
+#### 4. 구현 위치 및 설계 패턴
+* **구현 위치:** [`DataAnalyzer.handle_missing_values`](../src/pipeline.py#L129) · [`DataAnalyzer.handle_missing`](../src/pipeline.py#L141) → [`impute_features`](../utils/analytics.py#L71)
+* **호환성 설계 (Bridge / 위임 패턴):** 평가 인터페이스 호환용 메서드(`handle_missing`)가 내부 단일 핵심 로직(`handle_missing_values`)을 호출하도록 위임하여 코드 중복을 제거하고 동일한 결측치 처리 결과를 보장한다.
+* **시계열 모델 확장 시 주의사항:** 예측 모델 학습 단계에서는 미래 정보 역참조(Data Leakage)를 방지하기 위해 반드시 기준 시점 $T$ 이전 학습 데이터(Train Window)에서만 그룹 평균을 산출(`fit`)하고, 검증·테스트 구간에는 해당 통계량을 적용(`transform`)해야 한다.
+
 ## 7. 통계·이상치·상관
 
 | 용어 | 뜻과 해석 |
