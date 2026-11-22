@@ -491,32 +491,38 @@ Original stdout is private. No notebook rows or identifiers are copied here.
 **1. 거래금액 히스토그램:** 값이 집중된 구간과 긴 꼬리를 본다. 원본 금액을 사용하며, 오른쪽으로 긴 비대칭 분포(왜도 `+1.554`)를 눈으로 확인해 평균과 중앙값을 함께 보고 IQR 기준을 선택하는 출발점으로 삼는다.
 
 ![거래금액 히스토그램](docs/results/figures/01_histogram.png)  
-*▲ 그림 1. 거래금액 히스토그램 (`01_histogram.png`)*
+*▲ 그림 1. 거래금액 히스토그램 (`01_histogram.png`)*  
+*X축: `Amount (source units)`(거래금액 원값 구간) · Y축: `Transaction rows`(거래 상품 행 건수)*
 
 **2. IQR 전후 박스플롯.** 원래 IQR 경계 밖 212행을 EDA 사본에서 보정했다. 원금액과 보정 사본에 동일한 금액 축을 적용했다. 클리핑 값을 매출·RFM에 쓰면 실제 소비가 왜곡되므로, 여기서는 사본의 분포·분산 안정화(`−17.21%`) 효과를 비교하는 용도로만 사용한다.
 
 ![동일 금액의 IQR 보정 전후 요약](docs/results/figures/02_boxplot.png)  
-*▲ 그림 2. IQR 보정 전후 박스플롯 (`02_boxplot.png`)*
+*▲ 그림 2. IQR 보정 전후 박스플롯 (`02_boxplot.png`)*  
+*X축: `EDA treatment`(`Raw` 원금액 vs `IQR clipped` 사본) · Y축: `Amount (source units)`(동일 금액 축)*
 
 **3. 세그먼트 막대그래프:** 클리핑 사본이 아닌 **원금액(`Raw`)**으로 RFM을 계산한 고객 1,000명 단위 그룹 규모다. 상품 구매 행 수와 구분한다.
 
 ![고객 세그먼트별 인원](docs/results/figures/03_bar.png)  
-*▲ 그림 3. 고객 세그먼트별 인원 막대그래프 (`03_bar.png`)*
+*▲ 그림 3. 고객 세그먼트별 인원 막대그래프 (`03_bar.png`)*  
+*X축: `Segment`(RFM 세그먼트) · Y축: `Customers`(고객 인원수)*
 
 **4. RFM 상관 히트맵:** 고객 1,000명의 `Recency`, `Frequency`, `Monetary` 지표 간 선형 상관 행렬(`−1~1`)을 본다. `Frequency`–`Monetary`(`0.64`) 등 동반 경향을 요약하며 캠페인 효과·인과를 증명하지 않는다.
 
 ![고객 RFM 상관 히트맵](docs/results/figures/04_heatmap.png)  
-*▲ 그림 4. 고객 RFM 상관 히트맵 (`04_heatmap.png`)*
+*▲ 그림 4. 고객 RFM 상관 히트맵 (`04_heatmap.png`)*  
+*X·Y축: `RFM metric`(`Recency`, `Frequency`, `Monetary` 지표 쌍)*
 
 **5. 이미지 통계 산점도:** 이미지를 실제로 읽은 200개 상품 각각의 평균·표준편차를 점으로 표시한다. `(0, 0)`이나 `(1, 0)`에 뚝 튀는 깨진/빈 이미지 없이 매끈한 곡선을 이루어 정상 추출을 확인할 수 있다. 밝은 배경·촬영 조건을 반영한 요약이므로 상품 질감이나 매출 원인으로 해석하지 않고, 표본에 없는 상품으로 일반화하지 않는다.
 
 ![관측 상품별 이미지 통계 산점도](docs/results/figures/05_scatter.png)  
-*▲ 그림 5. 관측 상품 이미지 통계 산점도 (`05_scatter.png`)*
+*▲ 그림 5. 관측 상품 이미지 통계 산점도 (`05_scatter.png`)*  
+*X축: `Pixel mean (0–1)`(평균 밝기) · Y축: `Pixel standard deviation (0–1)`(픽셀 표준편차·대비)*
 
 **6. 월별 금액 라인차트:** 관측 범위의 완전한 세 달을 표시하고 거래·RFM 합계(`202.212746`)와 일치하는지 교차 검증한다. 선택 고객 1,000명의 기간 내 관측이므로 전체 회사 매출 추이로 일반화하지 않고 표본 선택·계절성 한계를 함께 확인한다.
 
 ![완전한 월의 표본 금액 합계](docs/results/figures/06_line.png)  
-*▲ 그림 6. 월별 구매금액 합계 라인차트 (`06_line.png`)*
+*▲ 그림 6. 월별 구매금액 합계 라인차트 (`06_line.png`)*  
+*X축: `Complete month`(완전한 연-월) · Y축: `Amount (source units)`(월별 구매금액 합계)*
 
 | 월 | 구매금액 합계·원본 단위 |
 | --- | ---: |
@@ -597,6 +603,12 @@ Original stdout is private. No notebook rows or identifiers are copied here.
 [인터랙티브 RFM HTML](docs/results/bonus/rfm_interactive.html)을 **내려받거나 로컬 파일로 브라우저에서 연다**. GitHub 파일 미리보기는 JavaScript 실행을 지원하지 않는다. 고객 **1,000명·4개 그룹**의 실제 Recency·Frequency·Monetary와 원본 고객 ID를 유지한다. 마우스 드래그로 3D 회전, 스크롤로 확대, 점의 hover로 고객 ID·지표 확인, 범례로 그룹 선택을 할 수 있다. Plotly JS를 내장해 별도 [CDN (Content Delivery Network · 콘텐츠 전송 네트워크)](docs/tech_study.md#14-선택-보너스예측-확장-용어) 연결이 필요 없다.
 
 실제 브라우저에서 네트워크를 차단한 채 전체 점 1,000개·범례 필터·3D 카메라 조작을 확인했다. 화면에서 그룹을 선택해도 원본 관측을 삭제하지 않는다. 이미지·코호트·인터랙티브 결과는 앞의 재생성 명령으로 갱신된다. SRC: [이미지 배치](utils/image_features.py), [보너스 함수](utils/bonus.py), [검증 입력](tests/test_bonus.py), [실행 노트북](notebooks/analysis_report.ipynb).
+
+저장소 루트(`A1_1/`)에서 아래 명령을 실행하면 macOS 브라우저에서 바로 열 수 있다(하위 폴더인 `utils/` 등에서는 `open ../docs/results/bonus/rfm_interactive.html` 사용).
+
+```bash
+open docs/results/bonus/rfm_interactive.html
+```
 
 ### 실제 실행 화면과 기능 확인
 
