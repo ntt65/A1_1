@@ -10,6 +10,7 @@
 | [docs/a1_1_mission.md](docs/a1_1_mission.md) | 미션 원문 |
 | [docs/a1_1_eval.md](docs/a1_1_eval.md) | 평가 기준 Markdown 원본 |
 | [2차 네이토 평가](docs/naito_eval_result2.md) · [최종 네이토 평가](docs/naito_eval_result.md) | 17/19에서 19/19로 변경. 1차 이력과 대응은 [통합 계획](docs/a1_1_detailed_plan.md#네이토-평가-보완-계획), 권고 반영은 [체크표](docs/a1_1_checklist.md#최종-권고와-자체-점검) |
+| [docs/mission-eval괴리해결법.md](docs/mission-eval괴리해결법.md) | 미션·평가 문서 괴리 진단, 평가 19문항 대응표, 정리 순서 |
 | [docs/a1_1_eval_review.md](docs/a1_1_eval_review.md) | PDF·Markdown 자료 대조와 검토 의견 |
 | [docs/a1_1_evaluation_qa.md](docs/a1_1_evaluation_qa.md) | 평가 문항 19개 Q&A·SRC·시연·준비 계획 |
 | [미션 설명 PPTX](docs/presentation/a1_1_mission_explanation.pptx) · [PDF](docs/presentation/a1_1_mission_explanation.pdf) | 미션 설명 22장·실제 결과·수식·발표자 노트 |

@@ -17,6 +17,7 @@
 | 검증 실행·현재 가상환경 커널·출력 위치 | `utils/run_checks.py::main/run_notebook` | 회귀 검증·실행된 로컬 노트북·README |
 | 허용 라이브러리·설치 환경 | `requirements.txt`·README | 미션 원문·평가 원문·P0 |
 | 데이터 공개·Git 제외 | `.gitignore`·`AGENTS.md` | A1·F2·README·Git 노트북 출력 |
+| 미션 요구사항과 평가문항의 대응·설명 순서 | `docs/mission-eval괴리해결법.md` 대응표 | 평가 Q&A·README 평가 문항별 결과 위치·미션 문서 |
 | 작업 순서·계산 기준·평가·QA 변경 | `docs/a1_1_detailed_plan.md` | 체크표·원문과의 일치 |
 | 완료 상태·실행 증거 확인 | `docs/a1_1_checklist.md` | 로컬 `data/processed/` 기록 |
 | 거래 유효성·결측·IQR·RFM 계산 정책 | `utils/analytics.py`·`DataAnalyzer` 대응 메서드 | `tests/test_analytics.py`·NB_CLEAN·NB_RFM |
