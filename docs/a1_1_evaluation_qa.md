@@ -31,9 +31,44 @@
 - `handle_missing()`은 네이토 평가에서 사용하는 메서드다. 같은 인자를 `handle_missing_values()`에 전달하고 같은 대치 표와 `missing_audit`를 제공한다.
 - 상품 조인, 요약 통계, 피처 생성 메서드도 제공한다.
 
-**SRC/증거:** [src/pipeline.py](../src/pipeline.py)의 `DataAnalyzer`, [노트북](../notebooks/analysis_report.ipynb)의 NB_LOAD·NB_CLEAN·NB_RFM, [테스트](../tests/test_analytics.py).
+**실행 예제**
 
-**꼬리 질문:** self.df를 바꾸는 메서드와 새 표를 반환하는 메서드는? 로드·정제·조인·대치는 상태를 바꾸고 RFM과 EDA 보정 Series는 원본 거래를 보존해 반환한다.
+저장소 루트의 PowerShell에 아래 블록 전체를 붙여넣으면 가상 거래 6행으로 필수 메서드 4개를 실행할 수 있다.
+
+```powershell
+@'
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from src.pipeline import DataAnalyzer
+
+with TemporaryDirectory() as directory:
+    csv_path = Path(directory) / "transactions.csv"
+    csv_path.write_text(
+        "customer_id,t_dat,category,price\n"
+        "A,2020-01-01,shirts,10\n"
+        "A,2020-01-02,shirts,12\n"
+        "B,2020-01-01,shirts,\n"
+        "B,2020-01-03,shirts,14\n"
+        "C,2020-01-02,shoes,16\n"
+        "C,2020-01-03,shoes,100\n",
+        encoding="utf-8",
+    )
+
+    analyzer = DataAnalyzer(csv_path)
+    transactions = analyzer.load_data(date_columns=["t_dat"])
+    print("Loaded rows:", len(transactions))
+
+    filled = analyzer.handle_missing_values(group_col="category", columns=["price"])
+    print("Imputed price:", filled.loc[2, "price"])
+
+    outliers = analyzer.detect_outliers("price")
+    print("IQR outliers:", analyzer.df.loc[outliers, "price"].tolist())
+
+    rfm = analyzer.calculate_rfm("customer_id", "t_dat", "price", reference_date="2020-01-03")
+    print(rfm.to_string(index=False))
+'@ | .venv\Scripts\python.exe -B -
+```
 
 #### 1-2
 
