@@ -23,87 +23,12 @@
 
 **답변**
 
-- `DataAnalyzer`는 거래와 상품의 분석 상태를 관리한다.
-- `load_data()`는 거래 CSV를 읽고 자료형을 설정한다.
-- `handle_missing_values()`는 지정한 피처의 결측값을 대치한다.
-- `detect_outliers()`는 IQR 기준으로 이상치 마스크를 반환한다.
-- `calculate_rfm()`은 고객별 구매 최근성·빈도·금액을 집계한다.
-- `handle_missing()`은 네이토 평가에서 사용하는 메서드다. 같은 인자를 `handle_missing_values()`에 전달하고 같은 대치 표와 `missing_audit`를 제공한다.
-- 상품 조인, 요약 통계, 피처 생성 메서드도 제공한다.
+`src/pipeline.py`에 `DataAnalyzer` 클래스와 필수 메서드 4개가 정의되어 있다. 노트북의 `NB_LOAD`에서 거래 표본 CSV 경로를 넘겨 `analyzer = DataAnalyzer(DATA / "transactions_sample.csv")`를 만들고, 이 인스턴스를 이후 정제와 RFM 집계에 사용한다. [analysis_report.ipynb (line 679)](../notebooks/analysis_report.ipynb#L679)
 
-**실행 예제**
-
-**확인할 내용**
-
-- 클래스 정의는 `DataAnalyzer`를 불러와 정의 파일이 `src/pipeline.py`인지 확인한다.
-- 메서드 포함 여부는 필수 메서드 4개가 `DataAnalyzer` 클래스에 직접 정의되어 있고 호출 가능한지 각각 확인한다.
-- 동작 확인은 가상 거래 6행으로 CSV 로드, 결측값 대치, IQR 이상치 탐지, 고객별 RFM 집계를 차례로 실행한다.
-
-저장소 루트의 PowerShell에 아래 블록 전체를 붙여넣으면 된다.
-
-```powershell
-@'
-from inspect import getsourcefile
-from pathlib import Path
-from tempfile import TemporaryDirectory
-
-from src.pipeline import DataAnalyzer
-
-source_path = Path(getsourcefile(DataAnalyzer)).resolve().relative_to(Path.cwd().resolve())
-if not isinstance(DataAnalyzer, type) or source_path.as_posix() != "src/pipeline.py":
-    raise AssertionError("Expected DataAnalyzer to be defined in src/pipeline.py")
-print(f"Class: {DataAnalyzer.__name__} ({source_path.as_posix()})")
-
-required_methods = ("load_data", "handle_missing_values", "detect_outliers", "calculate_rfm")
-for name in required_methods:
-    if not callable(vars(DataAnalyzer).get(name)):
-        raise AssertionError(f"Missing callable method: {name}")
-    print(f"Method defined: {name}()")
-
-with TemporaryDirectory() as directory:
-    csv_path = Path(directory) / "transactions.csv"
-    csv_path.write_text(
-        "customer_id,t_dat,category,price\n"
-        "A,2020-01-01,shirts,10\n"
-        "A,2020-01-02,shirts,12\n"
-        "B,2020-01-01,shirts,\n"
-        "B,2020-01-03,shirts,14\n"
-        "C,2020-01-02,shoes,16\n"
-        "C,2020-01-03,shoes,100\n",
-        encoding="utf-8",
-    )
-
-    analyzer = DataAnalyzer(csv_path)
-    transactions = analyzer.load_data(date_columns=["t_dat"])
-    print("Loaded rows:", len(transactions))
-
-    filled = analyzer.handle_missing_values(group_col="category", columns=["price"])
-    print("Imputed price:", filled.loc[2, "price"])
-
-    outliers = analyzer.detect_outliers("price")
-    print("IQR outliers:", analyzer.df.loc[outliers, "price"].tolist())
-
-    rfm = analyzer.calculate_rfm("customer_id", "t_dat", "price", reference_date="2020-01-03")
-    print(rfm.to_string(index=False))
-'@ | .venv\Scripts\python.exe -B -
-```
-
-**실행 결과**
-
-```text
-Class: DataAnalyzer (src/pipeline.py)
-Method defined: load_data()
-Method defined: handle_missing_values()
-Method defined: detect_outliers()
-Method defined: calculate_rfm()
-Loaded rows: 6
-Imputed price: 12.0
-IQR outliers: [100.0]
-customer_id  Frequency  Monetary  Recency  R_Score  F_Score  M_Score   Segment
-          A          2      22.0        1        1        2        1   Churned
-          B          2      26.0        0        3        2        2 Potential
-          C          2     116.0        0        3        2        4 Potential
-```
+- **`load_data()` · `NB_LOAD`** — 바로 다음 줄에서 고객 ID, 상품 ID, 거래일, 금액, 판매 채널을 필수 열로 지정해 CSV를 읽는다. 거래일인 `t_dat`를 날짜형으로 변환하고 읽어 온 거래 표를 `analyzer.df`에 저장한다.
+- **`handle_missing_values()` · `NB_CLEAN`** — 상품 피처 표의 사본을 별도의 `DataAnalyzer` 인스턴스인 `imputer`에 넣는다. `image_mean_eda`와 `image_std_eda`의 결측값을 상품 유형별 평균으로 채우고, 그룹 평균이 없으면 전체 관측 평균을 사용한다. 표본에 포함되지 않은 상품은 대치 대상에서 제외한다.
+- **`detect_outliers()` · `NB_CLEAN`** — 노트북이 `analyzer.clip_outliers("price", ...)`를 호출하면, 이 메서드가 내부에서 `detect_outliers()`를 호출한다. IQR 경계 밖 거래를 마스크로 표시하고 경계와 건수를 기록한다. 노트북은 경계로 보정한 사본을 분포 비교에 쓰고 원래 거래 금액은 유지한다.
+- **`calculate_rfm()` · `NB_RFM`** — 고객 ID, 거래일, 원래 거래 금액, 표본 기록의 기준일을 넘겨 고객별 마지막 구매 이후 경과일, 고유 구매일 수, 구매금액 합계를 집계한다. 반환된 고객별 RFM 표로 그룹을 요약하고, 고객이 한 번씩 집계됐는지와 그룹이 4개 이상인지 확인한다.
 
 #### 1-2
 
