@@ -23,7 +23,9 @@
 
 **답변**
 
-`src/pipeline.py`에 `DataAnalyzer` 클래스와 필수 메서드 4개가 정의되어 있다. 노트북의 `NB_LOAD`에서 거래 표본 CSV 경로를 넘겨 `analyzer = DataAnalyzer(DATA / "transactions_sample.csv")`를 만들고, 이 인스턴스를 이후 정제와 RFM 집계에 사용한다. [analysis_report.ipynb (line 679)](../notebooks/analysis_report.ipynb#L679)
+`src/pipeline.py`에 `DataAnalyzer` 클래스와 필수 메서드 4개가 정의되어 있다. [DataAnalyzer 정의 (pipeline.py 20행)](../src/pipeline.py#L20)
+
+노트북의 `NB_LOAD`에서 거래 표본 CSV 경로를 넘겨 `analyzer = DataAnalyzer(DATA / "transactions_sample.csv")`를 만들고, 이 인스턴스를 이후 정제와 RFM 집계에 사용한다. [analysis_report.ipynb (line 679)](../notebooks/analysis_report.ipynb#L679)
 
 - **`load_data()` · `NB_LOAD`** — 바로 다음 줄에서 고객 ID, 상품 ID, 거래일, 금액, 판매 채널을 필수 열로 지정해 CSV를 읽는다. 거래일인 `t_dat`를 날짜형으로 변환하고 읽어 온 거래 표를 `analyzer.df`에 저장한다.
 - **`handle_missing_values()` · `NB_CLEAN`** — 상품 피처 표의 사본을 별도의 `DataAnalyzer` 인스턴스인 `imputer`에 넣는다. `image_mean_eda`와 `image_std_eda`의 결측값을 상품 유형별 평균으로 채우고, 그룹 평균이 없으면 전체 관측 평균을 사용한다. 표본에 포함되지 않은 상품은 대치 대상에서 제외한다.
