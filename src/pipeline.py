@@ -1,14 +1,14 @@
 """거래·상품 입력을 분석 표와 RFM으로 변환하며 인스턴스 상태와 처리 근거를 관리한다."""
 
-from __future__ import annotations
+from __future__ import annotations	# 타입 힌트 전방 참조 활성화
 
-import argparse
-import sys
-from pathlib import Path
-from typing import Optional
+import argparse	# 명령줄 인자 파싱용 표준 라이브러리
+import sys	# 모듈 탐색 경로 조정용
+from pathlib import Path	# 파일 시스템 경로 처리용
+from typing import Optional	# 선택적 타입 힌트 표기용
 
-import numpy as np
-import pandas as pd
+import numpy as np	# 수치·배열 연산 라이브러리
+import pandas as pd	# 표 형식 데이터 처리 라이브러리
 
 
 if __package__ in (None, ""):	# 직접 파일 실행일 때만 저장소 모듈의 검색 경로를 보완한다.
@@ -239,10 +239,10 @@ class DataAnalyzer:
         상품 조인이 있으면 상품별 한 번 계산해 상품 표와 거래 표를 함께 갱신한다.
         원문은 보존하고 결측은 계산 시에만 빈 문자열로 취급하며 미매칭 피처는 결측으로 둔다.
         """
-        if self.df is None:
-            raise ValueError("Data is not loaded. Call load_data() first.")
-        if text_column not in self.df.columns:
-            raise ValueError(f"Column '{text_column}' not found in data.")
+        if self.df is None:	# 데이터 로드 여부 확인
+            raise ValueError("Data is not loaded. Call load_data() first.")	# 미로드 시 예외 발생
+        if text_column not in self.df.columns:	# 대상 텍스트 열 존재 여부 확인
+            raise ValueError(f"Column '{text_column}' not found in data.")	# 열 누락 시 예외 발생
 
         source = self.products if self.products is not None and text_column in self.products else self.df	# 상품 원문이 있으면 반복 거래보다 고유 상품에서 먼저 계산한다.
         text_series = source[text_column].fillna("").astype(str)	# 결측 치환은 임시 Series에만 적용해 원문을 덮어쓰지 않는다.
@@ -255,7 +255,7 @@ class DataAnalyzer:
             else:
                 self.df[column] = values
 
-        return self.df
+        return self.df	# 텍스트 피처가 추가된 DataFrame 반환
 
 
 def main() -> None:

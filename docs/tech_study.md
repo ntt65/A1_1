@@ -28,6 +28,15 @@
 
 SRC: [src/pipeline.py](../src/pipeline.py)의 DataAnalyzer가 상태와 순서를, [분석 노트북](../notebooks/analysis_report.ipynb)이 실행과 해석을 담당한다.
 
+### EDA(탐색적 데이터 분석)의 4단계 풀이와 코드 연결
+
+EDA는 결론이나 모델을 만들기 전에 **데이터를 먼저 눈으로 확인하고 검증할 가설을 세우는 사전 점검**이다. 이 프로젝트에서는 다음 네 단계가 순서대로 코드에 구현되어 있다.
+
+1. **구조 확인** (*행·열 수와 자료형 확인*): [`DataAnalyzer.load_data()`](../src/pipeline.py#L36)와 [`join_products()`](../src/pipeline.py#L71)로 데이터를 읽은 뒤 [분석 노트북](../notebooks/analysis_report.ipynb)의 `NB_LOAD`에서 `head()`, `info()`, `describe()`로 **8,084행·9열**과 ID·날짜 자료형을 먼저 확인한다.
+2. **결측 확인** (*비어 있는 값의 위치와 원인 파악*): [`extract_image_features()`](../src/pipeline.py#L189) 실행 후 4,705개 상품 중 관측 성공(`ok`) 200개, 원본 누락(`missing`) 9개, 표본 미포함(`not_sampled`) 4,496개를 구분하고 [`handle_missing_values()`](../src/pipeline.py#L129)로 **EDA 사본에만** 대치한다.
+3. **분포 확인** (*값의 쏠림과 극단값 파악*): [`summarize()`](../src/pipeline.py#L177), [`clip_outliers()`](../src/pipeline.py#L156), [`make_figures()`](../utils/reporting.py#L35)로 `price`의 오른쪽 긴 꼬리와 `1.5×IQR` 상한 초과 **212행**을 확인한다.
+4. **관계 확인 → 가설 수립** (*변수 간 연관에서 실험 아이디어 도출*): [`pair_correlation()`](../utils/reporting.py#L8)으로 `Frequency`–`Monetary`(`r = 0.6397`) 등의 선형 연관을 확인한 뒤, [`write_insights()`](../utils/reporting.py#L73)에서 VIP 우선 알림이나 New 추가 구매 유도 같은 **대조 실험 가설**을 만든다.
+
 ## 2. 표와 자료형
 
 | 용어 | 의미·예시·주의점 |
@@ -168,6 +177,35 @@ SRC: [src/pipeline.py](../src/pipeline.py)의 `extract_text_features`, `extract_
 
 SRC: [utils/analytics.py](../utils/analytics.py)의 `clean_transactions`, `impute_features`; [tests/test_analytics.py](../tests/test_analytics.py).
 
+### 계층적 카테고리 그룹 결측치 대치(Hierarchical Imputation)와 분산 보존 원리
+
+#### 1. 결측치 대치 전략 개요
+* **문제 배경:** 수치형 거래·상품 피처에 결측치(`NaN`)가 발생했을 때 행을 일괄 삭제(Drop)하면 표본 손실과 선택 편향이 발생하며, 반대로 전체 데이터셋의 단일 평균(Global Mean)으로 일괄 대치하면 모든 결측치가 하나의 평균으로 몰려 **표본분산이 과도하게 축소(Variance Shrinkage)되고 카테고리별 고유 특성이 소실**된다.
+* **해결 구조 (2단계 계층적 대치 + 미표본 이미지 격리):**
+  1. **1단계 — 동일 카테고리 그룹 평균 우선 대치:** 상품군(`product_type_name`)별로 그룹화하여 해당 그룹 내부의 관측 평균으로 결측치를 우선 대치한다.
+  2. **2단계 — 전체 평균 폴백(Global Mean Fallback):** 특정 희소 카테고리의 모든 행이 결측이어서 그룹 평균 자체를 산출할 수 없는 경우(`NaN` 잔존)에 한해 대치 전 전체 관측 평균으로 2차 보완한다.
+  3. **미표본 이미지 피처 격리(`eligible=False`):** 이미지 표본에 포함되지 않은 상품(`not_sampled` `4,496`개)의 픽셀 통계량(`image_mean`, `image_std`)은 인위적 평균값으로 채우지 않고 `eligible=False`로 관측 대상에서 격리하여 합성 노이즈 유입을 차단한다.
+
+#### 2. 통계적 분산 보존 원리 (총분산 분해 관점)
+* 전체 데이터의 총분산(Total Variance)은 **집단 내 분산(Within-Group Variance)**과 **집단 간 분산(Between-Group Variance)**의 합으로 구성된다.
+  $$\text{Var}(X) = \mathbb{E}[\text{Var}(X \mid G)] + \text{Var}(\mathbb{E}[X \mid G])$$
+* **단일 전체 평균($\mu_{\text{global}}$) 대치 시:** 결측치가 모두 $\mu_{\text{global}}$로 치환되므로 집단 내 분산뿐 아니라 **집단 간 분산($\text{Var}(\mathbb{E}[X \mid G])$)까지 0으로 붕괴**하여 전체 분포가 인위적으로 뾰족해진다.
+* **카테고리 그룹 평균($\mu_g$) 대치 시:** 각 상품군 고유의 평균 위치($\mu_g$)가 유지되므로 **집단 간 분산이 보존**되며, 전체 분포의 왜곡과 분산 축소 폭을 최소한으로 통제할 수 있다.
+
+#### 3. 프로젝트(`A1_1`) 실측 검증 수치
+
+| 검증 항목 | 실측 수치 | 비고 |
+| :--- | :--- | :--- |
+| **보정 전 표본분산** | `0.010424` | `image_mean` 대치 적용 직전(`NB_CLEAN`, 관측 상품 200개 기준) |
+| **보정 후 표본분산** | `0.010130` | 누락 9건에 2단계 계층적 그룹 평균 대치 적용 후(209개 기준) |
+| **분산 변화율** | **`-2.82%`** | $(0.010130 - 0.010424) / 0.010424 \times 100$ (극단적 분산 붕괴 억제) |
+| **대치 대상 / 표본 미포함 격리** | `209`개(`ok` 200 + `missing` 9) / `4,496`개 | 전체 상품 `4,705`개 중 미표본(`not_sampled`) `4,496`개는 평균 대치 제외 |
+
+#### 4. 구현 위치 및 설계 패턴
+* **구현 위치:** [`DataAnalyzer.handle_missing_values`](../src/pipeline.py#L129) · [`DataAnalyzer.handle_missing`](../src/pipeline.py#L141) → [`impute_features`](../utils/analytics.py#L71)
+* **호환성 설계 (Bridge / 위임 패턴):** 평가 인터페이스 호환용 메서드(`handle_missing`)가 내부 단일 핵심 로직(`handle_missing_values`)을 호출하도록 위임하여 코드 중복을 제거하고 동일한 결측치 처리 결과를 보장한다.
+* **시계열 모델 확장 시 주의사항:** 예측 모델 학습 단계에서는 미래 정보 역참조(Data Leakage)를 방지하기 위해 반드시 기준 시점 $T$ 이전 학습 데이터(Train Window)에서만 그룹 평균을 산출(`fit`)하고, 검증·테스트 구간에는 해당 통계량을 적용(`transform`)해야 한다.
+
 ## 7. 통계·이상치·상관
 
 | 용어 | 뜻과 해석 |
@@ -200,6 +238,45 @@ IQR 예시 `[1,2,3,4,100]`은 Q1=2·Q3=4, 하한=−1·상한=7이므로 100만 
 Pearson r은 공분산을 두 표준편차의 곱으로 나눈 값이다. r=0은 선형 연관이 없다는 요약이며 모든 비선형 관계가 없다는 뜻은 아니다. r이 커도 원인·캠페인 효과를 뜻하지 않는다. Pandas는 결측 쌍의 처리와 방법에 따라 계수를 계산하므로 유효 쌍 수를 함께 기록한다. [Pandas corr](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html)
 
 SRC: [utils/analytics.py](../utils/analytics.py)의 `iqr_limits`, [utils/reporting.py](../utils/reporting.py)의 `pair_correlation`, `monthly_amount`, [파이프라인](../src/pipeline.py)의 `summarize`.
+
+### 사분위수(Quartile)와 IQR 기반 이상치 탐지 및 클리핑
+
+#### 1. 사분위수(Quartile)의 정의
+* **개념:** 데이터 값 자체를 산술적으로 4등분한 수치가 아니라, 전체 데이터를 크기순(오름차순)으로 정렬했을 때 **전체 개수의 25%, 50%, 75%, 100% 위치(순위 비율)에 놓인 실제 값**이다. (상대평가 석차 백분율과 동일한 원리)
+  * **$Q_1$ (제1사분위수, 25% 위치):** 전체 데이터의 하위 25%가 이 값 이하에 위치
+  * **$Q_2$ (제2사분위수, 50% 위치):** 전체 데이터의 정중앙인 중앙값(Median)
+  * **$Q_3$ (제3사분위수, 75% 위치):** 전체 데이터의 하위 75%(상위 25%)가 이 값 이하에 위치
+  * **$Q_4$ (최댓값, 100% 위치):** 전체 데이터 중 가장 큰 값
+
+#### 2. IQR(Interquartile Range) 및 정상 범위 경계 수식
+* **사분위수 범위($\text{IQR}$):** 중심 50% 데이터가 퍼져 있는 폭
+  $$\text{IQR} = Q_3 - Q_1$$
+* **정상 허용 범위 (Tukey's Fences, 기본 배수 $k = 1.5$):**
+  * **하한선(Lower Bound):** $Q_1 - 1.5 \times \text{IQR}$
+  * **상한선(Upper Bound):** $Q_3 + 1.5 \times \text{IQR}$
+  * 경계값 자체는 정상 범위에 포함하며, 하한 미만 또는 상한 초과 데이터만 이상치로 탐지한다.
+
+#### 3. 왜 이 방식을 사용하는가? (설계 근거)
+1. **$Q_1$(25%)과 $Q_3$(75%) 경계에서 바로 자르지 않고 $1.5 \times \text{IQR}$만큼 넓히는 이유**
+   * $Q_1$과 $Q_3$ 사이는 전체 데이터의 가운데 50%에 불과하다. 만약 $Q_1$ 이하와 $Q_3$ 이상을 즉시 자르면 정상 데이터의 **절반(50%)**이 훼손된다.
+   * 따라서 $Q_1$과 $Q_3$는 절단선이 아니라 **중심부의 퍼짐 폭($\text{IQR}$)을 재는 기준점**이며, 그 폭의 1.5배만큼 바깥으로 여유 울타리를 확장해야 정상 분포(표준정규분포 기준 양측 약 99.3%)를 보존하면서 극단값만 걸러낼 수 있다.
+2. **평균·표준편차(Z-score) 대신 사분위수(IQR)를 사용하는 이유**
+   * 평균과 표준편차는 소수의 극단값만 유입되어도 기준선 자체가 크게 왜곡되어 이상치를 놓치는 **마스킹 현상(Masking Effect)**이 발생한다.
+   * 반면 사분위수는 순위(위치) 기반 비모수 통계량이므로, 끝단에 초고가 결제가 존재하더라도 $Q_1$과 $Q_3$의 위치가 흔들리지 않아 우측 꼬리가 긴(왜도 $+1.554$) 이커머스 거래 금액에 적합하다.
+
+#### 4. 프로젝트(`A1_1`) 실측 적용 및 원본 보존 정책
+* **적용 대상:** 유효 거래 `8,084`행의 `price` 열 (`SETTINGS["iqr_threshold"] = 1.5`)
+* **사분위수 및 경계값 산출:**
+  * $Q_1 = 0.015237$, $Q_2 = 0.022017$, $Q_3 = 0.033881$
+  * $\text{IQR} = 0.033881 - 0.015237 = 0.018644$
+  * **하한선:** $0.015237 - (1.5 \times 0.018644) = \mathbf{-0.012729}$ (하한 미만 `0`행)
+  * **상한선:** $0.033881 + (1.5 \times 0.018644) = \mathbf{0.061847}$ (상한 초과 **`212`행, 2.62%**)
+* **클리핑(Clipping) 및 원본 보존 분기:**
+  * 고액 거래 `212`행은 데이터 오류가 아닌 VIP 실제 소비이므로 행 삭제(Drop)를 금지한다.
+  * **EDA 시각화 사본(`clipped_amount`):** 상한 초과 `212`행을 상한선 `0.061847`로 치환하여 중앙값(`0.022017`)은 동일하게 유지하면서 표본분산만 `0.000222373` → `0.000184101` (**`-17.21%`**) 축소했다.
+  * **원본 `price` 열 보존:** RFM Monetary 및 월별 매출 집계에는 클리핑하지 않은 유효 원금액 합계 **`202.212746`**을 그대로 사용한다.
+* **한계점:** 상품군별 가격대 차이를 통합한 단일 전역 경계는 고가 상품군의 정상 거래까지 이상치로 표시할 수 있으며, $\text{IQR} = 0$인 상수 분포에서는 상·하한이 동일 값으로 수렴한다.
+* **구현 위치:** [`iqr_limits`](../utils/analytics.py#L117), [`DataAnalyzer.detect_outliers`](../src/pipeline.py#L145) · [`DataAnalyzer.clip_outliers`](../src/pipeline.py#L156), [analysis_report.ipynb](../notebooks/analysis_report.ipynb) (`NB_CLEAN`, `NB_PLOTS`)
 
 ## 8. 시각화 6종 읽기
 
@@ -243,6 +320,20 @@ SRC: [utils/reporting.py](../utils/reporting.py)의 `make_figures`; 노트북 `N
 점수는 `p=(평균 순위−0.5)/고객 수`를 계산해 p≤0.25면1, ≤0.50면2, ≤0.75면3, 나머지4로 정한다. R은 내림차순, F·M은 오름차순 순위를 사용한다. 동점이 많으면 각 점수나 그룹의 인원이 같지 않다. 인원 균등화를 위해 같은 값을 임의로 나누지 않는다. [Pandas rank](https://pandas.pydata.org/docs/reference/api/pandas.Series.rank.html)
 
 SRC: [utils/analytics.py](../utils/analytics.py)의 `calculate_customer_rfm`, `segment_profile`; [RFM 테스트](../tests/test_analytics.py).
+
+### 보충 · RFM 점수화 설계 원리(`1/R` 금지·가중치 총점)와 본 프로젝트 구현 차이
+
+1. **왜 원값을 바로 더하거나 `1/R` 역수 합산을 쓰지 않는가?**
+   * R(일수), F(횟수), M(금액)은 **단위와 스케일이 완전히 다르므로** 그대로 더하면 값의 크기가 큰 `M`이 전체 점수를 지배한다.
+   * 최근성을 높게 치려고 `1/R` 역수를 쓰면 `R=0`(당일 구매)에서 0으로 나눌 수 없고, `R=1`과 `R=2`의 차이가 `0.5`인 반면 `R=30`과 `R=60`의 차이는 `0.017`에 불과해 **극단적인 비선형 왜곡**이 발생한다.
+   * 따라서 세 지표를 동일한 점수 척도(`1~4`점 또는 `1~5`점)로 먼저 변환(정규화)한 뒤 비교·결합한다.
+
+2. **실무 가중치 총점 방식 vs 본 프로젝트(`A1_1`)의 규칙 분류**
+   * **일반 실무 가중치 합산식:** 업종 특성에 따라 가중치를 달리해 단일 점수를 매길 수 있다.
+     $$\text{RFM Total Score} = w_R \cdot S_R + w_F \cdot S_F + w_M \cdot S_M$$
+     * 패션/이커머스 예시: 재방문·빈도 중시 ($w_R=0.4,\ w_F=0.4,\ w_M=0.2$)
+     * 고관여/고가 상품 예시: 객단가·금액 중시 ($w_R=0.2,\ w_F=0.2,\ w_M=0.6$)
+   * **본 프로젝트(`A1_1`) 실제 구현 차이:** 가중치 합산 대신 [`calculate_customer_rfm`](../utils/analytics.py#L128)에서 **순위 백분위 1~4점 + 우선순위 조건문(`np.select`)**으로 `VIP(R·F·M≥3, F≥2) → Loyal(R·F≥3, F≥2) → New(R≥3, F=1) → Churned(R≤2) → Potential`을 배정한다. (기준일도 `최종일+1`이 아니라 마지막 유효 구매일 `2020-08-31`을 사용해 당일 구매 `Recency=0`이다.)
 
 ## 10. 사업 해석과 검증
 
@@ -392,3 +483,33 @@ SRC: [AGENTS.md](../AGENTS.md), [utils/run_checks.py](../utils/run_checks.py), [
 ### 인터랙티브 탐색과 원본 관측
 
 `interactive_rfm`은 Recency·Frequency·Monetary 3축과 세그먼트 색상, 원본 고객ID hover를 가진 Plotly scatter3d를 생성한다. 독립 HTML에 JS를 내장하며 회전·확대·범례 필터를 제공한다. 범례는 화면 표시를 선택하는 기능이고 원본 고객을 제거하지 않는다. Plotly7은 숫자 배열을 이진 표현으로 전송할 수 있으므로 브라우저 검증은 해석된 실제 좌표를 확인한다. 실제1000고객·4그룹과 네트워크 차단 상태의 필터/카메라 조작을 검증했다. Plotly는 이 보너스에서만 import한다. SRC: [보너스 함수](../utils/bonus.py), [독립 HTML](results/bonus/rfm_interactive.html).
+
+## 16. 핵심 약자·수식·비즈니스 맥락 보충
+
+초보 학습자를 위해 프로젝트에서 가장 자주 쓰이는 7가지 핵심 약어와 수식, 비즈니스 적용 맥락을 **정의 → 기술 원리 → 비즈니스 의미** 순서로 정리했다. (기존 `tech_study1.md`에서 중복·구버전 내용을 정리해 통합했다.)
+
+### 핵심 약자 7선 요약표
+
+| 약자 / 용어 | 풀네임 (Full Name) | 프로젝트 내 핵심 역할 및 코드 위치 |
+| --- | --- | --- |
+| **RFM** | Recency, Frequency, Monetary | 최근 구매일·고유 구매일 수·유효 구매 금액 기반 세분화 ([`calculate_rfm`](../src/pipeline.py#L162)) |
+| **OOP** | Object-Oriented Programming | `DataAnalyzer` 클래스 중심의 상태·메서드 캡슐화 ([`DataAnalyzer`](../src/pipeline.py#L20)) |
+| **EDA** | Exploratory Data Analysis | `head()`, `info()`, `describe()`, 시각화 6종으로 구조·결측·분포·관계 파악 |
+| **IQR** | Interquartile Range | 사분위수 범위($Q_3 - Q_1$) 기반 이상치 탐지·EDA 사본 보정 ([`detect_outliers`](../src/pipeline.py#L145)) |
+| **RGB / Mean / Std** | Red-Green-Blue / Mean / Std | 정규화(`0~1`)된 3차원 이미지 픽셀의 밝기(평균)·대비(표준편차) 피처 ([`extract_image_features`](../src/pipeline.py#L189)) |
+| **KPI** | Key Performance Indicator | 캠페인 실행 후 성과를 검증하는 핵심 지표(재구매율, 고객당 마진 등) |
+| **LTV** | Lifetime Value | 한 고객이 유지 기간 동안 기업에 기여하는 생애 총 가치(현재 데이터만으로 단정하지 않음) |
+
+### 수식과 비즈니스 맥락 보충
+
+1. **RGB 픽셀 평균($\mu$)과 표준편차($\sigma$)** — [`extract_product_image_features`](../utils/image_features.py#L64)
+   - $H \times W \times C$ 픽셀을 `0~1` 실수로 정규화한 뒤, **평균($\mu$)**은 이미지 전반의 밝기 톤을, **표준편차($\sigma$, `ddof=0`)**는 밝고 어두운 명암 대비·패턴 퍼짐을 요약한다.
+   $$\mu = \frac{1}{H \cdot W \cdot C} \sum_{h,w,c} I(h,w,c), \qquad \sigma = \sqrt{\frac{1}{H \cdot W \cdot C} \sum_{h,w,c} (I(h,w,c) - \mu)^2}$$
+   - **비즈니스 의미:** 딥러닝 비전 모델 없이도 밝은 배경·대비 등 시각적 요약 피처를 빠르게 추출해 상품군별 분포 탐색에 활용할 수 있다.
+
+2. **2단계 계층적 결측 대치를 쓰는 비즈니스 이유** — [`handle_missing_values`](../src/pipeline.py#L129) → [`impute_features`](../utils/analytics.py#L71)
+   - 고가 아우터 카테고리의 결측치를 양말 등이 섞인 전체 상품 평균으로 채우면 카테고리 고유 특성이 왜곡된다. 따라서 1단계로 `product_type_name` 그룹 평균을 먼저 적용하고, 그룹 전체가 비어 있는 경우에만 2단계로 대치 전 전체 관측 평균(fallback)을 사용한다.
+
+3. **KPI와 LTV 개념** — [`write_insights`](../utils/reporting.py#L73)
+   $$\text{캠페인 재구매율(\%)} = \frac{\text{캠페인 후 재구매 고객 수}}{\text{전체 대상 고객 수}} \times 100, \qquad \text{LTV 개념식} = \text{평균 구매 금액} \times \text{평균 구매 빈도} \times \text{고객 유지 기간}$$
+   - 비즈니스 인사이트는 항상 **(근거: 정량 수치/차트) → (실행: 타겟 세그먼트·액션) → (검증: 대조군 대비 KPI·추가 데이터)** 3단계로 작성해 가설과 검증된 효과를 구분한다.

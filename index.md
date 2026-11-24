@@ -18,8 +18,9 @@
 | [PowerPoint PDF 변환](utils/export_presentation_pdfs.ps1) | Windows의 PowerPoint로 두 최종 PPTX를 열람용 PDF로 저장 |
 | [docs/presentation/a1_1_eval_technical_final.pptx](docs/presentation/a1_1_eval_technical_final.pptx) | 이전 31장 평가 발표자료, 최신 자료는 위의 두 덱 |
 | [docs/presentation/README.md](docs/presentation/README.md) | 질문-페이지 매핑·발표·PPT 재생성 안내 |
-| [utils/build_eval_presentation.mjs](utils/build_eval_presentation.mjs) · [utils/eval_presentation_content.mjs](utils/eval_presentation_content.mjs) | 이전 평가 PPT 작성 도구와 재사용하는 질문별 기본 원고 |
-| [docs/tech_study.md](docs/tech_study.md) | 미션·평가 용어와 기술 원리·예시·구현 위치 |
+| [utils/build_eval_presentation.mjs](utils/build_eval_presentation.mjs) · [utils/eval_presentation_content.mjs](utils/eval_presentation_content.mjs) | 현재 실행 결과를 활용한 재사용 PPT 작성·검증과 질문별 원고 |
+| [docs/tech_study.md](docs/tech_study.md) | 미션·평가 용어와 기술 원리·수식·예시·구현 위치 |
+| [docs/code_review.md](docs/code_review.md) | 전체 코드 개요 및 실행 순서별 코드 리뷰·상대 경로 링크 |
 | [docs/ai1_1_mission.pdf](docs/ai1_1_mission.pdf) · [docs/a1_1_eval.pdf](docs/a1_1_eval.pdf) | 원본 PDF |
 | [src/pipeline.py](src/pipeline.py) | DataAnalyzer 상태·로드·조인·피처·정제·RFM 및 CLI |
 | [utils/__init__.py](utils/__init__.py) | 공용 도구 패키지 |
