@@ -165,6 +165,9 @@ venv.bak/
 # Temporary native-chart workbook conversion workspaces.
 /.chart-data-*/
 
+# Microsoft Office lock files created while a document is open.
+~$*
+
 # Spyder project settings
 .spyderproject
 .spyproject
