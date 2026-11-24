@@ -82,81 +82,6 @@
 - **보너스 ② 코호트 히트맵**: 코호트 활동 비율 시각화 차트 생성 — [`cohort_figure`](utils/bonus.py#L44)
 - **보너스 ③ 인터랙티브 RFM**: 고객 1,000명 3D RFM Plotly 독립 HTML 생성 — [`interactive_rfm`](utils/bonus.py#L59)
 
-## 환경과 실행
-
-저장소 루트에서 실행한다. 검증한 Python은 3.11.4다. 새 환경은 `git clone https://github.com/ntt65/A1_1.git` 후 `cd A1_1`에서 시작한다. 현재 PC의 기존 저장소에서는 복제·환경 생성을 반복하지 않아도 된다. 분석 패키지 버전은 `requirements.txt`, 노트북 실행 도구는 `requirements-notebook.txt`에 고정했다.
-
-macOS·Linux (bash/zsh):
-
-```bash
-python3.11 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt -r requirements-notebook.txt -r requirements-bonus.txt
-.venv/bin/python -B -m utils.run_checks
-```
-
-Windows (PowerShell). 이 README의 실행 기록은 이 환경에서 확인했다. 아래 절의 bash 명령은 `.venv/bin/python`을 `.venv\Scripts\python.exe`로 바꿔 실행한다.
-
-```powershell
-py -3.11 -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-notebook.txt -r requirements-bonus.txt
-.venv\Scripts\python.exe -B -m utils.run_checks
-```
-
-마지막 명령은 `utils/run_checks.py`로 회귀 테스트(단위 테스트)를 실행한다.
-
-| 부분 | 의미 |
-| --- | --- |
-| `.venv/bin/python` | 가상환경(`.venv`)에 설치된 Python 실행 |
-| `-B` | `__pycache__`(`.pyc` 캐시 파일)를 만들지 않음 |
-| `-m utils.run_checks` | `tests/` 폴더의 전체 단위 테스트(`unittest discover -s tests -v`) 실행 |
-| `--with-sample` (선택) | 테스트 통과 후 실제 `data/raw/hm/` 표본으로 `analysis_report.ipynb`를 새 커널에서 전체 실행해 `data/processed/analysis_report.executed.ipynb`로 저장 |
-
-옵션 없이 실행하면 가상 입력만 쓰므로 `data/raw/hm/` 표본이 없어도 된다.
-
-검증한 분석 패키지: NumPy 2.4.6, Pandas 3.1.1, Matplotlib 3.11.2, Seaborn 0.13.2. 보너스는 Plotly 7.1.0·narwhals 2.28.0·packaging 26.3을 별도 `requirements-bonus.txt`에 고정했다. Plotly는 인터랙티브 보너스에서만 사용한다. 실행 도구는 Notebook 7.6.4, ipykernel 7.4.0, nbclient 0.11.0, nbformat 5.11.1이다. Python 3.11 환경에서 설치·실행을 확인했다.
-
-표본 데이터 재실행이 필요하면 Kaggle 로그인 후 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data) 규정에 동의하고 [Kaggle 표본 추출 노트북](https://www.kaggle.com/code/ntt6551/a1-1-h-m-sample-extractor/notebook)([로컬 노트북](notebooks/prepare_hm_sample.ipynb))으로 표본 ZIP을 준비한다(자세한 복원 방법은 아래 [비공개 데이터 준비](#비공개-데이터-준비) 참고).
-
-## 비공개 데이터 준비
-
-[H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)의 규정에 동의한 계정으로 표본을 준비한다. 기존 작업자는 본인만 접근하는 Drive의 `A1_1_hm_sample.zip`을 사용한다. 새 표본은 [Kaggle 추출 노트북](notebooks/prepare_hm_sample.ipynb)에서 기간·고객·이미지만 선별해 만든다. 전체 대회 ZIP이나 전체 거래 [CSV (Comma-Separated Values · 쉼표 구분 표 파일)](docs/tech_study.md#2-표와-자료형)는 로컬로 받지 않는다.
-
-```bash
-.venv/bin/python scripts/restore_hm_sample.py --archive "$HOME/Downloads/A1_1_hm_sample.zip"
-```
-
-파일은 `data/raw/hm/transactions_sample.csv`, `articles_sample.csv`, `sample_manifest.json`, `images/<ID 앞 3자리>/<ID>.jpg`에 복원된다. `data/raw/hm/hm_sample.zip`을 보관하면 `--archive`를 생략할 수 있다. 복원은 구성·추출 기록과 기존 파일 충돌을 검증한다. 개인 Drive 설정이 있으면 [SHA-256 (256비트 암호화 해시 체크섬)](docs/tech_study.md#13-테스트재현git-작업-흐름)도 대조한다. 새 환경에는 개인 설정이나 인증 정보를 복사할 필요가 없다.
-
-데이터 출처는 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)다. 사용자 지시에 따라 평가 노트북 `notebooks/analysis_report.ipynb`에는 원본 행·고객/상품 ID·원본 이미지 예시와 실행 결과를 숨기거나 치환하지 않고 저장했다. CSV·전체 이미지·ZIP 자체는 기존 Drive·로컬 보관 방식을 유지한다. 표본 ZIP이 없으면 아래 절차로 Kaggle에서 새로 만들고, 실행본은 [원본 실행 보고서와 다시 생성하는 방법](#원본-실행-보고서와-다시-생성하는-방법)의 명령으로 다시 만든다.
-
-### Kaggle에서 `hm_sample.zip` 추출·다운로드 절차
-
-1. Kaggle 노트북 오른쪽 사이드바에서 **Session options**를 연다.
-
-   ![Kaggle Session options](docs/pics/kaggle_ssession_option.png)
-
-2. **Internet** 토글을 **Internet on**으로 확인한다.
-
-   ![Kaggle Internet on 설정](docs/pics/kaggle_ssession_internet.png)
-
-3. 상단 툴바의 **Run All**을 눌러 전체 셀을 실행한다.
-
-   ![Kaggle Run All 실행](docs/pics/run_all.png)
-
-4. 오른쪽 **Output** 패널의 `/kaggle/working` 아래에 `hm_sample.zip`이 생성되었는지 확인한다(안 보이면 새로고침 아이콘 클릭).
-
-   ![Kaggle Output hm_sample.zip 확인](docs/pics/kaggle_output.png)
-
-5. `hm_sample.zip`의 메뉴에서 **Download**를 눌러 로컬 `Downloads` 폴더로 내려받은 뒤 위의 `restore_hm_sample.py` 명령으로 복원한다.
-
-   ![Kaggle hm_sample.zip 다운로드](docs/pics/kaggle_download.png)
-
-기존 PC처럼 ZIP이 `data/raw/hm/hm_sample.zip`에 있으면 아래 명령으로 재검증·복원한다. 동일 파일 재실행은 허용하고 다른 내용의 기존 파일은 덮어쓰지 않는다.
-
-```bash
-.venv/bin/python scripts/restore_hm_sample.py
-```
-
 ## 입력과 계산 기준
 
 분석에 쓰는 컬럼, 관찰 기간, RFM 기준일, 주요 설정값을 먼저 정한다. 뒤의 모든 결과는 이 기준 위에서 계산된다.
@@ -209,76 +134,6 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 | `handle_missing_values()` / `handle_missing()` | 대치 전략·그룹·대상 피처·행 마스크 | 대치한 DataFrame | `df`와 `missing_audit` 갱신 | `NB_CLEAN` 및 `[10, NaN, NaN]` → `[10, 10, NaN]` |
 | `detect_outliers()` / `clip_outliers()` | 수치 열·IQR 배수 | 탐지 마스크 / 보정 Series | `outlier_audit` 갱신, `df`의 원금액 보존 | `NB_CLEAN` 및 `[1,2,3,4,100]`의 경계 −1·7, 100만 탐지 |
 | `calculate_rfm()` | 고객·날짜·금액·기준일·빈도 단위 | 고객별 RFM 표 | `rfm_audit` 갱신, 거래 `df` 보존 | `NB_RFM`의 실제 1,000명과 손계산 A `(0,2,60)`, B `(1,1,5)` |
-
-## 기능별 SRC
-
-| SRC 경로 | 주요 함수·책임 |
-| --- | --- |
-| [src/pipeline.py](src/pipeline.py) | DataAnalyzer의 load_data·join_products·validate_transactions·handle_missing_values(평가 호환 호출명 handle_missing)·detect_outliers·calculate_rfm·summarize |
-| [utils/analytics.py](utils/analytics.py) | clean_transactions·impute_features·iqr_limits·calculate_customer_rfm·segment_profile |
-| [utils/image_features.py](utils/image_features.py) | `prepare_image`·`extract_product_image_features`로 픽셀 통계를 계산하고 `profile_jpeg_stages`로 읽기·디코딩·전처리를 계측 |
-| [utils/bonus.py](utils/bonus.py) | cohort_retention·cohort_figure·interactive_rfm. 코호트와 Plotly 보너스 |
-| [utils/reporting.py](utils/reporting.py) | pair_correlation·monthly_amount·make_figures·write_insights |
-| [utils/run_checks.py](utils/run_checks.py) | 가상 테스트와 현재 Python의 새 커널 실행 |
-| [utils/reproducibility.py](utils/reproducibility.py) | 새 복제본·새 환경·표본 복원과 결과 전체 대조 |
-| [utils/publish_report.py](utils/publish_report.py) | 원본 실행본·차트·집계 보존과 보조 보고서 생성 |
-| [utils/repository_checks.py](utils/repository_checks.py) | 제출 파일·링크·분석 import·데이터 제외·공개 보고서 검사 |
-| [scripts/restore_hm_sample.py](scripts/restore_hm_sample.py) | ZIP 구성·기록·경로·충돌·선택적 체크섬 확인 |
-| [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb) | NB_LOAD~NB_TIMING 실행·해석 |
-| [tests/test_pipeline.py](tests/test_pipeline.py) · [tests/test_analytics.py](tests/test_analytics.py) · [tests/test_reporting.py](tests/test_reporting.py) · [tests/test_publication.py](tests/test_publication.py) · [tests/test_bonus.py](tests/test_bonus.py) · [tests/test_repository_checks.py](tests/test_repository_checks.py) | 로드·조인·이미지·정제·대치·IQR·RFM·월·상관·원본 출력 보존·보너스·문서 링크 검증 (22개) |
-
-용어·원리·작은 예제는 [docs/tech_study.md](docs/tech_study.md), 평가 질문·SRC·시연은 [docs/a1_1_evaluation_qa.md](docs/a1_1_evaluation_qa.md), 원본 평가 자료에 대한 의견은 [docs/a1_1_eval_review.md](docs/a1_1_eval_review.md)에 있다. 실행·결과·인사이트의 필수 설명은 이 README 본문에 포함했다.
-
-## 전체 분석과 검증
-
-```bash
-.venv/bin/python -B -m utils.run_checks --with-sample
-.venv/bin/python -B -m utils.repository_checks
-```
-
-새 커널의 실행 결과는 다음 로컬 파일에서 확인한다.
-
-- 2026-11-08 로컬에서 새 커널의 첫 코드 셀 시작부터 마지막 코드 셀 종료까지 **8.67초**가 걸렸다. 코드 셀 13개의 관측값이며 커널 시작과 실행본 저장 시간은 별도다.
-- `data/processed/analysis_report.executed.ipynb`: 실행된 전체 보고서
-- `data/processed/analysis_verification.json`: 입력 체크섬·환경·정제·피처·RFM·월별 합계
-- `data/processed/figures/`: 히스토그램·박스플롯·막대·히트맵·산점도·라인차트
-- `data/processed/insights.md`, `segment_profile.csv`: 실제 집계 기반 해석과 그룹 표
-
-```bash
-.venv/bin/python -m notebook data/processed/analysis_report.executed.ipynb
-```
-
-새 복제본·새 가상환경·새 커널에서 비교하려면 기준 실행 후 다음을 실행한다. 고정 의존성을 설치하기 위한 네트워크 접근과 원본 표본 ZIP이 필요하다. 새 복제본에는 원본 데이터나 개인 Drive 설정이 들어 있지 않으며 ZIP을 검증해 복원한다.
-
-```bash
-.venv/bin/python -B -m utils.reproducibility
-```
-
-비교 결과는 `data/processed/reproduction_verification.json`에 저장한다. 자료형·동점·순서·대치·IQR·월 누락 등의 작은 입력 검증과 실제 조인·금액 대조를 함께 수행한다.
-
-## 검증을 직접 재현할 작은 입력
-
-- 텍스트 `Blue cotton shirt` → 17자·3단어.
-- 픽셀 절반 0·절반 1 → 이미지 평균·표준편차 각각 0.5.
-- 그룹 A의 10·30·결측 → 결측20, 그룹 누락 행의 관측50 보존, 전체 관측 평균 fallback30.
-- `[1,2,3,4,100]` → IQR 경계−1·7, 100만 탐지. `[-2,1,2,3,6]`의 경계값은 탐지하지 않음.
-- A 고객이 1/1에 10·20, 1/3에30, B가1/2에5 구매 → 기준일1/3에서 A=R0/F2/M60, B=R1/F1/M5, 합계65.
-- 동일 지표의 점수가 같고 입력 순서를 바꿔도 RFM이 동일함. 고객당 단일 그룹, 네 그룹 이상과 금액 합계도 확인함.
-- 월 누락·상수 상관·원본 필드와 실행본 바이트 보존도 가상 입력 테스트로 확인함.
-
-## 원본 실행 보고서와 다시 생성하는 방법
-
-평가용 파일은 [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb)이다. 코드와 실행 결과가 함께 저장되어 있어 원본 행·고객 ID·상품 이미지 예시·피처·통계·RFM·차트를 바로 볼 수 있다. 대화나 게시 과정에서 값을 마스킹하거나 출력을 비우지 않았다. 전체 실행본은 `data/processed/analysis_report.executed.ipynb`와 바이트 단위로 동일하게 보존한다.
-
-보조 집계 자료는 `docs/results/analysis_aggregates.json`, `segment_profile.csv`, `monthly_amount.csv`, `analysis_report.md`다. 그림은 원본 분석에서 생성한 PNG를 그대로 복사한다. 원본 CSV·ZIP·전체 JPG 묶음과 개인 인증 설정은 Git에 넣지 않는다.
-
-```bash
-.venv/bin/python -B -m utils.run_checks --with-sample
-.venv/bin/python -B -m utils.publish_report
-.venv/bin/python -B -m utils.repository_checks
-```
-
-SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본을 바이트 그대로 복사하며 표·ID·이미지를 삭제하지 않는다. 오류가 있거나 실행되지 않은 셀이 있으면 제출본 보존을 중단한다. 검증 도구는 실행 오류·제출 파일·상대 링크·허용 라이브러리와 원본 데이터 파일의 Git 제외를 확인한다.
 
 ## 실제 실행 결과와 기술통계
 
@@ -555,6 +410,138 @@ Original stdout is private. No notebook rows or identifiers are copied here.
 
 작업 흐름은 이슈 → 기능 브랜치 → 검증·커밋 → develop [PR (Pull Request · 병합 요청)](docs/tech_study.md#13-테스트재현git-작업-흐름) → 검증한 묶음 main 반영이다. 계획·완료 증거는 통합 계획과 체크표에 유지한다.
 
+## 평가 기술 발표자료
+
+[미션 설명 PPTX](docs/presentation/a1_1_mission_explanation.pptx)·[PDF](docs/presentation/a1_1_mission_explanation.pdf)는 **22장**으로 요구사항, 표본과 분석 단위, 피처·정제·통계·RFM의 계산 원리와 실제 결과를 설명한다. [평가 Q&A PPTX](docs/presentation/a1_1_evaluation_qa.pptx)·[PDF](docs/presentation/a1_1_evaluation_qa.pdf)는 **35장**으로 필수 **19문항**과 보너스 3개를 다룬다. 원문 문항 번호, 코드·수식·배열 축·메모리·RFM 손계산·검증 근거와 한계를 연결했고 최신 IQR·이미지 병목 계측·표본 선택의 시간 누수 설명을 반영했다. 상세 설명·시연·꼬리 질문 답변·출처는 PPTX의 발표자 노트에 있다.
+
+원본 실행 사진·차트와 편집 가능한 표·추가 차트를 함께 사용했다. PDF는 같은 슬라이드의 열람용이다. [발표 순서·질문별 페이지·재생성 안내](docs/presentation/README.md)에서 두 자료의 위치와 이전 31장 버전을 확인할 수 있다. 관련 이슈는 #17이며, 보너스 구현은 별도 #18에서 관리했다.
+
+## 환경과 실행
+
+저장소 루트에서 실행한다. 검증한 Python은 3.11.4다. 새 환경은 `git clone https://github.com/ntt65/A1_1.git` 후 `cd A1_1`에서 시작한다. 현재 PC의 기존 저장소에서는 복제·환경 생성을 반복하지 않아도 된다. 분석 패키지 버전은 `requirements.txt`, 노트북 실행 도구는 `requirements-notebook.txt`에 고정했다.
+
+macOS·Linux (bash/zsh):
+
+```bash
+python3.11 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt -r requirements-notebook.txt -r requirements-bonus.txt
+.venv/bin/python -B -m utils.run_checks
+```
+
+Windows (PowerShell). 이 README의 실행 기록은 이 환경에서 확인했다. 아래 절의 bash 명령은 `.venv/bin/python`을 `.venv\Scripts\python.exe`로 바꿔 실행한다.
+
+```powershell
+py -3.11 -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-notebook.txt -r requirements-bonus.txt
+.venv\Scripts\python.exe -B -m utils.run_checks
+```
+
+마지막 명령은 `utils/run_checks.py`로 회귀 테스트(단위 테스트)를 실행한다.
+
+| 부분 | 의미 |
+| --- | --- |
+| `.venv/bin/python` | 가상환경(`.venv`)에 설치된 Python 실행 |
+| `-B` | `__pycache__`(`.pyc` 캐시 파일)를 만들지 않음 |
+| `-m utils.run_checks` | `tests/` 폴더의 전체 단위 테스트(`unittest discover -s tests -v`) 실행 |
+| `--with-sample` (선택) | 테스트 통과 후 실제 `data/raw/hm/` 표본으로 `analysis_report.ipynb`를 새 커널에서 전체 실행해 `data/processed/analysis_report.executed.ipynb`로 저장 |
+
+옵션 없이 실행하면 가상 입력만 쓰므로 `data/raw/hm/` 표본이 없어도 된다.
+
+검증한 분석 패키지: NumPy 2.4.6, Pandas 3.1.1, Matplotlib 3.11.2, Seaborn 0.13.2. 보너스는 Plotly 7.1.0·narwhals 2.28.0·packaging 26.3을 별도 `requirements-bonus.txt`에 고정했다. Plotly는 인터랙티브 보너스에서만 사용한다. 실행 도구는 Notebook 7.6.4, ipykernel 7.4.0, nbclient 0.11.0, nbformat 5.11.1이다. Python 3.11 환경에서 설치·실행을 확인했다.
+
+표본 데이터 재실행이 필요하면 Kaggle 로그인 후 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data) 규정에 동의하고 [Kaggle 표본 추출 노트북](https://www.kaggle.com/code/ntt6551/a1-1-h-m-sample-extractor/notebook)([로컬 노트북](notebooks/prepare_hm_sample.ipynb))으로 표본 ZIP을 준비한다(자세한 복원 방법은 아래 [비공개 데이터 준비](#비공개-데이터-준비) 참고).
+
+## 비공개 데이터 준비
+
+[H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)의 규정에 동의한 계정으로 표본을 준비한다. 기존 작업자는 본인만 접근하는 Drive의 `A1_1_hm_sample.zip`을 사용한다. 새 표본은 [Kaggle 추출 노트북](notebooks/prepare_hm_sample.ipynb)에서 기간·고객·이미지만 선별해 만든다. 전체 대회 ZIP이나 전체 거래 [CSV (Comma-Separated Values · 쉼표 구분 표 파일)](docs/tech_study.md#2-표와-자료형)는 로컬로 받지 않는다.
+
+```bash
+.venv/bin/python scripts/restore_hm_sample.py --archive "$HOME/Downloads/A1_1_hm_sample.zip"
+```
+
+파일은 `data/raw/hm/transactions_sample.csv`, `articles_sample.csv`, `sample_manifest.json`, `images/<ID 앞 3자리>/<ID>.jpg`에 복원된다. `data/raw/hm/hm_sample.zip`을 보관하면 `--archive`를 생략할 수 있다. 복원은 구성·추출 기록과 기존 파일 충돌을 검증한다. 개인 Drive 설정이 있으면 [SHA-256 (256비트 암호화 해시 체크섬)](docs/tech_study.md#13-테스트재현git-작업-흐름)도 대조한다. 새 환경에는 개인 설정이나 인증 정보를 복사할 필요가 없다.
+
+데이터 출처는 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)다. 사용자 지시에 따라 평가 노트북 `notebooks/analysis_report.ipynb`에는 원본 행·고객/상품 ID·원본 이미지 예시와 실행 결과를 숨기거나 치환하지 않고 저장했다. CSV·전체 이미지·ZIP 자체는 기존 Drive·로컬 보관 방식을 유지한다. 표본 ZIP이 없으면 아래 절차로 Kaggle에서 새로 만들고, 실행본은 [원본 실행 보고서와 다시 생성하는 방법](#원본-실행-보고서와-다시-생성하는-방법)의 명령으로 다시 만든다.
+
+### Kaggle에서 `hm_sample.zip` 추출·다운로드 절차
+
+1. Kaggle 노트북 오른쪽 사이드바에서 **Session options**를 연다.
+
+   ![Kaggle Session options](docs/pics/kaggle_ssession_option.png)
+
+2. **Internet** 토글을 **Internet on**으로 확인한다.
+
+   ![Kaggle Internet on 설정](docs/pics/kaggle_ssession_internet.png)
+
+3. 상단 툴바의 **Run All**을 눌러 전체 셀을 실행한다.
+
+   ![Kaggle Run All 실행](docs/pics/run_all.png)
+
+4. 오른쪽 **Output** 패널의 `/kaggle/working` 아래에 `hm_sample.zip`이 생성되었는지 확인한다(안 보이면 새로고침 아이콘 클릭).
+
+   ![Kaggle Output hm_sample.zip 확인](docs/pics/kaggle_output.png)
+
+5. `hm_sample.zip`의 메뉴에서 **Download**를 눌러 로컬 `Downloads` 폴더로 내려받은 뒤 위의 `restore_hm_sample.py` 명령으로 복원한다.
+
+   ![Kaggle hm_sample.zip 다운로드](docs/pics/kaggle_download.png)
+
+기존 PC처럼 ZIP이 `data/raw/hm/hm_sample.zip`에 있으면 아래 명령으로 재검증·복원한다. 동일 파일 재실행은 허용하고 다른 내용의 기존 파일은 덮어쓰지 않는다.
+
+```bash
+.venv/bin/python scripts/restore_hm_sample.py
+```
+
+## 전체 분석과 검증
+
+```bash
+.venv/bin/python -B -m utils.run_checks --with-sample
+.venv/bin/python -B -m utils.repository_checks
+```
+
+새 커널의 실행 결과는 다음 로컬 파일에서 확인한다.
+
+- 2026-11-08 로컬에서 새 커널의 첫 코드 셀 시작부터 마지막 코드 셀 종료까지 **8.67초**가 걸렸다. 코드 셀 13개의 관측값이며 커널 시작과 실행본 저장 시간은 별도다.
+- `data/processed/analysis_report.executed.ipynb`: 실행된 전체 보고서
+- `data/processed/analysis_verification.json`: 입력 체크섬·환경·정제·피처·RFM·월별 합계
+- `data/processed/figures/`: 히스토그램·박스플롯·막대·히트맵·산점도·라인차트
+- `data/processed/insights.md`, `segment_profile.csv`: 실제 집계 기반 해석과 그룹 표
+
+```bash
+.venv/bin/python -m notebook data/processed/analysis_report.executed.ipynb
+```
+
+새 복제본·새 가상환경·새 커널에서 비교하려면 기준 실행 후 다음을 실행한다. 고정 의존성을 설치하기 위한 네트워크 접근과 원본 표본 ZIP이 필요하다. 새 복제본에는 원본 데이터나 개인 Drive 설정이 들어 있지 않으며 ZIP을 검증해 복원한다.
+
+```bash
+.venv/bin/python -B -m utils.reproducibility
+```
+
+비교 결과는 `data/processed/reproduction_verification.json`에 저장한다. 자료형·동점·순서·대치·IQR·월 누락 등의 작은 입력 검증과 실제 조인·금액 대조를 함께 수행한다.
+
+## 검증을 직접 재현할 작은 입력
+
+- 텍스트 `Blue cotton shirt` → 17자·3단어.
+- 픽셀 절반 0·절반 1 → 이미지 평균·표준편차 각각 0.5.
+- 그룹 A의 10·30·결측 → 결측20, 그룹 누락 행의 관측50 보존, 전체 관측 평균 fallback30.
+- `[1,2,3,4,100]` → IQR 경계−1·7, 100만 탐지. `[-2,1,2,3,6]`의 경계값은 탐지하지 않음.
+- A 고객이 1/1에 10·20, 1/3에30, B가1/2에5 구매 → 기준일1/3에서 A=R0/F2/M60, B=R1/F1/M5, 합계65.
+- 동일 지표의 점수가 같고 입력 순서를 바꿔도 RFM이 동일함. 고객당 단일 그룹, 네 그룹 이상과 금액 합계도 확인함.
+- 월 누락·상수 상관·원본 필드와 실행본 바이트 보존도 가상 입력 테스트로 확인함.
+
+## 원본 실행 보고서와 다시 생성하는 방법
+
+평가용 파일은 [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb)이다. 코드와 실행 결과가 함께 저장되어 있어 원본 행·고객 ID·상품 이미지 예시·피처·통계·RFM·차트를 바로 볼 수 있다. 대화나 게시 과정에서 값을 마스킹하거나 출력을 비우지 않았다. 전체 실행본은 `data/processed/analysis_report.executed.ipynb`와 바이트 단위로 동일하게 보존한다.
+
+보조 집계 자료는 `docs/results/analysis_aggregates.json`, `segment_profile.csv`, `monthly_amount.csv`, `analysis_report.md`다. 그림은 원본 분석에서 생성한 PNG를 그대로 복사한다. 원본 CSV·ZIP·전체 JPG 묶음과 개인 인증 설정은 Git에 넣지 않는다.
+
+```bash
+.venv/bin/python -B -m utils.run_checks --with-sample
+.venv/bin/python -B -m utils.publish_report
+.venv/bin/python -B -m utils.repository_checks
+```
+
+SRC `utils/publish_report.py`의 `preserve_execution()`은 성공한 실행본을 바이트 그대로 복사하며 표·ID·이미지를 삭제하지 않는다. 오류가 있거나 실행되지 않은 셀이 있으면 제출본 보존을 중단한다. 검증 도구는 실행 오류·제출 파일·상대 링크·허용 라이브러리와 원본 데이터 파일의 Git 제외를 확인한다.
+
 ## 소스 구조와 실행 흐름
 
 아래 트리와 Mermaid 차트는 현재 구현의 파일·클래스·호출 순서를 설명한다. 분석을 처음 읽을 때는 **파일 트리 → 모듈 연결 → 클래스 구조 → 분석 순서 → 검증·제출 순서**로 확인한다.
@@ -718,8 +705,21 @@ flowchart TD
 
 SRC: [표본 복원](scripts/restore_hm_sample.py) → [검증 실행](utils/run_checks.py) → [원본 결과 보존](utils/publish_report.py) → [저장소 검사](utils/repository_checks.py). 독립 검증: [새 환경 재현](utils/reproducibility.py).
 
-## 평가 기술 발표자료
+## 기능별 SRC
 
-[미션 설명 PPTX](docs/presentation/a1_1_mission_explanation.pptx)·[PDF](docs/presentation/a1_1_mission_explanation.pdf)는 **22장**으로 요구사항, 표본과 분석 단위, 피처·정제·통계·RFM의 계산 원리와 실제 결과를 설명한다. [평가 Q&A PPTX](docs/presentation/a1_1_evaluation_qa.pptx)·[PDF](docs/presentation/a1_1_evaluation_qa.pdf)는 **35장**으로 필수 **19문항**과 보너스 3개를 다룬다. 원문 문항 번호, 코드·수식·배열 축·메모리·RFM 손계산·검증 근거와 한계를 연결했고 최신 IQR·이미지 병목 계측·표본 선택의 시간 누수 설명을 반영했다. 상세 설명·시연·꼬리 질문 답변·출처는 PPTX의 발표자 노트에 있다.
+| SRC 경로 | 주요 함수·책임 |
+| --- | --- |
+| [src/pipeline.py](src/pipeline.py) | DataAnalyzer의 load_data·join_products·validate_transactions·handle_missing_values(평가 호환 호출명 handle_missing)·detect_outliers·calculate_rfm·summarize |
+| [utils/analytics.py](utils/analytics.py) | clean_transactions·impute_features·iqr_limits·calculate_customer_rfm·segment_profile |
+| [utils/image_features.py](utils/image_features.py) | `prepare_image`·`extract_product_image_features`로 픽셀 통계를 계산하고 `profile_jpeg_stages`로 읽기·디코딩·전처리를 계측 |
+| [utils/bonus.py](utils/bonus.py) | cohort_retention·cohort_figure·interactive_rfm. 코호트와 Plotly 보너스 |
+| [utils/reporting.py](utils/reporting.py) | pair_correlation·monthly_amount·make_figures·write_insights |
+| [utils/run_checks.py](utils/run_checks.py) | 가상 테스트와 현재 Python의 새 커널 실행 |
+| [utils/reproducibility.py](utils/reproducibility.py) | 새 복제본·새 환경·표본 복원과 결과 전체 대조 |
+| [utils/publish_report.py](utils/publish_report.py) | 원본 실행본·차트·집계 보존과 보조 보고서 생성 |
+| [utils/repository_checks.py](utils/repository_checks.py) | 제출 파일·링크·분석 import·데이터 제외·공개 보고서 검사 |
+| [scripts/restore_hm_sample.py](scripts/restore_hm_sample.py) | ZIP 구성·기록·경로·충돌·선택적 체크섬 확인 |
+| [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb) | NB_LOAD~NB_TIMING 실행·해석 |
+| [tests/test_pipeline.py](tests/test_pipeline.py) · [tests/test_analytics.py](tests/test_analytics.py) · [tests/test_reporting.py](tests/test_reporting.py) · [tests/test_publication.py](tests/test_publication.py) · [tests/test_bonus.py](tests/test_bonus.py) · [tests/test_repository_checks.py](tests/test_repository_checks.py) | 로드·조인·이미지·정제·대치·IQR·RFM·월·상관·원본 출력 보존·보너스·문서 링크 검증 (22개) |
 
-원본 실행 사진·차트와 편집 가능한 표·추가 차트를 함께 사용했다. PDF는 같은 슬라이드의 열람용이다. [발표 순서·질문별 페이지·재생성 안내](docs/presentation/README.md)에서 두 자료의 위치와 이전 31장 버전을 확인할 수 있다. 관련 이슈는 #17이며, 보너스 구현은 별도 #18에서 관리했다.
+용어·원리·작은 예제는 [docs/tech_study.md](docs/tech_study.md), 평가 질문·SRC·시연은 [docs/a1_1_evaluation_qa.md](docs/a1_1_evaluation_qa.md), 원본 평가 자료에 대한 의견은 [docs/a1_1_eval_review.md](docs/a1_1_eval_review.md)에 있다. 실행·결과·인사이트의 필수 설명은 이 README 본문에 포함했다.
