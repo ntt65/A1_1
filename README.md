@@ -163,13 +163,13 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 예를 들어 VIP의 Monetary 점수 3 이상은 평균 순위 비율이 0.50보다 큰 고객을 우선 검토하는 기준이다. 이 컷오프의 실무 타당성은 후보군 크기와 대조군 대비 30일 재구매율·고객당 마진으로 확인한다.
 ## 분석 흐름과 원본 보존
 
-1. 거래 CSV를 읽고 ID·날짜 자료형을 맞춘다. 고객·날짜·주문 모드·금액의 대표 제외 사유를 중복 없이 센다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L92)
-2. 상품 ID의 다대일 왼쪽 조인을 검증하고 거래 행·순서·금액을 대조한다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L92)
+1. 거래 CSV를 읽고 ID·날짜 자료형을 맞춘다. 고객·날짜·주문 모드·금액의 대표 제외 사유를 중복 없이 센다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L93)
+2. 상품 ID의 다대일 왼쪽 조인을 검증하고 거래 행·순서·금액을 대조한다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L93)
 3. 상품별 이미지 mean/std와 상품명 길이·단어 수를 계산해 거래에 연결한다. 원본 이미지 배열을 거래마다 복제하지 않는다. [NB_FEATURES · `936e811c`](notebooks/analysis_report.ipynb?plain=1#L735)
-4. `handle_missing_values()`로 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 네이토의 호출명 `handle_missing()`도 같은 인자·반환값·대치 기록을 제공한다. 미표본 이미지·원래 관측값·원문을 보존한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1103)
-5. `Q1−1.5×IQR`, `Q3+1.5×IQR` 밖을 탐지하고 금액의 EDA 사본만 clip한다. 경계값은 정상 범위에 포함한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1103)
-6. 원금액으로 RFM과 완전한 월별 합계를 계산하고 그룹 고객·금액 합계를 대조한다. [NB_RFM · `b4769e15`](notebooks/analysis_report.ipynb?plain=1#L1367)
-7. 분석 단위를 구분한 통계·상관·6종 차트를 만들고 근거·실행·검증 인사이트를 작성한다. [NB_STATS · `333254fa`](notebooks/analysis_report.ipynb?plain=1#L1526) · [NB_PLOTS · `87a953b4`](notebooks/analysis_report.ipynb?plain=1#L1771)
+4. `handle_missing_values()`로 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 네이토의 호출명 `handle_missing()`도 같은 인자·반환값·대치 기록을 제공한다. 미표본 이미지·원래 관측값·원문을 보존한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1101)
+5. `Q1−1.5×IQR`, `Q3+1.5×IQR` 밖을 탐지하고 금액의 EDA 사본만 clip한다. 경계값은 정상 범위에 포함한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1101)
+6. 원금액으로 RFM과 완전한 월별 합계를 계산하고 그룹 고객·금액 합계를 대조한다. [NB_RFM · `b4769e15`](notebooks/analysis_report.ipynb?plain=1#L1363)
+7. 분석 단위를 구분한 통계·상관·6종 차트를 만들고 근거·실행·검증 인사이트를 작성한다. [NB_STATS · `333254fa`](notebooks/analysis_report.ipynb?plain=1#L1521) · [NB_PLOTS · `87a953b4`](notebooks/analysis_report.ipynb?plain=1#L1766)
 
 [SRC (Source Code · 소스 코드)](docs/tech_study.md#12-pythonoop라이브러리와-실행): `src/pipeline.py`가 분석 상태·메서드를, `utils/analytics.py`가 공통 정제·RFM 계산을, `utils/image_features.py`가 이미지 통계를, `utils/reporting.py`가 상관·차트·인사이트를 담당한다.
 
@@ -571,7 +571,8 @@ Original stdout is private. No notebook rows or identifiers are copied here.
 | 2 · New 추가 구매 | 두 번째 구매일 발생률 +2%p 이상, 고객당 마진 차이 ≥0 | New 내 무작위 미발송 | 연락 동의, 후속 거래의 고객 ID·날짜, 마진 |
 | 3 · Churned 재활성화 | 구매율 +1%p 이상, 혜택 비용 차감 후 고객당 마진 차이 >0 | 기존 반복 구매 여부 층별 무작위 미발송 | 배정·발송 시각, 후속 거래, 혜택 비용, 재고 |
 
-30일은 배정 시각부터 센다. 표의 수치는 대조군 대비 차이의 **사전 목표 예시**이며 실제 효과와 실행 순서는 기준 구매율·표본 크기·비용을 확인한 뒤 판단한다. 노트북에는 각 대상의 실제 고객 수·거래 행 수·구매금액과 이미지 대치 전후 밀도 그림, 예측 타깃별 피처와 날짜 기준을 표시한다. [인사이트 출력](notebooks/analysis_report.ipynb?plain=1#L2037) · [예측 시점 분리](notebooks/analysis_report.ipynb?plain=1#L2203)
+30일은 배정 시각부터 센다. 표의 수치는 대조군 대비 차이의 **사전 목표 예시**이며 실제 효과와 실행 순서는 기준 구매율·표본 크기·비용을 확인한 뒤 판단한다. 노트북에는 각 대상의 실제 고객 수·거래 행 수·구매금액과 이미지 대치 전후 밀도 그림, 예측 타깃별 피처와 날짜 기준을 표시한다. [인사이트 출력](notebooks/analysis_report.ipynb?plain=1#L2031) · [예측 시점 분리](notebooks/analysis_report.ipynb?plain=1#L2195)
+
 ## 보너스 3개 실제 구현 결과
 
 이슈 #18에서 구현·검증했다. 노트북의 `NB_BONUS_IMAGES`·`NB_BONUS_COHORT`·`NB_BONUS_PLOTLY`에 실제 코드와 출력이 있으며, 보너스를 포함한 코드 셀 12개가 새 커널에서 모두 실행된다.
@@ -642,7 +643,187 @@ open docs/results/bonus/rfm_interactive.html
 - 이미지 고급 피처·첫 관찰 구매월 코호트·Plotly 보너스는 실제 구현했다. 가입일 코호트와 실제 모델 학습은 현재 범위에 포함되지 않는다.
 ## 평가용 실행 증거
 
-**새 커널 전체 실행 성공(PASS).** [평가용 실행 노트북](notebooks/analysis_report.ipynb)에 아래 셀의 코드와 출력이 함께 들어 있다. `NB_*`는 노트북 안에서 검색할 제목이며 괄호 안 값은 코드 셀 ID다.
+## 실제 실행 확인 기록
+
+2026-11-08 실제 검증의 성공 상태를 기록했다. 아래는 테스트 수·종료 성공·검증 상태 요약이며, 전체 분석 출력은 실행 노트북에서 확인할 수 있다. 이 블록은 실행 결과이며 복사 실행할 명령은 앞 절의 PowerShell 블록이다.
+
+```text
+Validation status summary, 2026-11-08 Asia/Seoul
+> .venv/Scripts/python.exe -B -m utils.run_checks --with-sample
+Ran 22 tests
+OK
+Notebook execution: PASS (13 code cells)
+> .venv/Scripts/python.exe -B -m utils.repository_checks
+Repository checks: PASS
+Original stdout is private. No notebook rows or identifiers are copied here.
+```
+
+새 복제본·새 가상환경에서는 표본 203파일을 복원하고 입력 체크섬·설정·버전·정제·이미지·월별·RFM·상관 등 기록한 전체 필드를 비교한다. 성공 시 `Fresh-checkout reproduction matched every recorded field.`를 출력한다. 검증 원문은 `data/processed/reproduction_verification.json`에 남는다.
+
+작업 흐름은 이슈 → 기능 브랜치 → 검증·커밋 → develop PR → 검증한 묶음 main 반영이다. 계획·완료 증거는 통합 계획과 체크표에 유지하며, 마지막 README 작업은 이슈 #11에서 관리한다.
+
+## 소스 구조와 실행 흐름
+
+아래 트리와 Mermaid 차트는 현재 구현의 파일·클래스·호출 순서를 설명한다. 분석을 처음 읽을 때는 **파일 트리 → 모듈 연결 → 클래스 구조 → 분석 순서 → 검증·제출 순서**로 확인한다. 이 문서의 도식 보완은 이슈 #14에서 관리한다.
+
+### 1. SRC 파일 트리 개요
+
+`src/`에는 분석 상태를 관리하는 `pipeline.py`가 있다. 공용 계산은 `utils/`, 분석 호출과 설명은 `notebooks/`, 표본 복원은 `scripts/`가 담당한다.
+
+```text
+A1_1/
+├── src/
+│   └── pipeline.py                 # DataAnalyzer 클래스와 간단한 로드·조인 CLI
+├── utils/
+│   ├── __init__.py                  # 공용 도구 패키지
+│   ├── bonus.py                     # 첫 관찰 구매월 코호트·Plotly 보너스
+│   ├── build_split_presentations.mjs # 미션·평가 PPTX 작성·렌더·검증
+│   ├── mission_presentation_content.mjs # 미션 설명 원고·발표자 노트
+│   ├── evaluation_qa_content.mjs     # 최신 평가 Q&A 원고·꼬리질문 답변
+│   ├── export_presentation_pdfs.ps1  # PowerPoint의 PDF 변환
+│   ├── build_eval_presentation.mjs   # 이전 31장 평가 PPT 작성 도구
+│   ├── eval_presentation_content.mjs # 재사용하는 질문별 기본 원고
+│   ├── analytics.py                 # 거래 정제·결측 대치·IQR·RFM·그룹 프로파일
+│   ├── image_features.py            # 이미지 정규화·축소·배치 mean/std
+│   ├── reporting.py                 # 통계 상관·월별 집계·6종 차트·인사이트
+│   ├── run_checks.py                # 회귀 테스트와 선택적 새 커널 실행
+│   ├── reproducibility.py           # 새 복제본·새 환경의 전체 결과 대조
+│   ├── publish_report.py            # 원본 실행본·차트 보존과 보조 집계 생성
+│   └── repository_checks.py         # 제출 파일·링크·실행 오류·Git 제외 검사
+├── notebooks/
+│   ├── prepare_hm_sample.ipynb       # Kaggle 원격 환경에서 필요한 표본 추출
+│   └── analysis_report.ipynb         # 분석 단계·해석과 실제 실행 출력
+├── scripts/
+│   └── restore_hm_sample.py         # ZIP 검사와 로컬 표본 복원
+├── tests/
+│   ├── test_pipeline.py             # 로드·상품 조인·이미지·텍스트
+│   ├── test_bonus.py                # 히스토그램·엣지·코호트·Plotly
+│   ├── test_analytics.py            # 정제·대치·IQR·RFM
+│   ├── test_reporting.py            # 상관·월별 합계 경계
+│   ├── test_publication.py          # 원본 필드·실행본 보존
+│   └── test_repository_checks.py   # 인용 코드·실제 상대 링크 구분
+└── docs/
+    ├── results/                    # 실제 차트·집계·보너스·실행 상태
+    └── presentation/               # 미션·평가 PPTX/PDF와 페이지·재생성 안내
+```
+
+`data/raw/hm/`은 재실행용 표본, `data/processed/`는 실행 중 생성하는 결과의 로컬 경로다. 파일별 자세한 위치는 [index.md](index.md), 기능을 바꿀 때 함께 확인할 위치는 [reverse_index.md](reverse_index.md)에 있다.
+
+### 2. 클래스와 모듈 연결 구조
+
+현재 분석 핵심 클래스는 `DataAnalyzer` 하나다. 별도 부모·자식 클래스로 나누지 않고 공용 함수 모듈을 호출한다. 아래 화살표는 **호출하는 쪽 → 호출되는 쪽**이며 상속 관계를 의미하지 않는다.
+
+```mermaid
+flowchart LR
+    NB["notebooks/analysis_report.ipynb<br/>설정·단계 실행·결과 해석"]
+    DA["src/pipeline.py<br/>DataAnalyzer"]
+    CLI["src/pipeline.py main<br/>로드·선택적 상품 조인 CLI"]
+    AN["utils/analytics.py<br/>clean_transactions / impute_features<br/>iqr_limits / calculate_customer_rfm<br/>segment_profile"]
+    IM["utils/image_features.py<br/>extract_product_image_features<br/>prepare_image"]
+    RP["utils/reporting.py<br/>pair_correlation / monthly_amount<br/>make_figures / write_insights"]
+    NP["NumPy<br/>배열·이미지 통계"]
+    PD["Pandas<br/>표·조인·집계"]
+    NB --> DA
+    CLI --> DA
+    DA --> AN
+    DA --> IM
+    NB --> RP
+    NB --> BN["utils/bonus.py<br/>cohort_retention / cohort_figure<br/>interactive_rfm (Plotly 보너스)"]
+    DA --> NP
+    DA --> PD
+```
+
+전체 분석의 진입점은 노트북이다. `python src/pipeline.py --data ... --products ...`는 CSV 로드와 선택적 상품 조인을 확인하는 CLI다. SRC: [src/pipeline.py](src/pipeline.py), [utils/analytics.py](utils/analytics.py), [utils/image_features.py](utils/image_features.py), [utils/reporting.py](utils/reporting.py).
+
+### 3. DataAnalyzer 클래스 구조도
+
+속성은 현재 분석 상태와 검증 기록을, 메서드는 수행할 작업을 나타낸다. `df`는 거래 표, `products`는 상품 표이며 로드·조인 전에는 `None`이다. `+`는 공개 인터페이스, `-`는 내부 보조 메서드라는 관례를 표시하며, `$`는 정적 메서드다.
+
+```mermaid
+classDiagram
+    class DataAnalyzer {
+        +str data_path
+        +DataFrame df
+        +DataFrame products
+        +str product_key
+        +dict join_summary
+        +dict image_batch_info
+        +dict transaction_audit
+        +dict missing_audit
+        +dict outlier_audit
+        +dict rfm_audit
+        +__init__(data_path)
+        +load_data(required_columns, date_columns, dtype)
+        +validate_transactions(customer_col, date_col, amount_col, settings)
+        +join_products(product_path, key, amount_col)
+        +extract_text_features(text_column)
+        +extract_image_features(image_column, image_dir, image_size, batch_size, advanced, histogram_bins)
+        -_extract_image_files(directory, prefix, image_size, batch_size, advanced, histogram_bins)
+        +handle_missing_values(strategy, group_col, columns, eligible)
+        +handle_missing(strategy, group_col, columns, eligible)
+        +detect_outliers(column, threshold)
+        +clip_outliers(column, threshold)
+        +calculate_rfm(customer_col, date_col, amount_col, reference_date, frequency_unit, order_col, split_inactive)
+        +summarize(columns)
+        +profile_segments(rfm)$
+    }
+```
+
+`load_data()`는 분석 상태를 초기화하고, `validate_transactions()`·`join_products()`·피처/대치 메서드는 자신의 인스턴스 표를 갱신한다. `clip_outliers()`는 보정된 별도 Series를, `calculate_rfm()`는 고객별 별도 DataFrame을 반환하므로 거래 원금액은 유지된다. `profile_segments()`는 전달받은 RFM 표를 요약하는 정적 메서드다. 실제 타입·기본값·키워드 전용 인자는 [클래스 원문](src/pipeline.py)에서 확인한다.
+
+### 4. 노트북 분석 실행 차트
+
+노트북에 있는 `NB_*` 제목의 실제 순서다. 상품 이미지 피처의 결측 대치는 별도 `imputer` 인스턴스의 EDA 사본에 적용한다. IQR 보정 금액도 사본으로 반환하며 RFM·월별 합계에는 유효 거래의 원금액을 사용한다.
+
+```mermaid
+flowchart TD
+    SET["설정<br/>경로·기간·채널·시드와 manifest 대조"]
+    LOAD["NB_LOAD<br/>load_data → validate_transactions → join_products<br/>head / info / describe와 조인 보존 검증"]
+    FEAT["NB_FEATURES<br/>상품명 길이·단어 수 / 이미지 mean·std<br/>상태별 건수와 실제 상품 이미지 표시"]
+    CLEAN["NB_CLEAN<br/>별도 피처 사본 결측 대치<br/>IQR 탐지·금액 사본 보정"]
+    EDA["EDA 사본<br/>대치한 이미지 피처 / clipped_amount"]
+    RFM["NB_RFM<br/>거래 원금액 → 고객 RFM → 그룹 프로파일<br/>고객·금액 합계와 손계산 대조"]
+    STATS["NB_STATS<br/>기술통계와 상관 2쌍<br/>상품 단위 / 고객 단위 구분"]
+    PLOTS["NB_PLOTS<br/>원금액 월별 집계와 필수 차트 6종<br/>IQR 전후 비교에는 clipped_amount 사용"]
+    INSIGHT["비즈니스 해석<br/>write_insights → 근거·실행·검증 3개"]
+    BONUS["NB_BONUS_IMAGES / COHORT / PLOTLY<br/>고급 이미지 피처·첫 구매월 코호트<br/>고객 전체 인터랙티브 탐색"]
+    REPRO["NB_REPRO<br/>입력 체크섬·설정·환경·전체 분석 기록<br/>analysis_verification.json / segment_profile.csv"]
+    TIMING["NB_TIMING<br/>JPEG 읽기·디코딩·전처리 계측"]
+    SET --> LOAD --> FEAT --> CLEAN --> RFM --> STATS --> PLOTS --> INSIGHT --> BONUS --> REPRO --> TIMING
+    CLEAN -. "원본과 별도 보관" .-> EDA
+    EDA -. "보정 금액의 분포 비교" .-> PLOTS
+    FEAT -. "관측 상품 피처" .-> STATS
+```
+
+SRC: [실행 노트북](notebooks/analysis_report.ipynb)의 `NB_LOAD`~`NB_TIMING`, [DataAnalyzer](src/pipeline.py), [보고서 공용 함수](utils/reporting.py). `NB_REPRO`는 분석 재현 기록을 저장하고 `NB_TIMING`은 환경별 계측 결과를 노트북에 표시한다.
+
+### 5. 검증·제출 실행 차트
+
+실제 실행·원본 보존·저장소 검사 순서를 보여준다. 각 명령이 성공한 뒤 다음 단계를 진행한다. 새 환경 재현은 분석 결과가 생성된 뒤 별도로 실행하는 검증 경로다.
+
+```mermaid
+flowchart TD
+    ZIP["scripts/restore_hm_sample.py<br/>ZIP 검사·표본 복원"]
+    TEST["utils.run_checks --with-sample<br/>회귀 테스트 22개"]
+    KERNEL["현재 Python의 새 커널<br/>analysis_report.ipynb 전체 실행"]
+    LOCAL["data/processed/<br/>실행 노트북·검증 JSON·차트·프로파일"]
+    PUB["utils.publish_report<br/>성공한 실행본을 바이트 그대로 복사<br/>원본 차트·집계와 보조 보고서 생성"]
+    REPO["utils.repository_checks<br/>제출 파일·실행 오류·문서 링크<br/>허용 분석 라이브러리·Git 제외 검사"]
+    SUBMIT["제출 결과<br/>notebooks/analysis_report.ipynb<br/>docs/results/ + README.md"]
+    FRESH["utils.reproducibility<br/>새 복제본·새 가상환경·표본 복원<br/>회귀 테스트·새 커널 전체 실행"]
+    COMPARE["분석 JSON 전체 필드 대조<br/>reproduction_verification.json"]
+    ZIP --> TEST
+    TEST -->|"테스트 성공"| KERNEL
+    KERNEL -->|"전체 셀 성공"| LOCAL
+    LOCAL --> PUB --> REPO --> SUBMIT
+    LOCAL -. "별도 재현 검증" .-> FRESH
+    FRESH --> COMPARE
+    LOCAL -. "대조 기준" .-> COMPARE
+```
+
+`utils.run_checks`만 실행하면 회귀 테스트까지 수행하며, `--with-sample`을 붙여야 새 커널 분석을 실행한다. `utils.publish_report`는 README 설명과 본문 인사이트를 자동 작성하지 않으며 실행 결과와 보조 집계 파일을 갱신한다. 재실행 후 README의 수치·설명도 결과와 대조한다. 전체 명령은 앞의 **전체 분석과 검증**, **원본 실행 보고서와 다시 생성하는 방법**에 있다.
+
+SRC: [표본 복원](scripts/restore_hm_sample.py) → [검증 실행](utils/run_checks.py) → [원본 결과 보존](utils/publish_report.py) → [저장소 검사](utils/repository_checks.py). 독립 검증: [새 환경 재현](utils/reproducibility.py).
 
 | 항목 | 실제 결과와 확인 위치 | SRC |
 | --- | --- | --- |
@@ -658,6 +839,6 @@ open docs/results/bonus/rfm_interactive.html
 | 18–19 · 사업 활용과 예측 확장 | 아래 캠페인 표는 대조 실험 가설을, 평가 Q&A는 기준시점 T까지의 피처와 미래 30일 라벨을 분리하는 설계를 설명한다. | [캠페인 설계](#비즈니스-인사이트) · [평가 Q&A](docs/a1_1_evaluation_qa.md) |
 ## 평가 기술 발표자료
 
-[질문별 기술 발표 PPT](docs/presentation/a1_1_eval_technical_final.pptx)는 **31장**이며, 평가서 필수 질문 **19개를 각각 최소 한 장**으로 설명한다. 질문 번호1-1~4-3을 표시하고 실제 구현·코드·수식·배열 축·메모리/[Stride (메모리 보폭)](docs/tech_study.md#4-numpy-배열벡터화메모리)/[SIMD (Single Instruction, Multiple Data · 단일 명령 다중 데이터)](docs/tech_study.md#4-numpy-배열벡터화메모리)·RFM 손계산·검증값과 한계를 담았다. 보너스3개는 B-1~B-3에서 실제 결과로 설명한다. 각 장의 발표자 노트에는 질문 원문·설명·코드 시연·꼬리 질문·SRC/출처가 있다.
+[미션 설명 PPTX](docs/presentation/a1_1_mission_explanation.pptx)·[PDF](docs/presentation/a1_1_mission_explanation.pdf)는 **22장**으로 요구사항, 표본과 분석 단위, 피처·정제·통계·RFM의 계산 원리와 실제 결과를 설명한다. [평가 Q&A PPTX](docs/presentation/a1_1_evaluation_qa.pptx)·[PDF](docs/presentation/a1_1_evaluation_qa.pdf)는 **35장**으로 필수 **19문항**과 보너스 3개를 다룬다. 원문 문항 번호, 코드·수식·배열 축·메모리·RFM 손계산·검증 근거와 한계를 연결했고 최신 IQR·이미지 병목 계측·표본 선택의 시간 누수 설명을 반영했다. 상세 설명·시연·꼬리 질문 답변·출처는 PPTX의 발표자 노트에 있다.
 
-필수 분석과 보너스의 실제 실행 화면, 편집 가능한 표·차트·기술 도식을 함께 사용했다. [질문별 페이지·발표/재생성 안내](docs/presentation/README.md)에서 필요한 질문을 찾을 수 있다. 관련 이슈는 #17이며, 보너스 구현은 별도 #18에서 관리했다.
+원본 실행 사진·차트와 편집 가능한 표·추가 차트를 함께 사용했다. PDF는 같은 슬라이드의 열람용이다. [발표 순서·질문별 페이지·재생성 안내](docs/presentation/README.md)에서 두 자료의 위치와 이전 31장 버전을 확인할 수 있다. 관련 이슈는 #17이며, 보너스 구현은 별도 #18에서 관리했다.

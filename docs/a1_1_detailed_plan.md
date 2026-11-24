@@ -59,7 +59,7 @@ H&M 대회 자료는 구매 내역 `transactions_train.csv`, 상품 정보 `arti
 
 접근·용량·공개 범위 문제로 H&M을 제출에 사용할 수 없으면 원인을 기록하고 대체 데이터를 검토한다. CC BY 4.0으로 제공되는 UCI Online Retail 거래와 Amazon Berkeley Objects 상품·이미지를 사용하는 경우, 두 데이터 흐름을 분리하는 구성이 평가 기준에 허용되는지 먼저 확인한다. 서로 다른 상품 ID는 연결하지 않는다. UCI의 `InvoiceNo`는 주문 ID로, `UnitPrice × Quantity`는 금액으로 사용하고 취소·반품을 양의 구매 집계와 분리한다. 원본 엑셀은 CSV로 내보낸다. ABO 상품은 자체 ID로 메타데이터와 이미지를 연결한다. [UCI Online Retail](https://archive.ics.uci.edu/dataset/352/online+retail) · [Amazon Berkeley Objects](https://amazon-berkeley-objects.s3.us-east-1.amazonaws.com/index.html)
 
-이 PC의 표본 복원은 완료되어 있다. 다른 작업 환경에서는 [README](../README.md#hm-표본-준비)의 복원 절차를 실행하고, 로컬 `data/drive_source.json`과 `data/raw/hm/sample_manifest.json`으로 원본 연결과 추출 설정을 확인한다.
+이 PC의 표본 복원은 완료되어 있다. 다른 작업 환경에서는 [README](../README.md#비공개-데이터-준비)의 복원 절차를 실행하고, 로컬 `data/drive_source.json`과 `data/raw/hm/sample_manifest.json`으로 원본 연결과 추출 설정을 확인한다.
 
 ### A2. 입력 구조 고정
 

@@ -16,8 +16,8 @@ class PipelineTests(unittest.TestCase):
 
     def setUp(self):
         """테스트마다 독립된 입력 폴더를 만들어 기존 데이터를 보호한다."""
-        self.temporary = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temporary.cleanup)
+        self.temporary = tempfile.TemporaryDirectory()	# 매 검사마다 별도 폴더를 사용해 기존 표본과 충돌하지 않게 한다.
+        self.addCleanup(self.temporary.cleanup)	# 검사 실패 여부와 관계없이 생성한 임시 폴더를 정리한다.
         self.root = Path(self.temporary.name)
 
     def csv(self, name, rows):
@@ -27,6 +27,7 @@ class PipelineTests(unittest.TestCase):
         return path
 
     def test_load_ids_dates_and_failed_reload(self):
+        """가상 CSV로 ID의 선행 0·잘못된 날짜·로드 실패 후 상태 보존을 검증한다. 반환값은 없고 임시 입력·검사 객체만 변경한다."""
         analyzer = DataAnalyzer(self.csv("tx.csv", {
             "article_id": ["00123", "  "], "customer_id": ["0001", "0002"],
             "t_dat": ["2020-06-01", "bad"], "price": [1.0, 2.0]}))
@@ -36,12 +37,13 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(pd.isna(loaded.t_dat.iloc[1]))
         with self.assertRaisesRegex(ValueError, "missing_column"):
             analyzer.load_data(required_columns=["missing_column"])
-        self.assertIs(analyzer.df, loaded)
+        self.assertIs(analyzer.df, loaded)	# 로드 실패가 마지막 정상 데이터 객체를 덮어쓰지 않아야 한다.
         analyzer.data_path = self.csv("empty.csv", {"price": []})
         with self.assertRaisesRegex(ValueError, "Empty CSV"):
             analyzer.load_data()
 
     def test_join_preserves_rows_order_sum_and_rejects_duplicates(self):
+        """가상 거래로 조인 순서·합계·중복 상품 키 거부와 텍스트 매핑을 검증한다. 반환값은 없고 임시 입력·검사 객체만 변경한다."""
         analyzer = DataAnalyzer(self.csv("tx.csv", {
             "article_id": ["00123", "00999", "00123", None], "price": [2, 3, 4, 5]}))
         analyzer.load_data()
@@ -51,12 +53,12 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(joined.index.tolist(), [5, 2, 8, 1])
         self.assertEqual(joined.price.tolist(), [2, 3, 4, 5])
         self.assertEqual(analyzer.join_summary["unmatched_rows"], 2)
-        self.assertEqual(analyzer.join_summary["amount_after"], 14)
-        self.assertEqual(analyzer.join_summary["excluded_empty_product_keys"], 1)
+        self.assertEqual(analyzer.join_summary["amount_after"], 14)	# 중복 매칭으로 거래금액이 늘지 않았는지 손계산 합계로 확인한다.
+        self.assertEqual(analyzer.join_summary["excluded_empty_product_keys"], 1)	# 빈 상품 키가 빈 거래 키에 잘못 매칭되지 않게 한다.
         duplicate = self.csv("duplicate.csv", {"article_id": ["00123", "00123"]})
         with self.assertRaisesRegex(ValueError, "Duplicate"):
             analyzer.join_products(duplicate)
-        self.assertIs(analyzer.df, joined)
+        self.assertIs(analyzer.df, joined)	# 중복 상품 키 오류가 정상 조인 결과를 훼손하지 않아야 한다.
         with self.assertRaisesRegex(ValueError, "already exist"):
             analyzer.join_products(self.root / "products.csv")
         analyzer.extract_text_features("prod_name")
@@ -66,6 +68,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(analyzer.products.prod_name.iloc[0], "Blue cotton shirt")
 
     def test_array_features_and_missing_text_keep_existing_api(self):
+        """배열 입력의 평균·표준편차와 결측 텍스트의 기존 처리 규칙을 검증한다. 반환값은 없고 임시 입력·검사 객체만 변경한다."""
         analyzer = DataAnalyzer("unused.csv")
         analyzer.df = pd.DataFrame({"pixels": [np.array([[0, 0], [1, 1]])], "name": [None]})
         original = analyzer.df
@@ -73,11 +76,12 @@ class PipelineTests(unittest.TestCase):
         analyzer.extract_text_features("name")
         self.assertIs(analyzer.df, original)
         self.assertEqual(original.pixels_mean.iloc[0], .5)
-        self.assertEqual(original.pixels_std.iloc[0], .5)
+        self.assertEqual(original.pixels_std.iloc[0], .5)	# 0과 1이 절반인 픽셀의 모집단 표준편차를 확인한다.
         self.assertEqual(original.name_word_count.iloc[0], 0)
         self.assertTrue(pd.isna(original.name.iloc[0]))
 
     def test_file_statuses_batching_and_color_normalization(self):
+        """가상 이미지로 색상 정규화·실패 상태·상품별 읽기·배치 독립성을 검증한다. 반환값은 없고 임시 입력·검사 객체만 변경한다."""
         identifiers = [f"001{i:03}" for i in range(9)]
         analyzer = DataAnalyzer(self.csv("tx.csv", {
             "article_id": identifiers + [identifiers[0], "999999"], "price": [1] * 11}))
@@ -106,20 +110,20 @@ class PipelineTests(unittest.TestCase):
 
         with patch("matplotlib.image.imread", side_effect=read):
             analyzer.extract_image_features(image_dir=images, batch_size=2)
-        self.assertEqual(len(calls), 6)  # 반복 거래도 상품 이미지를 다시 읽지 않는다.
+        self.assertEqual(len(calls), 6)	# 반복 거래도 상품 이미지를 다시 읽지 않는다.
         expected = ["ok"] * 4 + ["too_small", "corrupt", "missing", "missing", "not_sampled"]
         self.assertEqual(analyzer.products.image_status.tolist(), expected)
         self.assertEqual(analyzer.df.image_status.iloc[-1], "unmatched_product")
         np.testing.assert_allclose(analyzer.products.image_mean.iloc[:4], .5)
         np.testing.assert_allclose(analyzer.products.image_std.iloc[:4], .5)
         self.assertTrue(analyzer.products.image_mean.iloc[4:].isna().all())
-        self.assertEqual(analyzer.image_batch_info["shape"], (2, 32, 32, 3))
+        self.assertEqual(analyzer.image_batch_info["shape"], (2, 32, 32, 3))	# 이미지 번호·높이·너비·RGB 축의 실제 배치 형상을 확인한다.
         first = analyzer.df[["image_mean", "image_std"]].copy()
         with patch("matplotlib.image.imread", side_effect=read):
             analyzer.extract_image_features(image_dir=images, batch_size=3, advanced=True)
-        pd.testing.assert_frame_equal(first, analyzer.df[["image_mean", "image_std"]])
+        pd.testing.assert_frame_equal(first, analyzer.df[["image_mean", "image_std"]])	# 배치 크기와 보너스 사용 여부가 기본 통계값을 바꾸지 않아야 한다.
         histogram = analyzer.products.filter(regex=r"^image_hist_")
-        np.testing.assert_allclose(histogram.iloc[:4].sum(axis=1), 1)
+        np.testing.assert_allclose(histogram.iloc[:4].sum(axis=1), 1)	# 이미지마다 정규화된 구간 비중의 합은 1이어야 한다.
         self.assertTrue(histogram.iloc[4:].isna().all().all())
         self.assertEqual(analyzer.df.image_hist_0.iloc[0], analyzer.df.image_hist_0.iloc[-2])
         self.assertTrue(analyzer.df.columns.is_unique)
@@ -130,4 +134,4 @@ class PipelineTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main()	# 파일을 직접 실행했을 때 이 모듈의 회귀 검사를 수행한다.

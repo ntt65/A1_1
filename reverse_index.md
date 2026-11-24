@@ -27,7 +27,7 @@
 | 네이토 최종 판정·권고 자체 검증 | `docs/a1_1_checklist.md`의 최종 권고와 자체 점검 | `docs/naito_eval_result.md`·`docs/naito_eval_result2.md`·통합 계획·README 평가 증거 |
 | 네이토 #13 IQR 이론·표본 전후 비교 / #17 이미지 병목 설계 | 통합 계획 R1·R2 | README·`NB_CLEAN`·`NB_FEATURES`·평가 Q&A 3-1·4-1·`utils/analytics.py`·`utils/image_features.py` |
 | 평가 예상 질문·답변·시연 | `docs/a1_1_evaluation_qa.md` | 19개 문항·SRC·실행 기록·이슈 #6 |
-| 평가 PPT·질문별 원고·발표자 노트·도식 | `utils/eval_presentation_content.mjs`·`utils/build_eval_presentation.mjs` | docs/presentation·실제 분석 JSON/그림·질문별 페이지·이슈 #17 |
+| 미션 설명·평가 Q&A·PPTX/PDF·발표자 노트 | `utils/build_split_presentations.mjs`·`utils/mission_presentation_content.mjs`·`utils/evaluation_qa_content.mjs`·`utils/export_presentation_pdfs.ps1` | docs/presentation·기본 평가 원고·실제 집계/그림·문항별 페이지·이슈 #17 |
 | 기술·용어·원리 학습 | `docs/tech_study.md` | 미션 필수·선택·제약·코드·QA |
 | 토큰 절약·수정과 검증 반복 절차 | `AGENTS.md` | 인덱스 최신성·관련 파일만 읽기 |
 
