@@ -27,10 +27,10 @@
 
 노트북의 `NB_LOAD`에서 거래 표본 CSV 경로를 넘겨 `analyzer = DataAnalyzer(DATA / "transactions_sample.csv")`를 만들고, 이 인스턴스를 이후 정제와 RFM 집계에 사용한다. [analysis_report.ipynb (line 679)](../notebooks/analysis_report.ipynb#L679)
 
-- **`load_data()` · `NB_LOAD`** — 바로 다음 줄에서 고객 ID, 상품 ID, 거래일, 금액, 판매 채널을 필수 열로 지정해 CSV를 읽는다. 거래일인 `t_dat`를 날짜형으로 변환하고 읽어 온 거래 표를 `analyzer.df`에 저장한다.
-- **`handle_missing_values()` · `NB_CLEAN`** — 상품 피처 표의 사본을 별도의 `DataAnalyzer` 인스턴스인 `imputer`에 넣는다. `image_mean_eda`와 `image_std_eda`의 결측값을 상품 유형별 평균으로 채우고, 그룹 평균이 없으면 전체 관측 평균을 사용한다. 표본에 포함되지 않은 상품은 대치 대상에서 제외한다.
-- **`detect_outliers()` · `NB_CLEAN`** — 노트북이 `analyzer.clip_outliers("price", ...)`를 호출하면, 이 메서드가 내부에서 `detect_outliers()`를 호출한다. IQR 경계 밖 거래를 마스크로 표시하고 경계와 건수를 기록한다. 노트북은 경계로 보정한 사본을 분포 비교에 쓰고 원래 거래 금액은 유지한다.
-- **`calculate_rfm()` · `NB_RFM`** — 고객 ID, 거래일, 원래 거래 금액, 표본 기록의 기준일을 넘겨 고객별 마지막 구매 이후 경과일, 고유 구매일 수, 구매금액 합계를 집계한다. 반환된 고객별 RFM 표로 그룹을 요약하고, 고객이 한 번씩 집계됐는지와 그룹이 4개 이상인지 확인한다.
+- **`load_data()` · `NB_LOAD`** — 바로 다음 줄에서 고객 ID, 상품 ID, 거래일, 금액, 판매 채널을 필수 열로 지정해 CSV를 읽는다. 거래일인 `t_dat`를 날짜형으로 변환하고 읽어 온 거래 표를 `analyzer.df`에 저장한다. [거래 표와 자료형 출력 · In [2]](../notebooks/analysis_report.ipynb#L238)
+- **`handle_missing_values()` · `NB_CLEAN`** — 상품 피처 표의 사본을 별도의 `DataAnalyzer` 인스턴스인 `imputer`에 넣는다. `image_mean_eda`와 `image_std_eda`의 결측값을 상품 유형별 평균으로 채우고, 그룹 평균이 없으면 전체 관측 평균을 사용한다. 표본에 포함되지 않은 상품은 대치 대상에서 제외한다. [결측치 대치 결과표 · In [4]](../notebooks/analysis_report.ipynb#L1142)
+- **`detect_outliers()` · `NB_CLEAN`** — 노트북이 `analyzer.clip_outliers("price", ...)`를 호출하면, 이 메서드가 내부에서 `detect_outliers()`를 호출한다. IQR 경계 밖 거래를 마스크로 표시하고 경계와 건수를 기록한다. 노트북은 경계로 보정한 사본을 분포 비교에 쓰고 원래 거래 금액은 유지한다. [IQR 이상치 탐지 결과 · In [4]](../notebooks/analysis_report.ipynb#L1226)
+- **`calculate_rfm()` · `NB_RFM`** — 고객 ID, 거래일, 원래 거래 금액, 표본 기록의 기준일을 넘겨 고객별 마지막 구매 이후 경과일, 고유 구매일 수, 구매금액 합계를 집계한다. 반환된 고객별 RFM 표로 그룹을 요약하고, 고객이 한 번씩 집계됐는지와 그룹이 4개 이상인지 확인한다. [RFM 그룹 요약표 · In [5]](../notebooks/analysis_report.ipynb#L1398)
 
 #### 1-2
 
