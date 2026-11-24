@@ -33,14 +33,32 @@
 
 **실행 예제**
 
-저장소 루트의 PowerShell에 아래 블록 전체를 붙여넣으면 가상 거래 6행으로 필수 메서드 4개를 실행할 수 있다.
+**확인할 내용**
+
+- 클래스 정의는 `DataAnalyzer`를 불러와 정의 파일이 `src/pipeline.py`인지 확인한다.
+- 메서드 포함 여부는 필수 메서드 4개가 `DataAnalyzer` 클래스에 직접 정의되어 있고 호출 가능한지 각각 확인한다.
+- 동작 확인은 가상 거래 6행으로 CSV 로드, 결측값 대치, IQR 이상치 탐지, 고객별 RFM 집계를 차례로 실행한다.
+
+저장소 루트의 PowerShell에 아래 블록 전체를 붙여넣으면 된다.
 
 ```powershell
 @'
+from inspect import getsourcefile
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from src.pipeline import DataAnalyzer
+
+source_path = Path(getsourcefile(DataAnalyzer)).resolve().relative_to(Path.cwd().resolve())
+if not isinstance(DataAnalyzer, type) or source_path.as_posix() != "src/pipeline.py":
+    raise AssertionError("Expected DataAnalyzer to be defined in src/pipeline.py")
+print(f"Class: {DataAnalyzer.__name__} ({source_path.as_posix()})")
+
+required_methods = ("load_data", "handle_missing_values", "detect_outliers", "calculate_rfm")
+for name in required_methods:
+    if not callable(vars(DataAnalyzer).get(name)):
+        raise AssertionError(f"Missing callable method: {name}")
+    print(f"Method defined: {name}()")
 
 with TemporaryDirectory() as directory:
     csv_path = Path(directory) / "transactions.csv"
@@ -68,6 +86,23 @@ with TemporaryDirectory() as directory:
     rfm = analyzer.calculate_rfm("customer_id", "t_dat", "price", reference_date="2020-01-03")
     print(rfm.to_string(index=False))
 '@ | .venv\Scripts\python.exe -B -
+```
+
+**실행 결과**
+
+```text
+Class: DataAnalyzer (src/pipeline.py)
+Method defined: load_data()
+Method defined: handle_missing_values()
+Method defined: detect_outliers()
+Method defined: calculate_rfm()
+Loaded rows: 6
+Imputed price: 12.0
+IQR outliers: [100.0]
+customer_id  Frequency  Monetary  Recency  R_Score  F_Score  M_Score   Segment
+          A          2      22.0        1        1        2        1   Churned
+          B          2      26.0        0        3        2        2 Potential
+          C          2     116.0        0        3        2        4 Potential
 ```
 
 #### 1-2
