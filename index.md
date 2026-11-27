@@ -4,7 +4,7 @@
 
 | 파일 | 역할 |
 | --- | --- |
-| [README.md](README.md) | 환경·표본·실행·결과 안내와 하단 파일 트리·클래스 구조·실행 Mermaid 차트 |
+| [README.md](README.md) | 미션 구현·결과·인사이트·실행 절차와 소스 구조 |
 | [docs/a1_1_detailed_plan.md](docs/a1_1_detailed_plan.md) | 통합 구현 계획·계산 정의·평가 매핑·QA |
 | [docs/a1_1_checklist.md](docs/a1_1_checklist.md) | 완료 여부와 검증 증거 |
 | [docs/a1_1_mission.md](docs/a1_1_mission.md) | 미션 원문 |
@@ -12,7 +12,7 @@
 | [2차 네이토 평가](docs/naito_eval_result2.md) · [최종 네이토 평가](docs/naito_eval_result.md) | 17/19에서 19/19로 변경. 1차 이력과 대응은 [통합 계획](docs/a1_1_detailed_plan.md#네이토-평가-보완-계획), 권고 반영은 [체크표](docs/a1_1_checklist.md#최종-권고와-자체-점검) |
 | [docs/mission-eval괴리해결법.md](docs/mission-eval괴리해결법.md) | 미션·평가 문서 괴리 진단, 평가 19문항 대응표, 정리 순서 |
 | [docs/a1_1_eval_review.md](docs/a1_1_eval_review.md) | PDF·Markdown 자료 대조와 검토 의견 |
-| [docs/a1_1_evaluation_qa.md](docs/a1_1_evaluation_qa.md) | 평가 문항 19개 Q&A·SRC·시연·준비 계획 |
+| [docs/a1_1_evaluation_qa.md](docs/a1_1_evaluation_qa.md) | 평가 문항 19개 Q&A·실행 증거·네이토 평가·발표자료 |
 | [미션 설명 PPTX](docs/presentation/a1_1_mission_explanation.pptx) · [PDF](docs/presentation/a1_1_mission_explanation.pdf) | 미션 설명 22장·실제 결과·수식·발표자 노트 |
 | [평가 Q&A PPTX](docs/presentation/a1_1_evaluation_qa.pptx) · [PDF](docs/presentation/a1_1_evaluation_qa.pdf) | 필수 19문항·보너스·꼬리질문 답변 35장 |
 | [공통 작성 도구](utils/build_split_presentations.mjs) · [미션 원고](utils/mission_presentation_content.mjs) · [평가 원고](utils/evaluation_qa_content.mjs) | 두 발표자료의 원고·PPTX 작성·검증·PDF 변환 |

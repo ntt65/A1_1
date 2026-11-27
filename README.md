@@ -11,13 +11,12 @@
 3. [실제 실행 결과와 기술통계](#실제-실행-결과와-기술통계) · [필수 시각화 6종](#필수-시각화-6종)
 4. [실제 고객 그룹 요약](#실제-고객-그룹-요약) · [비즈니스 인사이트](#비즈니스-인사이트)
 5. [보너스 3개 실제 구현 결과](#보너스-3개-실제-구현-결과) · [범위와 한계](#범위와-한계)
-6. [평가용 실행 증거](#평가용-실행-증거) · [평가 기술 발표자료](#평가-기술-발표자료)
 
 **부록 (실행·재현·코드 구조)**
 
-7. [환경과 실행](#환경과-실행) · [비공개 데이터 준비](#비공개-데이터-준비)
-8. [전체 분석과 검증](#전체-분석과-검증) · [검증을 직접 재현할 작은 입력](#검증을-직접-재현할-작은-입력) · [원본 실행 보고서와 다시 생성하는 방법](#원본-실행-보고서와-다시-생성하는-방법)
-9. [소스 구조와 실행 흐름](#소스-구조와-실행-흐름) · [기능별 SRC](#기능별-src) · [작업 체크표](docs/a1_1_checklist.md)
+6. [환경과 실행](#환경과-실행) · [비공개 데이터 준비](#비공개-데이터-준비)
+7. [전체 분석과 검증](#전체-분석과-검증) · [검증을 직접 재현할 작은 입력](#검증을-직접-재현할-작은-입력) · [원본 실행 보고서와 다시 생성하는 방법](#원본-실행-보고서와-다시-생성하는-방법)
+8. [소스 구조와 실행 흐름](#소스-구조와-실행-흐름) · [기능별 SRC](#기능별-src) · [작업 체크표](docs/a1_1_checklist.md)
 
 ## 미션 개요 및 목표
 
@@ -44,7 +43,7 @@
 | --- | --- |
 | 이 README | 데이터 → 분석 흐름 → 결과 → 전략 순서로 프로젝트 전체를 설명할 때 |
 | [미션 원문과 구현 대조](docs/a1_1_mission.md) | 미션 요구사항 하나하나가 어디에 구현됐는지 확인할 때 |
-| [평가 Q&A](docs/a1_1_evaluation_qa.md) | 평가 문항별 답변과 코드·노트북 출력 위치를 짚을 때 |
+| 미션 설명 [PPTX](docs/presentation/a1_1_mission_explanation.pptx) · [PDF](docs/presentation/a1_1_mission_explanation.pdf) | 미션 요구사항·분석 흐름·실제 결과를 22장으로 설명할 때 |
 | [tech_study.md](docs/tech_study.md) | IQR·RFM·벡터화 같은 개념을 공부하거나 설명할 때 |
 
 ### 기능 구현 요약
@@ -64,7 +63,6 @@
 #### 과제 2. 완전한 EDA (결측 대치 · IQR · 통계 · 시각화 6종)
 
 - **결측치 대치 (파이프라인)**: [EDA (Exploratory Data Analysis · 탐색적 데이터 분석)](docs/tech_study.md#eda탐색적-데이터-분석의-4단계-풀이와-코드-연결) 사본 대치 및 `missing_audit` 갱신 — [`DataAnalyzer.handle_missing_values`](src/pipeline.py#L129)
-- **결측치 대치 (호환 별칭)**: 평가 호환 호출명(`handle_missing`) 위임 연결 — [`DataAnalyzer.handle_missing`](src/pipeline.py#L141)
 - **결측치 대치 (공용 함수)**: `product_type_name` 그룹 평균 → 전체 평균 fallback 대치 — [`impute_features`](utils/analytics.py#L71)
 - **이상치 경계 계산**: 사분위수(`Q1`, `Q3`) 기반 `1.5×IQR` 하한·상한 산출 — [`iqr_limits`](utils/analytics.py#L117)
 - **이상치 탐지**: 원금액 보존하며 IQR 경계 밖 불리언 마스크 반환 — [`DataAnalyzer.detect_outliers`](src/pipeline.py#L145)
@@ -93,7 +91,7 @@
 
 분석에 쓰는 컬럼, 관찰 기간, RFM 기준일, 주요 설정값을 먼저 정한다. 뒤의 모든 결과는 이 기준 위에서 계산된다.
 
-> **처음 읽는다면** — 아래 표는 "어떤 열을 무슨 뜻으로 쓰는가"와 "바꿀 수 있는 설정값"이다. 이어지는 RFM 규칙은 고객을 세 숫자로 요약하는 방법이다. R은 마지막 구매 후 며칠 지났는지(작을수록 최근), F는 구매한 날이 며칠인지, M은 구매금액 합계다. 평가 질문: [1-3](docs/a1_1_evaluation_qa.md#1-3) · [2-3](docs/a1_1_evaluation_qa.md#2-3)
+> **처음 읽는다면** — 아래 표는 "어떤 열을 무슨 뜻으로 쓰는가"와 "바꿀 수 있는 설정값"이다. 이어지는 RFM 규칙은 고객을 세 숫자로 요약하는 방법이다. R은 마지막 구매 후 며칠 지났는지(작을수록 최근), F는 구매한 날이 며칠인지, M은 구매금액 합계다.
 
 | 입력/설정 | 의미 |
 | --- | --- |
@@ -101,19 +99,19 @@
 | `t_dat` | 구매일. 분석 설명의 order_date에 대응 |
 | `price` | 거래 상품 행의 금액 원값. 통화·환율을 추정하지 않음 |
 | `prod_name`, `product_type_name` | 상품명·카테고리 |
-| 관찰 범위 | 2020-06-01 포함 ~ 2020-09-01 제외, 전체 판매 채널, 시드 42 |
-| RFM 기준일 | 표본 추출 전 마지막 유효 구매일인 2020-08-31 |
 | 이미지 | 선별된 상품 이미지만 RGB·0~1·32×32·[float32 (32비트 부동소수점)](docs/tech_study.md#4-numpy-배열벡터화메모리)로 처리. 기본 최대 배치 32 |
 | 이미지 통계 | 상품별 한 번 계산. `(N,H,W,C)`의 `axis=(1,2,3)`, 표준편차 `ddof=0` |
 
-| 설정 위치·이름 | 기본 실행값 | 탐색 권장 범위와 변경 영향 |
-| --- | --- | --- |
-| 표본 manifest와 노트북 `SETTINGS`의 `start_inclusive`, `end_exclusive`, `seed`, `sales_channel` | `2020-06-01`, `2020-09-01`, `42`, `None` | 기간·고객 선정·채널이 달라진다. 표본을 다시 추출하고 manifest와 설정을 맞춘다. |
-| `SETTINGS["image_size"]` | `32` | 탐색은 16~64에서 시작하되 같은 상품을 비교하려면 공통 원본의 최소 변 길이 이하로 고른다. 해상도에 따라 통계와 작은 이미지의 제외 범위가 달라질 수 있다. |
-| `SETTINGS["batch_size"]` | `32` | 메모리가 빠듯하면 8~32에서 시작해 처리량과 최대 메모리를 함께 측정한다. 원래 입력이 같으면 이미지당 계산 결과는 같아야 한다. |
-| `SETTINGS["iqr_threshold"]` | `1.5` | 분포 민감도 검토는 1.5~3에서 시작한다. 경계와 표시 건수를 바꾸며 RFM은 원금액을 사용한다. |
-| 이미지 호출의 `histogram_bins` | `8` | 보너스 밝기 분포는 8~16에서 시작한다. 비교할 때 구간 수와 이미지 크기를 맞춘다. |
-| manifest의 `reference_date`, RFM의 `frequency_unit` | `2020-08-31`, `purchase_day` | 기준일은 Recency, 단위는 Frequency에 영향을 준다. 주문 수 모드는 주문 ID가 있는 입력에서 사용한다. |
+| 설정 위치·이름 | 실행값 |
+| --- | --- |
+| 표본 manifest와 노트북 `SETTINGS`의 `start_inclusive`, `end_exclusive`, `seed`, `sales_channel` | `2020-06-01`, `2020-09-01`, `42`, `None` |
+| `SETTINGS["image_size"]` | `32` |
+| `SETTINGS["batch_size"]` | `32` |
+| `SETTINGS["iqr_threshold"]` | `1.5` |
+| 이미지 호출의 `histogram_bins` | `8` |
+| manifest의 `reference_date`, RFM의 `frequency_unit` | `2020-08-31`, `purchase_day` |
+
+표본 추출 기간·시드·채널을 바꾸려면 표본을 다시 추출하고 manifest와 노트북 설정을 맞춘다. 채널 값 `None`은 전체 판매 채널을 뜻한다. RFM 기준일은 해당 기간·채널의 표본 추출 전 마지막 유효 구매일이다.
 
 거래는 고객 누락→날짜 오류→주문 모드의 주문 오류·취소→금액 오류 순으로 정제한다. 금액이 유한한 양수여야 한다. H&M에는 주문/취소 ID가 없어 고객·날짜·금액 기준을 적용하고 동일 값의 구매 행도 유지한다. 이미지나 상품 미매칭을 거래 무효로 처리하지 않는다. 그룹 평균 대치는 지정된 분석용 피처 사본에만 적용하고, 표본 미포함 이미지와 기존 관측값을 보존한다. IQR 보정도 EDA 사본에만 적용한다.
 
@@ -123,20 +121,18 @@ R은 기준일−최종 구매일(기준일 구매=0일), F는 고유 구매일 
 
 VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F원값=1) → Churned(R≤2) → Potential 순으로 배정한다. New는 신규 가입을, Churned는 실제 이탈 확정을 의미하지 않는다.
 
-평가 질문: [1-8](docs/a1_1_evaluation_qa.md#1-8) · [3-3](docs/a1_1_evaluation_qa.md#3-3) · 더 알아보기: [RFM·점수·세분화](docs/tech_study.md#9-rfm점수세분화)
-
-예를 들어 VIP의 Monetary 점수 3 이상은 평균 순위 비율이 0.50보다 큰 고객을 우선 검토하는 기준이다. 이 컷오프의 실무 타당성은 후보군 크기와 대조군 대비 30일 재구매율·고객당 마진으로 확인한다.
+[RFM 점수와 세분화 해설](docs/tech_study.md#9-rfm점수세분화)
 
 ## 분석 흐름과 원본 보존
 
 앞 절의 기준으로 노트북이 어떤 순서로 계산하는지, 그 과정에서 원본 데이터를 어떻게 보존하는지 보여준다.
 
-> **처음 읽는다면** — 핵심은 "원본은 그대로 두고, 고친 값은 사본에만 쓴다"는 원칙이다. 결측을 채운 값과 이상치를 깎은 금액은 그림·비교용 사본에만 있고, 고객별 구매액(RFM)과 월별 매출은 원래 금액으로 계산한다. 평가 질문: [1-1](docs/a1_1_evaluation_qa.md#1-1) · [2-1](docs/a1_1_evaluation_qa.md#2-1) · [2-4](docs/a1_1_evaluation_qa.md#2-4)
+> **처음 읽는다면** — 핵심은 "원본은 그대로 두고, 고친 값은 사본에만 쓴다"는 원칙이다. 결측을 채운 값과 이상치를 깎은 금액은 그림·비교용 사본에만 있고, 고객별 구매액(RFM)과 월별 매출은 원래 금액으로 계산한다.
 
 1. 거래 CSV를 읽고 ID·날짜 자료형을 맞춘다. 고객·날짜·주문 모드·금액의 대표 제외 사유를 중복 없이 센다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L93)
 2. 상품 ID의 다대일 왼쪽 조인을 검증하고 거래 행·순서·금액을 대조한다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L93)
 3. 상품별 이미지 mean/std와 상품명 길이·단어 수를 계산해 거래에 연결한다. 원본 이미지 배열을 거래마다 복제하지 않는다. [NB_FEATURES · `936e811c`](notebooks/analysis_report.ipynb?plain=1#L735)
-4. `handle_missing_values()`로 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 평가 호환 호출명 `handle_missing()`도 같은 인자·반환값·대치 기록을 제공한다. 미표본 이미지·원래 관측값·원문을 보존한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1101)
+4. `handle_missing_values()`로 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 미표본 이미지·원래 관측값·원문을 보존한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1101)
 5. `Q1−1.5×IQR`, `Q3+1.5×IQR` 밖을 탐지하고 금액의 EDA 사본만 clip한다. 경계값은 정상 범위에 포함한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1101)
 6. 원금액으로 RFM과 완전한 월별 합계를 계산하고 그룹 고객·금액 합계를 대조한다. [NB_RFM · `b4769e15`](notebooks/analysis_report.ipynb?plain=1#L1363)
 7. 분석 단위를 구분한 통계·상관·6종 차트를 만들고 근거·실행·검증 인사이트를 작성한다. [NB_STATS · `333254fa`](notebooks/analysis_report.ipynb?plain=1#L1521) · [NB_PLOTS · `87a953b4`](notebooks/analysis_report.ipynb?plain=1#L1766)
@@ -146,7 +142,7 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 | 필수 메서드 | 입력 | 반환 | 상태 변화 | 기존 시연 |
 | --- | --- | --- | --- | --- |
 | `load_data()` | 인스턴스의 CSV 경로·필수 열·자료형 | 거래 DataFrame | 성공 시 `df` 교체, 이전 상품·검증 상태 초기화 | `NB_LOAD`의 실제 8,084행 조인 결과 |
-| `handle_missing_values()` / `handle_missing()` | 대치 전략·그룹·대상 피처·행 마스크 | 대치한 DataFrame | `df`와 `missing_audit` 갱신 | `NB_CLEAN` 및 `[10, NaN, NaN]` → `[10, 10, NaN]` |
+| `handle_missing_values()` | 대치 전략·그룹·대상 피처·행 마스크 | 대치한 DataFrame | `df`와 `missing_audit` 갱신 | `NB_CLEAN` 및 `[10, NaN, NaN]` → `[10, 10, NaN]` |
 | `detect_outliers()` / `clip_outliers()` | 수치 열·IQR 배수 | 탐지 마스크 / 보정 Series | `outlier_audit` 갱신, `df`의 원금액 보존 | `NB_CLEAN` 및 `[1,2,3,4,100]`의 경계 −1·7, 100만 탐지 |
 | `calculate_rfm()` | 고객·날짜·금액·기준일·빈도 단위 | 고객별 RFM 표 | `rfm_audit` 갱신, 거래 `df` 보존 | `NB_RFM`의 실제 1,000명과 손계산 A `(0,2,60)`, B `(1,1,5)` |
 
@@ -154,7 +150,7 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 
 분석 흐름을 실제 표본에 실행한 결과다. 데이터 규모 → 기술통계 → 상관 → IQR 이상치 순으로 본다.
 
-> **처음 읽는다면** — 중앙값은 크기순으로 세웠을 때 한가운데 값이다. 평균이 중앙값보다 크면 큰 값 몇 개가 평균을 끌어올린 분포다. 예를 들어 `1, 2, 3, 4, 100`은 평균 22, 중앙값 3이다. 상관계수 r은 −1~1 사이로, 1에 가까우면 함께 커지고 −1에 가까우면 반대로 움직인다. 평가 질문: [1-3](docs/a1_1_evaluation_qa.md#1-3) · [1-7](docs/a1_1_evaluation_qa.md#1-7) · 더 알아보기: [통계·이상치·상관](docs/tech_study.md#7-통계이상치상관)
+> **처음 읽는다면** — 중앙값은 크기순으로 세웠을 때 한가운데 값이다. 평균이 중앙값보다 크면 큰 값 몇 개가 평균을 끌어올린 분포다. 예를 들어 `1, 2, 3, 4, 100`은 평균 22, 중앙값 3이다. 상관계수 r은 −1~1 사이로, 1에 가까우면 함께 커지고 −1에 가까우면 반대로 움직인다. [통계·이상치·상관](docs/tech_study.md#7-통계이상치상관)
 
 검증일: 2026-11-07 (통계·이미지 계측 실행. 새 커널 전체 실행 기록은 2026-11-08). 필수 조건은 실제 표본의 유효 거래·상품 조인 후 확인했다. 아래는 비식별 집계이며 전체 H&M 고객·매출을 대표하는 수치가 아니다.
 
@@ -191,9 +187,7 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 
 `IQR = Q3 − Q1`은 가운데 50%의 퍼짐이다. 사분위수는 극단값이 더 커져도 평균과 표준편차보다 영향을 덜 받으므로, 오염이 섞인 자료에서 중심부를 기준으로 먼 값을 찾는 데 유용하다. `iqr_limits()`는 정규성 가정 없이 `Q1 − 1.5×IQR`, `Q3 + 1.5×IQR`을 계산하고 `detect_outliers()`는 경계 밖을 표시한다. `clip_outliers()`는 같은 경계로 EDA 사본만 보정한다. [경계 계산](utils/analytics.py) · [탐지와 보정](src/pipeline.py) · [IQR 상세 해설](docs/tech_study.md#사분위수quartile와-iqr-기반-이상치-탐지-및-클리핑)
 
-**작은 예** — `[1, 2, 3, 4, 100]`에서 Q1 = 2, Q3 = 4, IQR = 2이므로 경계는 2 − 3 = −1, 4 + 3 = 7이다. 7을 넘는 100만 이상치다. 100을 10,000으로 바꿔도 Q1·Q3와 경계는 그대로지만 평균은 22에서 2,002로 바뀐다. 이것이 평균·표준편차 대신 사분위수를 쓰는 이유다. 평가 질문: [1-5](docs/a1_1_evaluation_qa.md#1-5) · [3-1](docs/a1_1_evaluation_qa.md#3-1)
-
-표준정규분포에 같은 규칙을 적용하면 경계는 약 `±2.698σ`이고 양쪽 합계 약 **0.70%**가 경계 밖이다. 오른쪽 꼬리가 긴 로그정규 예시 `exp(N(0,1))`에서는 하한이 음수라 전체의 약 **7.76%**가 상한을 넘고 하한 미만은 없다. 두 값은 이론 분포의 계산값이다. 긴 꼬리에서는 유효한 고액 거래도 표시될 수 있다. 가격대가 다른 상품군을 합치면 전체 경계가 각 상품군의 분포를 가릴 수 있고, `IQR=0`이면 두 경계가 같은 값으로 수렴한다.
+**작은 예** — `[1, 2, 3, 4, 100]`에서 Q1 = 2, Q3 = 4, IQR = 2이므로 경계는 2 − 3 = −1, 4 + 3 = 7이다. 7을 넘는 100만 이상치다. 100을 10,000으로 바꿔도 Q1·Q3와 경계는 그대로지만 평균은 22에서 2,002로 바뀐다. 이것이 평균·표준편차 대신 사분위수를 쓰는 이유다.
 
 | 동일한 유효 거래 8,084행 | 원금액 | EDA 보정 사본 |
 | --- | ---: | ---: |
@@ -203,26 +197,11 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 
 원금액 왜도 `+1.554`와 상한 초과 건수는 오른쪽 꼬리를 보여준다. 보정은 같은 행의 꼬리와 분산을 줄였고, 거래 원금액 합계 `202.212746`은 RFM·월별 집계에 보존했다. `NB_CLEAN`에서 표를 계산하고 `NB_PLOTS`에서 원금액 히스토그램과 같은 금액 축의 전후 박스플롯을 확인한다. [히스토그램](docs/results/figures/01_histogram.png) · [전후 박스플롯](docs/results/figures/02_boxplot.png)
 
-### 대규모 이미지 처리의 병목과 개선 설계
-
-`extract_product_image_features()`는 고유 상품마다 `imread()`로 순차 읽기·디코딩하고, 축소·정규화한 배열을 쌓아 NumPy 통계를 계산한다. 2026-11-07 로컬에서 실제 이미지 200장, 출력 32×32 RGB `float32`, 배치 상한 32, 보너스 피처 활성화 조건으로 워밍업 1회 후 3회 계측했다. 전체 중앙값은 **2.115초**, `imread()`의 읽기+디코딩 중앙값은 **1.797초**, 실행별 비중의 중앙값은 **84.9%**였다. 같은 피처·상태가 반환됐다. 이 시간은 해당 PC의 워밍업된 표본 계측이며 `imread()` 내부의 읽기와 디코딩 시간은 합산돼 있다. [순차 처리 경로](utils/image_features.py#L96)
-
-| 병목 | 확장 설계 | 확인 방법 |
-| --- | --- | --- |
-| 파일 반복 읽기·디코딩 | 상품 ID·파일 버전·피처 설정을 키로 피처를 캐시한다. 캐시 미스만 제한된 워커에서 읽기·디코딩·축소하고, 크기가 제한된 대기열로 다음 NumPy 배치에 넘긴다. 상품 위치로 결과를 합친다. | 같은 이미지 목록으로 워커 1·2·4개를 비교한다. 첫 실행과 워밍업 이후를 구분하고 이미지/초, 단계별 시간, 최대 프로세스 메모리, 오류 수를 기록한다. 상품 순서·상태·결측 위치 일치와 수치 허용 오차를 확인한다. |
-| 고해상도 메모리 | RGB 1024×1024 한 장은 `float32`로 12 MiB, `float64`로 24 MiB다. 축소 배치 외에 동시 디코딩 배열, 대기 중 축소 배열, `stack` 사본, 통계 임시 배열을 예산에 넣는다. 워커 수와 대기열 용량을 함께 제한한다. | 실제 최대 60 KiB와 32장 설정 상한 384 KiB는 축소 픽셀 버퍼다. 워커 설정별 프로세스 최대 메모리는 별도로 측정한다. |
-| 탐색할 이미지 수 | 상품군과 원본 해상도 구간별로 배분하고 고정 시드·선택 목록을 기록한다. | 동일 표본으로 처리량과 결과를 비교하고 이미지 미포함과 읽기 오류를 별도 상태로 유지한다. |
-| 고객 100만 명의 거래 | 필요한 열만 청크로 읽는다. 고객별 금액 합계·최종일은 청크별 집계를 병합하고, 구매일 수는 청크 간 중복 `(고객, 구매일)`을 제거한다. 이미지 비용은 고객 수와 별도로 고유 상품 이미지 수로 산정한다. | 전체 고객 수·금액 합계·최종 구매일·고유 구매일 수를 기존 경로와 비교한다. |
-
-워커 비교는 확장 설계의 검증 절차다. 위 실측은 현재 순차 경로에 대한 값이다.
-
-`NB_TIMING`은 이미지 12장으로 파일 바이트 읽기·메모리 [JPEG (Joint Photographic Experts Group · 이미지 압축 형식)](docs/tech_study.md#5-이미지와-텍스트-피처) 디코딩·픽셀 전처리를 분리했다. 워밍업 후 3회에서 단계별 중앙값은 각각 **7.45 ms**, **124.32 ms**, **3.38 ms**였다. 메모리 디코딩 후 피처 입력이 기존 파일 경로와 일치하는지 검사했다. 이 수치는 파일 캐시가 워밍업된 소규모 실험의 관측값이다. [계측 셀 · `image-timing`](notebooks/analysis_report.ipynb?plain=1#L4865)
-
 ## 필수 시각화 6종
 
 앞 절의 수치를 미션이 요구한 6종 차트로 확인한다.
 
-> **처음 읽는다면** — 차트마다 세는 단위가 다르다. 히스토그램·박스플롯은 거래, 막대그래프·히트맵은 고객, 산점도는 상품, 라인차트는 월이다. 각 그림 아래에 X축·Y축이 무엇인지 적었다. 평가 질문: [1-5](docs/a1_1_evaluation_qa.md#1-5) · [1-6](docs/a1_1_evaluation_qa.md#1-6) · 더 알아보기: [시각화 6종 읽기](docs/tech_study.md#8-시각화-6종-읽기)
+> **처음 읽는다면** — 차트마다 세는 단위가 다르다. 히스토그램·박스플롯은 거래, 막대그래프·히트맵은 고객, 산점도는 상품, 라인차트는 월이다. 각 그림 아래에 X축·Y축이 무엇인지 적었다. [시각화 6종 읽기](docs/tech_study.md#8-시각화-6종-읽기)
 
 아래 그림은 같은 실제 표본에서 만든 원본 분석 결과이다. 실제 거래금액의 이상치 점과 관측 상품별 산점도를 그대로 표시한다. 모든 그림에 제목·축·단위를 표시한다.
 
@@ -278,7 +257,7 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 
 선택 표본의 그룹 집계다. 금액은 통화를 확인하지 않은 원본 단위다. Frequency는 고유 구매일 수다.
 
-> **표 읽는 법** — "고객 비중"은 전체 1,000명 중 몇 %인지, "금액 비중"은 전체 구매금액 중 몇 %를 그 그룹이 샀는지다. VIP는 고객의 27.0%인데 금액의 52.3%를 차지한다. 고객 수에 비해 금액 기여가 큰 그룹이라는 뜻이다. 그룹을 나누는 규칙은 [입력과 계산 기준](#입력과-계산-기준)에 있다. 평가 질문: [1-8](docs/a1_1_evaluation_qa.md#1-8) · [3-3](docs/a1_1_evaluation_qa.md#3-3)
+> **표 읽는 법** — "고객 비중"은 전체 1,000명 중 몇 %인지, "금액 비중"은 전체 구매금액 중 몇 %를 그 그룹이 샀는지다. VIP는 고객의 27.0%인데 금액의 52.3%를 차지한다. 고객 수에 비해 금액 기여가 큰 그룹이라는 뜻이다. 그룹을 나누는 규칙은 [입력과 계산 기준](#입력과-계산-기준)에 있다.
 
 | 그룹 | 고객 수 | 고객 비중 | Recency 중앙값(일) | Frequency 중앙값(구매일) | 고객당 평균 Monetary | 금액 비중 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -289,9 +268,7 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 
 ## 비즈니스 인사이트
 
-위 그룹 표의 수치를 근거로, 그룹별로 무엇을 시험해 볼지 제안한다.
-
-> **처음 읽는다면** — 인사이트마다 **근거**(어떤 수치를 보고), **실행**(누구에게 무엇을 하고), **검증**(효과를 어떻게 확인할지)을 적었다. 검증은 모두 **무작위 대조군** 비교다. 예를 들어 VIP 전원에게 안내를 보내 구매율이 40%였어도, 원래 안내 없이도 40%가 다시 사는 고객이라면 효과는 없다. 추첨으로 고른 미발송군이 35%라면 차이 5%p가 캠페인 효과다. 평가 질문: [1-8](docs/a1_1_evaluation_qa.md#1-8) · [4-2](docs/a1_1_evaluation_qa.md#4-2) · 더 알아보기: [사업 해석과 검증](docs/tech_study.md#10-사업-해석과-검증)
+각 인사이트는 그룹별 관측 수치를 **근거**로 제안한 **실행**과 무작위 미발송군을 활용한 **검증** 방법을 담고 있다. [사업 해석과 검증](docs/tech_study.md#10-사업-해석과-검증)
 
 기준일 2020-08-31. 2020년 6~8월의 선택 고객·전체 판매 채널 표본에 한정한 관측이다. 금액은 H&M 원본 단위다. 세 인사이트의 근거는 `NB_RFM`의 VIP·New·Churned 프로파일 행이다. `03_bar.png`는 그룹별 인원, 프로파일 표는 금액 비중과 RFM 중앙값을 보여준다.
 
@@ -315,19 +292,11 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 
 세 인사이트의 우선순위와 [ROI (Return on Investment · 투자 대비 수익률)](docs/tech_study.md#10-사업-해석과-검증)는 현재 데이터만으로 확정하지 않는다. 이미지 평균·표준편차는 밝기·배경·색상 요약이며 상품 패턴이나 구매 원인을 직접 설명하지 않는다.
 
-| 검토 순서·대상 | 30일 목표의 예시 | 대조군 | 추가 확보할 데이터 |
-| --- | --- | --- | --- |
-| 1 · VIP 유지 | 구매율 +3%p 이상, 고객당 마진 차이 ≥0 | VIP 내 무작위 미발송 | 배정·발송 시각, 후속 거래, 상품 마진 |
-| 2 · New 추가 구매 | 두 번째 구매일 발생률 +2%p 이상, 고객당 마진 차이 ≥0 | New 내 무작위 미발송 | 연락 동의, 후속 거래의 고객 ID·날짜, 마진 |
-| 3 · Churned 재활성화 | 구매율 +1%p 이상, 혜택 비용 차감 후 고객당 마진 차이 >0 | 기존 반복 구매 여부 층별 무작위 미발송 | 배정·발송 시각, 후속 거래, 혜택 비용, 재고 |
-
-30일은 배정 시각부터 센다. 표의 수치는 대조군 대비 차이의 **사전 목표 예시**이며 실제 효과와 실행 순서는 기준 구매율·표본 크기·비용을 확인한 뒤 판단한다. 노트북에는 각 대상의 실제 고객 수·거래 행 수·구매금액과 이미지 대치 전후 밀도 그림, 예측 타깃별 피처와 날짜 기준을 표시한다. [인사이트 출력](notebooks/analysis_report.ipynb?plain=1#L2031) · [예측 시점 분리](notebooks/analysis_report.ipynb?plain=1#L2195)
-
 ## 보너스 3개 실제 구현 결과
 
 필수 과제 외에 선택 과제 3개를 같은 표본으로 구현했다.
 
-> **처음 읽는다면** — 이미지 피처는 사진을 밝기 8구간 비율과 윤곽 강도로 더 자세히 수치화한 것이다. 코호트는 처음 산 달이 같은 고객 묶음의 재구매율이다. 인터랙티브 RFM은 고객 1,000명을 마우스로 돌려 볼 수 있는 3D 그림이다. 평가 질문: [항목 5](docs/a1_1_evaluation_qa.md#항목-5) · 더 알아보기: [보너스 구현의 계산 기준](docs/tech_study.md#15-실제-보너스-구현의-계산-기준)
+> **처음 읽는다면** — 이미지 피처는 사진을 밝기 8구간 비율과 윤곽 강도로 더 자세히 수치화한 것이다. 코호트는 처음 산 달이 같은 고객 묶음의 재구매율이다. 인터랙티브 RFM은 고객 1,000명을 마우스로 돌려 볼 수 있는 3D 그림이다. [보너스 구현의 계산 기준](docs/tech_study.md#15-실제-보너스-구현의-계산-기준)
 
 이슈 #18에서 구현·검증했다. 노트북의 `NB_BONUS_IMAGES`·`NB_BONUS_COHORT`·`NB_BONUS_PLOTLY`에 실제 코드와 출력이 있으며, 보너스를 포함한 코드 셀 13개(마지막 `NB_TIMING` 포함)가 새 커널에서 모두 실행된다.
 
@@ -396,52 +365,8 @@ open docs/results/bonus/rfm_interactive.html
 - 현재 관측 기간과 선택 고객·이미지를 전체 고객·상품의 특성으로 일반화하지 않는다.
 - 신규 가입·실제 이탈·주문당 객단가·마진·[LTV (Lifetime Value · 고객 생애 가치)](docs/tech_study.md#16-핵심-약자수식비즈니스-맥락-보충)를 추정 없이 단정하지 않는다.
 - 이미지 통계는 촬영 조건을 함께 요약한다. 의미·질감·선호의 직접 측정값이 아니다.
-- 데이터에 접근할 수 없는 평가자도 저장된 원본 실행 출력과 집계를 확인할 수 있다. 재실행에는 표본 ZIP이 필요하다.
+- 저장된 실행 출력과 집계는 README에서 연결한 노트북과 결과 파일에 있다. 재실행에는 표본 ZIP이 필요하다.
 - 이미지 고급 피처·첫 관찰 구매월 코호트·Plotly 보너스는 실제 구현했다. 가입일 코호트와 실제 모델 학습은 현재 범위에 포함되지 않는다.
-
-## 평가용 실행 증거
-
-평가 문항 1~19에 대해 실제 결과가 어디에 있는지와 검증 실행 기록을 모았다. 문항별 상세 답변은 [평가 Q&A](docs/a1_1_evaluation_qa.md)에 있다.
-
-### 평가 문항별 결과 위치
-
-| 항목 | 실제 결과와 확인 위치 | SRC |
-| --- | --- | --- |
-| 1–3 · 클래스·실행·입력 | 결측 처리 두 이름은 같은 구현을 호출한다. `NB_LOAD` (`1196c1cf`)에 `head()`, `info()`, `describe()`와 조인 후 8,084행·9열을 저장했다. `NB_REPRO`까지 실행됐다. | [DataAnalyzer](src/pipeline.py) · [호환 회귀 테스트](tests/test_analytics.py) |
-| 4 · 파생 피처 | `NB_FEATURES` (`936e811c`)에 `image_mean`, `image_std`, `prod_name_length`, `prod_name_word_count` 및 가상 입력 `Blue cotton shirt`의 17자·3단어가 나온다. 관측 이미지는 상품 200개의 피처다. | [피처 메서드](src/pipeline.py) · [NumPy 이미지 배치](utils/image_features.py) |
-| 5–6 · IQR·그림 | `NB_CLEAN` (`a32f822f`)에서 212행 탐지, 하한 −0.012729·상한 0.061847. `NB_PLOTS` (`87a953b4`)에서 전후 박스플롯과 나머지 다섯 차트를 출력한다. | [clip_outliers](src/pipeline.py) · [make_figures](utils/reporting.py) |
-| 7 · 기술통계·상관 | `NB_STATS` (`333254fa`)에서 상품 200쌍 `r=-0.9435`, 고객 1,000쌍 `r=0.6397`을 표본 수 및 해석과 함께 보여준다. | [summarize](src/pipeline.py) · [pair_correlation](utils/reporting.py) |
-| 8 · 고객군·인사이트 | `NB_RFM` (`b4769e15`)에서 VIP 270명, Churned 499명, New 149명, Loyal 82명. [비즈니스 인사이트](#비즈니스-인사이트)의 3건은 각 그룹 행을 근거로 삼는다. | [RFM 계산과 분류](utils/analytics.py) · [인사이트](#비즈니스-인사이트) |
-| 9–12 · 책임·축·설정·판단 근거 | [입력과 계산 기준](#입력과-계산-기준)과 [분석 흐름](#분석-흐름과-원본-보존)의 메서드·설정 표에 입력과 상태 변화가 있다. `NB_FEATURES`는 이미지 N을 보존하고 H·W·C만 축약한다. `NB_CLEAN`은 EDA 사본, `NB_RFM`은 유효 원금액을 사용한다. | [클래스](src/pipeline.py) · [이미지 집계](utils/image_features.py) · [의사결정 기록](docs/a1_1_detailed_plan.md#q11-분석-의사결정을-노트북에-어떻게-남기는가) |
-| 13 · IQR의 통계적 필요성과 한계 | 같은 `1.5×IQR`의 이론 경계 밖 비율은 정규 약 0.70%, 오른쪽 꼬리가 긴 로그정규 예시 약 7.76%다. `NB_CLEAN` (`a32f822f`)의 실제 거래는 상한 초과 212행, 보정 후 분산 −17.21%, 중앙값 동일이다. | [IQR 해석과 전후 표](#iqr의-통계적-필요성과-한계) · [IQR 상세 해설](docs/tech_study.md#사분위수quartile와-iqr-기반-이상치-탐지-및-클리핑) · [iqr_limits](utils/analytics.py) · [clip_outliers](src/pipeline.py) |
-| 14–16 · 대치·점수·배치 | `NB_CLEAN`의 이미지 평균 대치 전후 분산은 0.010424 → 0.010130이다. RFM 동점 테스트와 `NB_FEATURES`의 NumPy 배치 축 설명도 확인할 수 있다. | [대치·RFM](utils/analytics.py) · [동점 테스트](tests/test_analytics.py) · [배치 계산](utils/image_features.py) |
-| 17 · 대규모 이미지 병목과 개선 | 실제 이미지 200장 계측에서 읽기+디코딩이 전체의 약 85%였다. `NB_FEATURES` 설명 셀 `923b9a03`에 상품 피처 캐시, 제한된 병렬 로드, 유한 대기열, 표본 선정과 워커별 검증 설계를 기록했다. | [병목 진단과 확장 설계](#대규모-이미지-처리의-병목과-개선-설계) · [이미지 처리](utils/image_features.py) |
-| 18–19 · 사업 활용과 예측 확장 | [비즈니스 인사이트](#비즈니스-인사이트)의 캠페인 표는 대조 실험 가설을, 평가 Q&A는 기준시점 T까지의 피처와 미래 30일 라벨을 분리하는 설계를 설명한다. | [캠페인 설계](#비즈니스-인사이트) · [평가 Q&A](docs/a1_1_evaluation_qa.md) |
-
-### 실제 실행 확인 기록
-
-2026-11-08 실제 검증의 성공 상태를 기록했다. 아래는 테스트 수·종료 성공·검증 상태 요약이며, 전체 분석 출력은 실행 노트북에서 확인할 수 있다. 이 블록은 실행 결과이며 실행할 명령은 [환경과 실행](#환경과-실행)의 bash·PowerShell 블록이다.
-
-```text
-Validation status summary, 2026-11-08 Asia/Seoul
-> .venv/Scripts/python.exe -B -m utils.run_checks --with-sample
-Ran 22 tests
-OK
-Notebook execution: PASS (13 code cells)
-> .venv/Scripts/python.exe -B -m utils.repository_checks
-Repository checks: PASS
-Original stdout is private. No notebook rows or identifiers are copied here.
-```
-
-새 복제본·새 가상환경에서는 표본 203파일을 복원하고 입력 체크섬·설정·버전·정제·이미지·월별·RFM·상관 등 기록한 전체 필드를 비교한다. 성공 시 `Fresh-checkout reproduction matched every recorded field.`를 출력한다. 검증 원문은 `data/processed/reproduction_verification.json`에 남는다.
-
-작업 흐름은 이슈 → 기능 브랜치 → 검증·커밋 → develop [PR (Pull Request · 병합 요청)](docs/tech_study.md#13-테스트재현git-작업-흐름) → 검증한 묶음 main 반영이다. 계획·완료 증거는 통합 계획과 체크표에 유지한다.
-
-## 평가 기술 발표자료
-
-[미션 설명 PPTX](docs/presentation/a1_1_mission_explanation.pptx)·[PDF](docs/presentation/a1_1_mission_explanation.pdf)는 **22장**으로 요구사항, 표본과 분석 단위, 피처·정제·통계·RFM의 계산 원리와 실제 결과를 설명한다. [평가 Q&A PPTX](docs/presentation/a1_1_evaluation_qa.pptx)·[PDF](docs/presentation/a1_1_evaluation_qa.pdf)는 **35장**으로 필수 **19문항**과 보너스 3개를 다룬다. 원문 문항 번호, 코드·수식·배열 축·메모리·RFM 손계산·검증 근거와 한계를 연결했고 최신 IQR·이미지 병목 계측·표본 선택의 시간 누수 설명을 반영했다. 상세 설명·시연·꼬리 질문 답변·출처는 PPTX의 발표자 노트에 있다.
-
-원본 실행 사진·차트와 편집 가능한 표·추가 차트를 함께 사용했다. PDF는 같은 슬라이드의 열람용이다. [발표 순서·질문별 페이지·재생성 안내](docs/presentation/README.md)에서 두 자료의 위치와 이전 31장 버전을 확인할 수 있다. 관련 이슈는 #17이며, 보너스 구현은 별도 #18에서 관리했다.
 
 ---
 
@@ -492,7 +417,7 @@ py -3.11 -m venv .venv
 
 파일은 `data/raw/hm/transactions_sample.csv`, `articles_sample.csv`, `sample_manifest.json`, `images/<ID 앞 3자리>/<ID>.jpg`에 복원된다. `data/raw/hm/hm_sample.zip`을 보관하면 `--archive`를 생략할 수 있다. 복원은 구성·추출 기록과 기존 파일 충돌을 검증한다. 개인 Drive 설정이 있으면 [SHA-256 (256비트 암호화 해시 체크섬)](docs/tech_study.md#13-테스트재현git-작업-흐름)도 대조한다. 새 환경에는 개인 설정이나 인증 정보를 복사할 필요가 없다.
 
-데이터 출처는 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)다. 사용자 지시에 따라 평가 노트북 `notebooks/analysis_report.ipynb`에는 원본 행·고객/상품 ID·원본 이미지 예시와 실행 결과를 숨기거나 치환하지 않고 저장했다. CSV·전체 이미지·ZIP 자체는 기존 Drive·로컬 보관 방식을 유지한다. 표본 ZIP이 없으면 아래 절차로 Kaggle에서 새로 만들고, 실행본은 [원본 실행 보고서와 다시 생성하는 방법](#원본-실행-보고서와-다시-생성하는-방법)의 명령으로 다시 만든다.
+데이터 출처는 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)다. 분석 노트북 `notebooks/analysis_report.ipynb`에는 원본 행·고객/상품 ID·원본 이미지 예시와 실행 결과를 숨기거나 치환하지 않고 저장했다. CSV·전체 이미지·ZIP 자체는 기존 Drive·로컬 보관 방식을 유지한다. 표본 ZIP이 없으면 아래 절차로 Kaggle에서 새로 만들고, 실행본은 [원본 실행 보고서와 다시 생성하는 방법](#원본-실행-보고서와-다시-생성하는-방법)의 명령으로 다시 만든다.
 
 ### Kaggle에서 `hm_sample.zip` 추출·다운로드 절차
 
@@ -531,7 +456,6 @@ py -3.11 -m venv .venv
 
 새 커널의 실행 결과는 다음 로컬 파일에서 확인한다.
 
-- 2026-11-08 로컬에서 새 커널의 첫 코드 셀 시작부터 마지막 코드 셀 종료까지 **8.67초**가 걸렸다. 코드 셀 13개의 관측값이며 커널 시작과 실행본 저장 시간은 별도다.
 - `data/processed/analysis_report.executed.ipynb`: 실행된 전체 보고서
 - `data/processed/analysis_verification.json`: 입력 체크섬·환경·정제·피처·RFM·월별 합계
 - `data/processed/figures/`: 히스토그램·박스플롯·막대·히트맵·산점도·라인차트
@@ -561,7 +485,7 @@ py -3.11 -m venv .venv
 
 ## 원본 실행 보고서와 다시 생성하는 방법
 
-평가용 파일은 [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb)이다. 코드와 실행 결과가 함께 저장되어 있어 원본 행·고객 ID·상품 이미지 예시·피처·통계·RFM·차트를 바로 볼 수 있다. 대화나 게시 과정에서 값을 마스킹하거나 출력을 비우지 않았다. 전체 실행본은 `data/processed/analysis_report.executed.ipynb`와 바이트 단위로 동일하게 보존한다.
+미션의 분석 보고서는 [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb)이다. 코드와 실행 결과가 함께 저장되어 있어 원본 행·고객 ID·상품 이미지 예시·피처·통계·RFM·차트를 바로 볼 수 있다. 대화나 게시 과정에서 값을 마스킹하거나 출력을 비우지 않았다. 전체 실행본은 `data/processed/analysis_report.executed.ipynb`와 바이트 단위로 동일하게 보존한다.
 
 보조 집계 자료는 `docs/results/analysis_aggregates.json`, `segment_profile.csv`, `monthly_amount.csv`, `analysis_report.md`다. 그림은 원본 분석에서 생성한 PNG를 그대로 복사한다. 원본 CSV·ZIP·전체 JPG 묶음과 개인 인증 설정은 Git에 넣지 않는다.
 
@@ -588,12 +512,6 @@ A1_1/
 ├── utils/
 │   ├── __init__.py                  # 공용 도구 패키지
 │   ├── bonus.py                     # 첫 관찰 구매월 코호트·Plotly 보너스
-│   ├── build_split_presentations.mjs # 미션·평가 PPTX 작성·렌더·검증
-│   ├── mission_presentation_content.mjs # 미션 설명 원고·발표자 노트
-│   ├── evaluation_qa_content.mjs     # 최신 평가 Q&A 원고·꼬리질문 답변
-│   ├── export_presentation_pdfs.ps1  # PowerPoint의 PDF 변환
-│   ├── build_eval_presentation.mjs   # 이전 31장 평가 PPT 작성 도구
-│   ├── eval_presentation_content.mjs # 재사용하는 질문별 기본 원고
 │   ├── analytics.py                 # 거래 정제·결측 대치·IQR·RFM·그룹 프로파일
 │   ├── image_features.py            # 이미지 정규화·축소·배치 mean/std
 │   ├── reporting.py                 # 통계 상관·월별 집계·6종 차트·인사이트
@@ -614,8 +532,7 @@ A1_1/
 │   ├── test_publication.py          # 원본 필드·실행본 보존
 │   └── test_repository_checks.py   # 인용 코드·실제 상대 링크 구분
 └── docs/
-    ├── results/                    # 실제 차트·집계·보너스·실행 상태
-    └── presentation/               # 미션·평가 PPTX/PDF와 페이지·재생성 안내
+    └── results/                    # 실제 차트·집계·보너스·실행 상태
 ```
 
 `data/raw/hm/`은 재실행용 표본, `data/processed/`는 실행 중 생성하는 결과의 로컬 경로다. 파일별 자세한 위치는 [index.md](index.md), 기능을 바꿀 때 함께 확인할 위치는 [reverse_index.md](reverse_index.md)에 있다.
@@ -671,7 +588,6 @@ classDiagram
         +extract_image_features(image_column, image_dir, image_size, batch_size, advanced, histogram_bins)
         -_extract_image_files(directory, prefix, image_size, batch_size, advanced, histogram_bins)
         +handle_missing_values(strategy, group_col, columns, eligible)
-        +handle_missing(strategy, group_col, columns, eligible)
         +detect_outliers(column, threshold)
         +clip_outliers(column, threshold)
         +calculate_rfm(customer_col, date_col, amount_col, reference_date, frequency_unit, order_col, split_inactive)
@@ -740,7 +656,7 @@ SRC: [표본 복원](scripts/restore_hm_sample.py) → [검증 실행](utils/run
 
 | SRC 경로 | 주요 함수·책임 |
 | --- | --- |
-| [src/pipeline.py](src/pipeline.py) | DataAnalyzer의 load_data·join_products·validate_transactions·handle_missing_values(평가 호환 호출명 handle_missing)·detect_outliers·calculate_rfm·summarize |
+| [src/pipeline.py](src/pipeline.py) | DataAnalyzer의 load_data·join_products·validate_transactions·handle_missing_values·detect_outliers·calculate_rfm·summarize |
 | [utils/analytics.py](utils/analytics.py) | clean_transactions·impute_features·iqr_limits·calculate_customer_rfm·segment_profile |
 | [utils/image_features.py](utils/image_features.py) | `prepare_image`·`extract_product_image_features`로 픽셀 통계를 계산하고 `profile_jpeg_stages`로 읽기·디코딩·전처리를 계측 |
 | [utils/bonus.py](utils/bonus.py) | cohort_retention·cohort_figure·interactive_rfm. 코호트와 Plotly 보너스 |
@@ -753,4 +669,4 @@ SRC: [표본 복원](scripts/restore_hm_sample.py) → [검증 실행](utils/run
 | [notebooks/analysis_report.ipynb](notebooks/analysis_report.ipynb) | NB_LOAD~NB_TIMING 실행·해석 |
 | [tests/test_pipeline.py](tests/test_pipeline.py) · [tests/test_analytics.py](tests/test_analytics.py) · [tests/test_reporting.py](tests/test_reporting.py) · [tests/test_publication.py](tests/test_publication.py) · [tests/test_bonus.py](tests/test_bonus.py) · [tests/test_repository_checks.py](tests/test_repository_checks.py) | 로드·조인·이미지·정제·대치·IQR·RFM·월·상관·원본 출력 보존·보너스·문서 링크 검증 (22개) |
 
-용어·원리·작은 예제는 [docs/tech_study.md](docs/tech_study.md), 평가 질문·SRC·시연은 [docs/a1_1_evaluation_qa.md](docs/a1_1_evaluation_qa.md), 원본 평가 자료에 대한 의견은 [docs/a1_1_eval_review.md](docs/a1_1_eval_review.md)에 있다. 실행·결과·인사이트의 필수 설명은 이 README 본문에 포함했다.
+용어와 계산 예제는 [기술 학습 문서](docs/tech_study.md)에서 확인할 수 있다.

@@ -17,7 +17,7 @@
 | 검증 실행·현재 가상환경 커널·출력 위치 | `utils/run_checks.py::main/run_notebook` | 회귀 검증·실행된 로컬 노트북·README |
 | 허용 라이브러리·설치 환경 | `requirements.txt`·README | 미션 원문·평가 원문·P0 |
 | 데이터 공개·Git 제외 | `.gitignore`·`AGENTS.md` | A1·F2·README·Git 노트북 출력 |
-| 미션 요구사항과 평가문항의 대응·설명 순서 | `docs/mission-eval괴리해결법.md` 대응표 | 평가 Q&A·README 평가 문항별 결과 위치·미션 문서 |
+| 미션 요구사항과 평가문항의 대응·설명 순서 | `docs/mission-eval괴리해결법.md` 대응표 | 평가 Q&A의 문항별 결과 위치·미션 문서 |
 | 작업 순서·계산 기준·평가·QA 변경 | `docs/a1_1_detailed_plan.md` | 체크표·원문과의 일치 |
 | 완료 상태·실행 증거 확인 | `docs/a1_1_checklist.md` | 로컬 `data/processed/` 기록 |
 | 거래 유효성·결측·IQR·RFM 계산 정책 | `utils/analytics.py`·`DataAnalyzer` 대응 메서드 | `tests/test_analytics.py`·NB_CLEAN·NB_RFM |
@@ -25,7 +25,7 @@
 | 새 복제본·새 가상환경 비교 | `utils/reproducibility.py` | 고정 의존성·로컬 입력·NB_REPRO |
 | 제출 파일·링크·Git 제외 검사 | `utils/repository_checks.py` | `tests/test_repository_checks.py`·README·공개 노트북·data 제외 |
 | PDF 평가 기준과 현재 Markdown 내용 검토 | `docs/a1_1_eval_review.md` | 원본 PDF·평가 문항·가상 참고 예시 구분 |
-| 네이토 최종 판정·권고 자체 검증 | `docs/a1_1_checklist.md`의 최종 권고와 자체 점검 | `docs/naito_eval_result.md`·`docs/naito_eval_result2.md`·통합 계획·README 평가 증거 |
+| 네이토 최종 판정·권고 자체 검증 | `docs/a1_1_checklist.md`의 최종 권고와 자체 점검 | `docs/naito_eval_result.md`·`docs/naito_eval_result2.md`·통합 계획·평가 Q&A의 네이토 평가 |
 | 네이토 #13 IQR 이론·표본 전후 비교 / #17 이미지 병목 설계 | 통합 계획 R1·R2 | README·`NB_CLEAN`·`NB_FEATURES`·평가 Q&A 3-1·4-1·`utils/analytics.py`·`utils/image_features.py` |
 | 평가 예상 질문·답변·시연 | `docs/a1_1_evaluation_qa.md` | 19개 문항·SRC·실행 기록·이슈 #6 |
 | 미션 설명·평가 Q&A·PPTX/PDF·발표자 노트 | `utils/build_split_presentations.mjs`·`utils/mission_presentation_content.mjs`·`utils/evaluation_qa_content.mjs`·`utils/export_presentation_pdfs.ps1` | docs/presentation·기본 평가 원고·실제 집계/그림·문항별 페이지·이슈 #17 |
@@ -44,6 +44,6 @@
 | 보너스 변경 | 시작 위치 | 함께 확인 |
 | --- | --- | --- |
 | 이미지 히스토그램·인접 절대차 | `utils/image_features.py::advanced_image_statistics` | DataAnalyzer advanced 옵션·NB_BONUS_IMAGES·test_bonus |
-| JPEG 읽기·디코딩·전처리 시간 | `utils/image_features.py::profile_jpeg_stages` | NB_TIMING·README 병목 설계. 실행 환경별 관측값은 집계 JSON과 분리 |
+| JPEG 읽기·디코딩·전처리 시간 | `utils/image_features.py::profile_jpeg_stages` | NB_TIMING·평가 Q&A 4-1의 병목 설계. 실행 환경별 관측값은 집계 JSON과 분리 |
 | 코호트 분모·관측 기간·미래NaN | `utils/bonus.py::cohort_retention` | NB_BONUS_COHORT·CSV·히트맵·README 기준 |
 | Plotly 3D·원본ID hover·독립 HTML | `utils/bonus.py::interactive_rfm` | NB_BONUS_PLOTLY·requirements-bonus·원본 결과 보존 |

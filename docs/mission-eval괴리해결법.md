@@ -94,7 +94,7 @@ README 개편(#32)에서 오래된 수치(12셀, 테스트 20개, 5대 세그먼
 | 평가 | 질문 요지 | 미션 요구사항 | 코드 | 결과 위치 |
 | --- | --- | --- | --- | --- |
 | 1-1 | DataAnalyzer와 필수 메서드 4개 | 2. 최종 결과물, 4-2 | [pipeline.py](../src/pipeline.py#L20) | `NB_LOAD`~`NB_RFM` |
-| 1-2 | 노트북 전체 실행 | 2. 최종 결과물 | [run_checks.py](../utils/run_checks.py) | [실제 실행 확인 기록](../README.md#실제-실행-확인-기록) |
+| 1-2 | 노트북 전체 실행 | 2. 최종 결과물 | [run_checks.py](../utils/run_checks.py) | [실제 실행 확인 기록](a1_1_evaluation_qa.md#실제-실행-확인-기록) |
 | 1-3 | 1,000행·8열·3종 타입 | 4-1 | [load_data·join_products](../src/pipeline.py#L36) | `NB_LOAD` |
 | 1-4 | 이미지 Mean/Std·텍스트 피처 열 | 4-3 | [image_features.py](../utils/image_features.py#L64) | `NB_FEATURES` |
 | 1-5 | 이상치 전후 분포 시각화 | 4-4, 4-6 | [clip_outliers](../src/pipeline.py#L156) | [IQR 절](../README.md#iqr의-통계적-필요성과-한계) |
@@ -105,11 +105,11 @@ README 개편(#32)에서 오래된 수치(12셀, 테스트 20개, 5대 세그먼
 | 2-2 | for 대신 NumPy 연산 지목 | 4-3 | [평균·표준편차 계산](../utils/image_features.py#L128) | `NB_FEATURES` |
 | 2-3 | 파라미터를 인자로 받은 이유 | 4-2 | [detect_outliers](../src/pipeline.py#L145) · [calculate_rfm](../src/pipeline.py#L162) | [입력과 계산 기준](../README.md#입력과-계산-기준) |
 | 2-4 | 단계별 마크다운·의사결정 기록 | 2. 최종 결과물 | [분석 노트북](../notebooks/analysis_report.ipynb) | `NB_FEATURES`·`NB_CLEAN`·`NB_STATS` 설명 셀 |
-| 3-1 | IQR 필요성과 한계 | 4-4 | [iqr_limits](../utils/analytics.py#L117) | [IQR 절](../README.md#iqr의-통계적-필요성과-한계) |
+| 3-1 | IQR 필요성과 한계 | 4-4 | [iqr_limits](../utils/analytics.py#L117) | [Q&A 3-1](a1_1_evaluation_qa.md#3-1) |
 | 3-2 | 그룹 평균 대치의 이유와 위험 | 4-4 | [impute_features](../utils/analytics.py#L71) | `NB_CLEAN` |
 | 3-3 | RFM 점수 기준과 타당성 | 4-7 | [점수 계산](../utils/analytics.py#L151) | [실제 고객 그룹 요약](../README.md#실제-고객-그룹-요약) |
 | 3-4 | 벡터화가 빠른 이유 | 4-3 (과제 목표) | [배치 축 연산](../utils/image_features.py#L128) | `NB_FEATURES` stride 출력 |
-| 4-1 | 100만 명·1024² 병목 | 없음 (확장) | [순차 이미지 경로](../utils/image_features.py#L96) | [병목과 개선 설계](../README.md#대규모-이미지-처리의-병목과-개선-설계) |
+| 4-1 | 100만 명·1024² 병목 | 없음 (확장) | [순차 이미지 경로](../utils/image_features.py#L96) | [병목과 개선 설계](a1_1_evaluation_qa.md#대규모-이미지-처리의-병목과-개선-설계) |
 | 4-2 | 첫 캠페인 세그먼트·리스크 | 4-7 | [write_insights](../utils/reporting.py#L73) | [1. VIP 유지 실험](../README.md#1-vip-유지-실험) |
 | 4-3 | ML 예측 확장 | 없음 (확장) | [calculate_rfm](../src/pipeline.py#L162) | [평가 Q&A 4-3](a1_1_evaluation_qa.md) |
 | 5 | 보너스 3종 | 5-1~5-3 | [bonus.py](../utils/bonus.py) | [보너스 3개 실제 구현 결과](../README.md#보너스-3개-실제-구현-결과) |
