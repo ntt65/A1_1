@@ -43,6 +43,7 @@
 | --- | --- |
 | 이 README | 데이터 → 분석 흐름 → 결과 → 전략 순서로 프로젝트 전체를 설명할 때 |
 | [미션 원문과 구현 대조](docs/a1_1_mission.md) | 미션 요구사항 하나하나가 어디에 구현됐는지 확인할 때 |
+| [평가 Q&A](docs/a1_1_evaluation_qa.md) | 평가 질문별 답변과 근거를 찾을 때 |
 | 미션 설명 [PPTX](docs/presentation/a1_1_mission_explanation.pptx) · [PDF](docs/presentation/a1_1_mission_explanation.pdf) | 미션 요구사항·분석 흐름·실제 결과를 22장으로 설명할 때 |
 | [tech_study.md](docs/tech_study.md) | IQR·RFM·벡터화 같은 개념을 공부하거나 설명할 때 |
 
