@@ -149,7 +149,7 @@ flowchart LR
 ### Step 1. 환경 초기화 및 설정 검증 (`db7bb992`)
 
 - [notebooks/analysis_report.ipynb](../notebooks/analysis_report.ipynb) 첫 코드 셀(`db7bb992`)에서 저장소 루트(`ROOT`)를 `sys.path`에 추가하고 [`DataAnalyzer`](../src/pipeline.py#L20)와 `utils/` 함수들을 임포트합니다.
-- `SETTINGS`(`start_inclusive`, `end_exclusive`, `seed`, `sales_channel`)가 복원된 `data/raw/hm/sample_manifest.json`의 추출 조건과 일치하는지 `assert`로 먼저 검증합니다.
+- 분석 노트북 상단의 `SETTINGS`는 분석에 쓸 설정값을 모아 둔 딕셔너리입니다. 여기서 시작일(`start_inclusive`), 종료일(`end_exclusive`), 난수 시드(`seed`), 판매 채널(`sales_channel`)을 읽고, 표본을 만들 때 기록한 `data/raw/hm/sample_manifest.json`의 네 항목과 일치하는지 검사합니다. [notebooks/analysis_report.ipynb의 설정 선언과 검사](../notebooks/analysis_report.ipynb?plain=1#L69)
 
 ---
 
@@ -173,7 +173,7 @@ flowchart LR
    - `prod_name` 원문은 보존한 채 결측만 빈 문자열로 취급해 문자 수(`prod_name_length`)와 공백 기준 단어 수(`prod_name_word_count`)를 계산합니다. 상품 조인 후에는 고유 상품별로 한 번만 계산해 거래에 매핑합니다.
 2. **이미지 배치 피처** — [`DataAnalyzer.extract_image_features()`](../src/pipeline.py#L189-L218) → [`_extract_image_files()`](../src/pipeline.py#L220-L234) → [`extract_product_image_features()`](../utils/image_features.py#L64)
    - [`prepare_image()`](../utils/image_features.py#L11)로 각 상품 이미지를 `32×32` RGB `float32`(0~1 범위)로 정규화하고, `batch_size=32` 단위로 쌓아 `(N, H, W, C)`의 `axis=(1, 2, 3)` 기준 평균(`image_mean`)과 표준편차(`image_std`, `ddof=0`)를 계산합니다.
-   - `advanced=True, histogram_bins=8`일 때 [`advanced_image_statistics()`](../utils/image_features.py#L38)가 동일 배치에서 8구간 정규화 밝기 히스토그램(`image_hist_0`~`7`)과 인접 픽셀 절대차 평균(`image_edge_mean`)을 함께 계산합니다.
+   - `NB_FEATURES`에서 고급 피처를 켜고 밝기 구간을 8개로 지정하면(`advanced=True, histogram_bins=8`) [`advanced_image_statistics()`](../utils/image_features.py#L38)가 동일 배치에서 8구간 정규화 밝기 히스토그램(`image_hist_0`~`7`)과 인접 픽셀 절대차 평균(`image_edge_mean`)을 함께 계산합니다. [notebooks/analysis_report.ipynb의 피처 호출](../notebooks/analysis_report.ipynb?plain=1#L1036)
    - 관련 학습: [tech_study.md §4~5·§16](tech_study.md)
 
 ---

@@ -27,15 +27,15 @@
   1. **[OOP (Object-Oriented Programming · 객체지향 프로그래밍)](docs/tech_study.md#12-pythonoop라이브러리와-실행) 파이프라인**
      - [멀티모달 데이터](docs/tech_study.md#1-미션-전체의-구조)(수치 + 텍스트 + 이미지 배열)를 [NumPy 벡터 연산](docs/tech_study.md#4-numpy-배열벡터화메모리)으로 통합 처리
      - [`DataAnalyzer`](src/pipeline.py#L20) 클래스 구축 ([소스 구조](#소스-구조와-실행-흐름))
-  2. [**완전한 EDA**](docs/tech_study.md#eda탐색적-데이터-분석의-4단계-풀이와-코드-연결) ([실행 노트북](notebooks/analysis_report.ipynb))
+  2. [**탐색적 데이터 분석(EDA)**](docs/tech_study.md#eda탐색적-데이터-분석의-4단계-풀이와-코드-연결) ([실행 노트북](notebooks/analysis_report.ipynb))
      - [IQR 이상치 탐지](#iqr의-통계적-필요성과-한계)
-     - [그룹별 결측치 대치](utils/analytics.py#L71)
+     - [같은 그룹의 평균으로 빠진 값 채우기(결측치 대치)](utils/analytics.py#L71)
      - [기술통계·상관 분석](#실제-실행-결과와-기술통계)
      - [필수 차트 6종 시각화](#필수-시각화-6종)
   3. [**RFM 세분화 및 전략**](docs/tech_study.md#9-rfm점수세분화) ([실행 노트북](notebooks/analysis_report.ipynb))
      - [RFM 분석·고객 그룹](#실제-고객-그룹-요약)으로 고객을 4개 이상 세그먼트로 분류
      - 데이터 근거 기반의 [비즈니스 인사이트 3건 이상](#비즈니스-인사이트) 제안
-- **학습·달성 목표 5가지:** NumPy 반복문 없는 벡터 연산 설명, 이미지 평균·표준편차 수치 피처 변환 원리 이해, IQR 이상치 탐지 구현·설명, RFM 기반 고객 세분화 및 전략 제안, `Class` 기반 재사용 파이프라인 설계.
+- **학습·달성 목표 5가지:** NumPy 반복문 없는 벡터 연산 설명, 상품 사진을 평균·표준편차 같은 분석용 수치(피처)로 바꾸는 원리 이해, IQR 이상치 탐지 구현·설명, RFM 기반 고객 세분화 및 전략 제안, `Class` 기반 재사용 파이프라인 설계.
 
 ### 문서 지도
 
@@ -54,20 +54,20 @@
 - **데이터 로드**: ID 문자열(`string`) 선행 `0` 보존 및 날짜 파싱 — [`DataAnalyzer.load_data`](src/pipeline.py#L36)
 - **거래 정제 (파이프라인)**: 유효 거래 필터링 및 `transaction_audit` 상태 갱신 — [`DataAnalyzer.validate_transactions`](src/pipeline.py#L121)
 - **거래 정제 (공용 함수)**: 고객 누락·날짜 오류·주문·금액 오류 상호 배타 집계 — [`clean_transactions`](utils/analytics.py#L7)
-- **상품 다대일 조인**: null·중복 키 검증 및 조인 전후 거래 행 수·금액 합계 보존 — [`DataAnalyzer.join_products`](src/pipeline.py#L71)
+- **상품 다대일 조인**: 같은 상품을 산 여러 거래 행에 상품 정보 한 건을 연결하고, 거래 행 수와 금액 합계를 대조 — [`DataAnalyzer.join_products`](src/pipeline.py#L71)
 - **텍스트 피처 추출**: 상품명 원문 보존 및 글자 수·단어 수 파생 열 생성 — [`DataAnalyzer.extract_text_features`](src/pipeline.py#L236)
 - **이미지 피처 추출 (진입점)**: 인메모리 배열 또는 디스크 이미지 폴더 분기 처리 — [`DataAnalyzer.extract_image_features`](src/pipeline.py#L189)
 - **이미지 피처 매핑 (내부)**: 상품 단위 이미지 피처를 거래 표에 매핑 — [`DataAnalyzer._extract_image_files`](src/pipeline.py#L220)
 - **이미지 리사이즈·정규화**: 32×32 [RGB (Red-Green-Blue · 적녹청 색상 채널)](docs/tech_study.md#5-이미지와-텍스트-피처) `float32` (`0~1`) 변환 — [`prepare_image`](utils/image_features.py#L11)
-- **이미지 배치 통계 계산**: 상품별 1회 읽기 및 배치 `(N,H,W,C)` `mean`/`std` 산출 — [`extract_product_image_features`](utils/image_features.py#L64)
+- **이미지 배치 통계 계산**: 상품 이미지를 한 번씩 읽고 여러 장을 묶어 이미지마다 평균과 표준편차 계산 — [`extract_product_image_features`](utils/image_features.py#L64)
 
-#### 과제 2. 완전한 EDA (결측 대치 · IQR · 통계 · 시각화 6종)
+#### 과제 2. 탐색적 데이터 분석 (결측 대치 · IQR · 통계 · 시각화 6종)
 
-- **결측치 대치 (파이프라인)**: [EDA (Exploratory Data Analysis · 탐색적 데이터 분석)](docs/tech_study.md#eda탐색적-데이터-분석의-4단계-풀이와-코드-연결) 사본 대치 및 `missing_audit` 갱신 — [`DataAnalyzer.handle_missing_values`](src/pipeline.py#L129)
-- **결측치 대치 (공용 함수)**: `product_type_name` 그룹 평균 → 전체 평균 fallback 대치 — [`impute_features`](utils/analytics.py#L71)
-- **이상치 경계 계산**: 사분위수(`Q1`, `Q3`) 기반 `1.5×IQR` 하한·상한 산출 — [`iqr_limits`](utils/analytics.py#L117)
-- **이상치 탐지**: 원금액 보존하며 IQR 경계 밖 불리언 마스크 반환 — [`DataAnalyzer.detect_outliers`](src/pipeline.py#L145)
-- **이상치 보정**: 분포 비교용 EDA 사본 `Series` 클리핑 반환 — [`DataAnalyzer.clip_outliers`](src/pipeline.py#L156)
+- **결측치 대치 (파이프라인)**: 분석용 사본에서 빠진 값을 채우고 결과를 `missing_audit`에 기록 — [`DataAnalyzer.handle_missing_values`](src/pipeline.py#L129)
+- **결측치 대치 (공용 함수)**: 같은 상품 유형(`product_type_name`)의 평균으로 채우고, 그룹 평균을 구할 수 없으면 전체 평균 사용 — [`impute_features`](utils/analytics.py#L71)
+- **이상치 경계 계산**: 금액 분포의 25% 지점(`Q1`)과 75% 지점(`Q3`)에서 `1.5×IQR`만큼 바깥에 하한과 상한을 설정 — [`iqr_limits`](utils/analytics.py#L117)
+- **이상치 탐지**: 원금액을 보존하고 거래마다 경계 밖인지 참·거짓으로 표시 — [`DataAnalyzer.detect_outliers`](src/pipeline.py#L145)
+- **이상치 보정**: 분포를 비교할 수 있도록 경계 밖 금액을 가장 가까운 경계값으로 바꾼 사본 반환 — [`DataAnalyzer.clip_outliers`](src/pipeline.py#L156)
 - **기술통계 요약**: 주요 수치 열 건수·평균·중앙값·표준편차·사분위수 요약 — [`DataAnalyzer.summarize`](src/pipeline.py#L177)
 - **상관관계 계산**: 상품·고객 분석 단위별 완전 관측 쌍 Pearson 상관 산출 — [`pair_correlation`](utils/reporting.py#L8)
 - **월별 매출 집계**: 관찰 기간 내 완전한 월별 원금액 합계 산출 — [`monthly_amount`](utils/reporting.py#L19)
@@ -90,33 +90,39 @@
 
 ## 입력과 계산 기준
 
-분석에 쓰는 컬럼, 관찰 기간, RFM 기준일, 주요 설정값을 먼저 정한다. 뒤의 모든 결과는 이 기준 위에서 계산된다.
-
-> **처음 읽는다면** — 아래 표는 "어떤 열을 무슨 뜻으로 쓰는가"와 "바꿀 수 있는 설정값"이다. 이어지는 RFM 규칙은 고객을 세 숫자로 요약하는 방법이다. R은 마지막 구매 후 며칠 지났는지(작을수록 최근), F는 구매한 날이 며칠인지, M은 구매금액 합계다.
+거래 표 `data/raw/hm/transactions_sample.csv`에는 구매 상품 한 건씩, 상품 표 `data/raw/hm/articles_sample.csv`에는 상품 정보가 한 행씩 들어 있다. 분석 노트북은 상품 ID로 두 표를 연결한다.
 
 | 입력/설정 | 의미 |
 | --- | --- |
-| `customer_id`, `article_id`, `sales_channel_id` | 문자열 ID. 선행 0 보존 |
+| `customer_id`, `article_id`, `sales_channel_id` | 고객·상품·판매 채널 식별자. 앞자리 0을 보존하기 위해 문자열로 읽는다. |
 | `t_dat` | 구매일. 분석 설명의 order_date에 대응 |
 | `price` | 거래 상품 행의 금액 원값. 통화·환율을 추정하지 않음 |
 | `prod_name`, `product_type_name` | 상품명·카테고리 |
 | 이미지 | 선별된 상품 이미지만 RGB·0~1·32×32·[float32 (32비트 부동소수점)](docs/tech_study.md#4-numpy-배열벡터화메모리)로 처리. 기본 최대 배치 32 |
-| 이미지 통계 | 상품별 한 번 계산. `(N,H,W,C)`의 `axis=(1,2,3)`, 표준편차 `ddof=0` |
+| 이미지 통계 | 사진 여러 장을 한 묶음(배치)으로 쌓는다. 배열 `(N,H,W,C)`에서 N은 이미지 수, H·W는 높이·너비, C는 색상 채널이다. 이미지마다 H·W·C 전체의 평균과 표준편차(`ddof=0`)를 구한다. |
 
-| 설정 위치·이름 | 실행값 |
-| --- | --- |
-| 표본 manifest와 노트북 `SETTINGS`의 `start_inclusive`, `end_exclusive`, `seed`, `sales_channel` | `2020-06-01`, `2020-09-01`, `42`, `None` |
-| `SETTINGS["image_size"]` | `32` |
-| `SETTINGS["batch_size"]` | `32` |
-| `SETTINGS["iqr_threshold"]` | `1.5` |
-| 이미지 호출의 `histogram_bins` | `8` |
-| manifest의 `reference_date`, RFM의 `frequency_unit` | `2020-08-31`, `purchase_day` |
+### 표본 추출 기록과 분석 설정
 
-표본 추출 기간·시드·채널을 바꾸려면 표본을 다시 추출하고 manifest와 노트북 설정을 맞춘다. 채널 값 `None`은 전체 판매 채널을 뜻한다. RFM 기준일은 해당 기간·채널의 표본 추출 전 마지막 유효 구매일이다.
+- **표본 추출 기록(manifest)**은 표본을 뽑을 때 사용한 기간·채널·난수 시드와 RFM 기준일을 저장한 파일이다. Kaggle에서 `notebooks/prepare_hm_sample.ipynb`를 실행하면 표본 ZIP에 이 기록을 넣는다. 로컬에서 ZIP을 풀면 `data/raw/hm/sample_manifest.json`에 있다. [추출 기록 작성 코드](notebooks/prepare_hm_sample.ipynb?plain=1#L234) · [표본 복원 방법](#비공개-데이터-준비)
+- **분석 설정(`SETTINGS`)**은 `notebooks/analysis_report.ipynb` 상단의 **설정** 코드 셀에서 항목 이름과 값을 짝지어 둔 Python 딕셔너리다. 분석을 시작할 때 시작일·종료일·시드·채널이 복원한 추출 기록과 일치하는지 확인한다. [설정 선언과 일치 검사](notebooks/analysis_report.ipynb?plain=1#L69)
+
+표의 `NB_FEATURES`, `NB_RFM`처럼 `NB_`로 시작하는 이름은 분석 노트북의 단계 제목이다. 링크를 열면 그 단계의 코드 위치로 이동한다.
+
+| 설정이 있는 파일과 항목 | 실행값 | 의미 |
+| --- | --- | --- |
+| `data/raw/hm/sample_manifest.json`과 [`notebooks/analysis_report.ipynb`의 `SETTINGS`](notebooks/analysis_report.ipynb?plain=1#L69) · `start_inclusive`, `end_exclusive`, `seed`, `sales_channel` | `2020-06-01`, `2020-09-01`, `42`, `None` | 시작일 포함, 종료일 제외. 난수 시드는 같은 표본을 다시 고르는 데 쓰는 시작값이다. 채널 값 `None`은 전체 채널을 뜻한다. |
+| [`notebooks/analysis_report.ipynb`의 `SETTINGS`](notebooks/analysis_report.ipynb?plain=1#L69) · `image_size` | `32` | 계산에 사용할 사진 크기를 32×32 픽셀로 맞춘다. |
+| [`notebooks/analysis_report.ipynb`의 `SETTINGS`](notebooks/analysis_report.ipynb?plain=1#L69) · `batch_size` | `32` | 한 번에 묶어 처리하는 상품 이미지의 최대 수다. |
+| [`notebooks/analysis_report.ipynb`의 `SETTINGS`](notebooks/analysis_report.ipynb?plain=1#L69) · `iqr_threshold` | `1.5` | 거래 금액의 이상치 경계를 정할 때 사분위수 범위(IQR)에 곱할 배수다. |
+| [`notebooks/analysis_report.ipynb`의 `NB_FEATURES` 호출](notebooks/analysis_report.ipynb?plain=1#L1036) · `histogram_bins` | `8` | 사진 속 픽셀의 밝기를 몇 구간으로 나눠 비율을 셀지 정한다. |
+| `data/raw/hm/sample_manifest.json` · `reference_date` | `2020-08-31` | 선택 기간·채널에서 고객 표본을 뽑기 전 마지막 유효 구매일이다. [노트북의 `NB_RFM`에서 기준일 전달](notebooks/analysis_report.ipynb?plain=1#L1491) |
+| [`src/pipeline.py`의 `DataAnalyzer.calculate_rfm()`](src/pipeline.py#L162-L163) · `frequency_unit` | `purchase_day` | `NB_RFM` 호출에서 이 인자를 생략하므로 기본값이 적용된다. 같은 날 여러 번 구매해도 구매일은 하루로 센다. |
+
+표본의 기간·시드·채널을 바꾸려면 [`notebooks/prepare_hm_sample.ipynb`의 추출 설정](notebooks/prepare_hm_sample.ipynb?plain=1#L43)을 바꿔 표본을 다시 만든 뒤, 분석 노트북의 `SETTINGS`를 새 추출 기록과 맞춘다.
 
 거래는 고객 누락→날짜 오류→주문 모드의 주문 오류·취소→금액 오류 순으로 정제한다. 금액이 유한한 양수여야 한다. H&M에는 주문/취소 ID가 없어 고객·날짜·금액 기준을 적용하고 동일 값의 구매 행도 유지한다. 이미지나 상품 미매칭을 거래 무효로 처리하지 않는다. 그룹 평균 대치는 지정된 분석용 피처 사본에만 적용하고, 표본 미포함 이미지와 기존 관측값을 보존한다. IQR 보정도 EDA 사본에만 적용한다.
 
-R은 기준일−최종 구매일(기준일 구매=0일), F는 고유 구매일 수, M은 유효 금액 원값 합계다. 주문 ID가 있는 다른 데이터는 주문 수 모드를 선택할 수 있다. R은 내림차순, F·M은 오름차순 평균 순위로 점수를 부여한다. `(평균 순위−0.5)/고객 수`가 0.25/0.50/0.75 이하인지에 따라 1/2/3점, 나머지는 4점이다. 같은 값은 같은 점수를 받는다.
+고객을 최근성(R)·구매 빈도(F)·구매금액(M) 세 숫자로 요약한다. R은 마지막 구매일부터 기준일까지 지난 일수(기준일에 사면 0일), F는 서로 다른 구매일 수, M은 유효 거래의 원금액 합계다. 주문 ID가 있는 다른 데이터는 `frequency_unit="order"`와 주문 ID 열 이름(`order_col`)을 넘겨 주문 수를 셀 수 있다. R은 내림차순, F·M은 오름차순 평균 순위로 점수를 부여한다. `(평균 순위−0.5)/고객 수`가 0.25/0.50/0.75 이하인지에 따라 1/2/3점, 나머지는 4점이다. 같은 값은 같은 점수를 받는다.
 
 **작은 예** — 고객 A가 1/1에 10·20, 1/3에 30을 사고, 고객 B가 1/2에 5를 샀다. 기준일 1/3에서 A는 R=0일·F=2일(같은 날 두 번은 하루)·M=60, B는 R=1일·F=1일·M=5다. 점수는 크기가 아니라 순서로 매긴다. M이 `5, 20, 60, 100`인 고객 4명은 순위 비율 0.125·0.375·0.625·0.875에 따라 1·2·3·4점을 받는다.
 
@@ -132,9 +138,9 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 
 1. 거래 CSV를 읽고 ID·날짜 자료형을 맞춘다. 고객·날짜·주문 모드·금액의 대표 제외 사유를 중복 없이 센다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L93)
 2. 상품 ID의 다대일 왼쪽 조인을 검증하고 거래 행·순서·금액을 대조한다. [NB_LOAD · `1196c1cf`](notebooks/analysis_report.ipynb?plain=1#L93)
-3. 상품별 이미지 mean/std와 상품명 길이·단어 수를 계산해 거래에 연결한다. 원본 이미지 배열을 거래마다 복제하지 않는다. [NB_FEATURES · `936e811c`](notebooks/analysis_report.ipynb?plain=1#L735)
+3. 상품별 이미지 평균·표준편차와 상품명 길이·단어 수를 계산해 거래에 연결한다. 원본 이미지 배열을 거래마다 복제하지 않는다. [NB_FEATURES · `936e811c`](notebooks/analysis_report.ipynb?plain=1#L735)
 4. `handle_missing_values()`로 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다. 미표본 이미지·원래 관측값·원문을 보존한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1101)
-5. `Q1−1.5×IQR`, `Q3+1.5×IQR` 밖을 탐지하고 금액의 EDA 사본만 clip한다. 경계값은 정상 범위에 포함한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1101)
+5. `Q1−1.5×IQR`, `Q3+1.5×IQR` 밖을 탐지하고 분포 비교용 금액 사본만 경계값으로 보정한다. 경계값은 정상 범위에 포함한다. [NB_CLEAN · `a32f822f`](notebooks/analysis_report.ipynb?plain=1#L1101)
 6. 원금액으로 RFM과 완전한 월별 합계를 계산하고 그룹 고객·금액 합계를 대조한다. [NB_RFM · `b4769e15`](notebooks/analysis_report.ipynb?plain=1#L1363)
 7. 분석 단위를 구분한 통계·상관·6종 차트를 만들고 근거·실행·검증 인사이트를 작성한다. [NB_STATS · `333254fa`](notebooks/analysis_report.ipynb?plain=1#L1521) · [NB_PLOTS · `87a953b4`](notebooks/analysis_report.ipynb?plain=1#L1766)
 
@@ -303,7 +309,7 @@ VIP(R·F·M≥3, F원값≥2) → Loyal(R·F≥3, F원값≥2) → New(R≥3, F�
 
 ### 이미지 히스토그램·엣지 피처
 
-`advanced=True, histogram_bins=8`을 지정하면 이미 읽은 상품 이미지 배치에서 8개 정규화 히스토그램 열 `image_hist_0`~`image_hist_7`과 `image_edge_mean`을 추가한다. 가중 밝기 근사는 `0.2126R+0.7152G+0.0722B`이며 sRGB 선형화나 물리적 휘도 측정을 수행하지 않는다. 히스토그램은 0~1을 8등분하고 마지막 구간에 1을 포함하며, 각 이미지에서 합이 1이다. 엣지는 수평·수직 인접 픽셀 절대차의 평균이다.
+`NB_FEATURES`에서 고급 이미지 피처를 켜고(`advanced=True`) 밝기 구간 수를 8로 지정한다(`histogram_bins=8`). 이미지마다 8개 밝기 구간의 픽셀 비율(`image_hist_0`~`image_hist_7`)과 윤곽 강도(`image_edge_mean`)를 계산하고, `NB_BONUS_IMAGES`에서 이 결과를 요약한다. [피처 계산 호출](notebooks/analysis_report.ipynb?plain=1#L1036) · [보너스 결과 확인](notebooks/analysis_report.ipynb?plain=1#L2215) 가중 밝기 근사는 `0.2126R+0.7152G+0.0722B`이며 sRGB 선형화나 물리적 휘도 측정을 수행하지 않는다. 히스토그램은 0~1을 8등분하고 마지막 구간에 1을 포함하며, 각 이미지에서 합이 1이다. 엣지는 수평·수직 인접 픽셀 절대차의 평균이다.
 
 실제 관측 상품 200개의 합1·상품/거래 매핑을 확인했다. 평균 엣지 값은 **0.045633**, 범위는 **0.004035~0.162338**이다. 실패·미표본 이미지는 피처를 결측으로 유지하며, 기존 mean/std·원본 이미지·거래금액을 바꾸지 않는다. 밝은 배경·리사이즈의 영향을 받으므로 상품 의미나 정교한 질감 검출로 단정하지 않는다.
 
@@ -416,7 +422,7 @@ py -3.11 -m venv .venv
 .venv/bin/python scripts/restore_hm_sample.py --archive "$HOME/Downloads/A1_1_hm_sample.zip"
 ```
 
-파일은 `data/raw/hm/transactions_sample.csv`, `articles_sample.csv`, `sample_manifest.json`, `images/<ID 앞 3자리>/<ID>.jpg`에 복원된다. `data/raw/hm/hm_sample.zip`을 보관하면 `--archive`를 생략할 수 있다. 복원은 구성·추출 기록과 기존 파일 충돌을 검증한다. 개인 Drive 설정이 있으면 [SHA-256 (256비트 암호화 해시 체크섬)](docs/tech_study.md#13-테스트재현git-작업-흐름)도 대조한다. 새 환경에는 개인 설정이나 인증 정보를 복사할 필요가 없다.
+거래 표 `data/raw/hm/transactions_sample.csv`, 상품 표 `data/raw/hm/articles_sample.csv`, 추출 기록 `data/raw/hm/sample_manifest.json`, 상품 사진 `data/raw/hm/images/<ID 앞 3자리>/<ID>.jpg`를 복원한다. `data/raw/hm/hm_sample.zip`을 보관하면 `--archive`를 생략할 수 있다. 복원은 구성·추출 기록과 기존 파일 충돌을 검증한다. 개인 Drive 설정이 있으면 [SHA-256 (256비트 암호화 해시 체크섬)](docs/tech_study.md#13-테스트재현git-작업-흐름)도 대조한다. 새 환경에는 개인 설정이나 인증 정보를 복사할 필요가 없다.
 
 데이터 출처는 [H&M 대회](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)다. 분석 노트북 `notebooks/analysis_report.ipynb`에는 원본 행·고객/상품 ID·원본 이미지 예시와 실행 결과를 숨기거나 치환하지 않고 저장했다. CSV·전체 이미지·ZIP 자체는 기존 Drive·로컬 보관 방식을 유지한다. 표본 ZIP이 없으면 아래 절차로 Kaggle에서 새로 만들고, 실행본은 [원본 실행 보고서와 다시 생성하는 방법](#원본-실행-보고서와-다시-생성하는-방법)의 명령으로 다시 만든다.
 
@@ -605,7 +611,7 @@ classDiagram
 
 ```mermaid
 flowchart TD
-    SET["설정<br/>경로·기간·채널·시드와 manifest 대조"]
+    SET["설정<br/>분석 설정과 표본 추출 기록 대조"]
     LOAD["NB_LOAD<br/>load_data → validate_transactions → join_products<br/>head / info / describe와 조인 보존 검증"]
     FEAT["NB_FEATURES<br/>상품명 길이·단어 수 / 이미지 mean·std<br/>상태별 건수와 실제 상품 이미지 표시"]
     CLEAN["NB_CLEAN<br/>별도 피처 사본 결측 대치<br/>IQR 탐지·금액 사본 보정"]

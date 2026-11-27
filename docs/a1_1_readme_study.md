@@ -50,8 +50,8 @@
 #### 2) 왜 원본 데이터는 Git에 없고 Kaggle → `restore_hm_sample.py` 과정을 거치는가?
 * **Git 제외 이유:** H&M 대회 데이터는 규정에 동의한 사용자만 쓸 수 있어 외부 재배포가 금지되어 있습니다. [.gitignore](https://github.com/ntt65/A1_1/blob/main/.gitignore)와 [`check_repository()`](https://github.com/ntt65/A1_1/blob/main/utils/repository_checks.py#L39)로 원본 CSV·이미지·ZIP이 Git에 올라가지 않도록 막습니다.
 * **추출 → 복원 2단계 흐름:**
-  1. **Kaggle에서 작은 표본만 추출:** [prepare_hm_sample.ipynb](https://github.com/ntt65/A1_1/blob/main/notebooks/prepare_hm_sample.ipynb)가 수천만 행 원본 중 3개월·고객 1,000명·이미지 200장만 골라 `hm_sample.zip`으로 만듭니다.
-  2. **로컬 검증 후 복원:** [`restore_sample()`](https://github.com/ntt65/A1_1/blob/main/scripts/restore_hm_sample.py#L30)이 ZIP 내부 파일 목록, `sample_manifest.json`의 이미지 수 일치 여부, 기존 파일 충돌, SHA-256 체크섬을 검사한 뒤 `data/raw/hm/` 폴더에 안전하게 풀어줍니다. (이미 같은 파일이 있으면 건너뛰고, 내용이 다른 기존 파일은 덮어쓰지 않아 데이터 손상을 막습니다.)
+  1. **Kaggle에서 작은 표본만 추출:** [prepare_hm_sample.ipynb](https://github.com/ntt65/A1_1/blob/main/notebooks/prepare_hm_sample.ipynb)가 수천만 행 원본 중 3개월·고객 1,000명·이미지 200장을 골라 `hm_sample.zip`으로 만듭니다. ZIP의 `sample_manifest.json`은 사용한 기간·채널·시드와 기준일을 남긴 추출 기록입니다. [추출 기록 생성 코드](../notebooks/prepare_hm_sample.ipynb?plain=1#L234)
+  2. **로컬 검증 후 복원:** [`restore_sample()`](https://github.com/ntt65/A1_1/blob/main/scripts/restore_hm_sample.py#L30)이 ZIP 내부 파일 목록, 추출 기록에 적힌 이미지 수, 기존 파일 충돌, SHA-256 체크섬을 검사한 뒤 `data/raw/hm/`에 풉니다. 추출 기록의 로컬 경로는 `data/raw/hm/sample_manifest.json`입니다. (이미 같은 파일이 있으면 건너뛰고, 내용이 다른 기존 파일은 덮어쓰지 않아 데이터 손상을 막습니다.)
 
 #### 3) 보충 · Kaggle 표본 추출 설정 (`prepare_hm_sample.ipynb` In [1])
 [prepare_hm_sample.ipynb](https://github.com/ntt65/A1_1/blob/main/notebooks/prepare_hm_sample.ipynb)의 1번 섹션(`In [1]`)은 외부 다운로드가 아니라 비공개 Kaggle 노트북에 연결된 H&M 원본 데이터셋에서 분석용 표본(`hm_sample.zip`)을 추출하기 위한 경로·기간·표본 크기·청크 크기 변수 설정입니다.
@@ -91,6 +91,7 @@
 ### Step 3 · 입력과 계산 기준 & 분석 흐름과 원본 보존 (`README.md` 90~138행)
 
 #### 1) 입력 데이터와 자료형을 지키는 이유
+* **분석 설정 확인:** `notebooks/analysis_report.ipynb` 상단 설정 셀의 `SETTINGS`는 기간·시드·채널과 분석에 사용할 값을 모아 둔 딕셔너리입니다. 실행을 시작할 때 기간·시드·채널을 `data/raw/hm/sample_manifest.json`의 추출 기록과 대조합니다. [설정 선언과 검사](../notebooks/analysis_report.ipynb?plain=1#L69)
 * **ID 열은 반드시 문자열(`string`):** `customer_id`, `article_id`, `sales_channel_id`를 숫자로 읽으면 `"0706016002"`의 앞자리 `0`이 사라져 이미지 경로 매칭이 깨집니다. 그래서 [`DataAnalyzer.load_data`](https://github.com/ntt65/A1_1/blob/main/src/pipeline.py#L36)에서 처음부터 `string`으로 읽고 공백을 제거합니다.
 * **금액(`price`)은 원값 보존:** 통화나 환율을 임의로 추정해 곱하지 않고, 유효한 양수인지(`np.isfinite` & `> 0`)만 검사합니다.
 * **정제 순서(상호 배타적 집계):** [`clean_transactions`](https://github.com/ntt65/A1_1/blob/main/utils/analytics.py#L7)는 **고객 누락 → 날짜 오류 → (주문 모드 시 주문/취소 오류) → 금액 오류** 순서로 검사해, 한 행이 여러 사유로 중복 카운트되지 않도록 합니다. H&M에는 주문 ID가 없어 같은 날·같은 금액의 중복 구매 행도 정상 거래로 유지합니다.

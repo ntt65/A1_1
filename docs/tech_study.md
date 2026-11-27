@@ -265,7 +265,7 @@ SRC: [utils/analytics.py](../utils/analytics.py)의 `iqr_limits`, [utils/reporti
    * 반면 사분위수는 순위(위치) 기반 비모수 통계량이므로, 끝단에 초고가 결제가 존재하더라도 $Q_1$과 $Q_3$의 위치가 흔들리지 않아 우측 꼬리가 긴(왜도 $+1.554$) 이커머스 거래 금액에 적합하다.
 
 #### 4. 프로젝트(`A1_1`) 실측 적용 및 원본 보존 정책
-* **적용 대상:** 유효 거래 `8,084`행의 `price` 열 (`SETTINGS["iqr_threshold"] = 1.5`)
+* 유효 거래 **8,084행**의 `price` 열에 적용한다. IQR 배수 `1.5`는 분석 노트북 상단의 설정 딕셔너리 `SETTINGS`에서 `iqr_threshold` 항목에 지정한다. [notebooks/analysis_report.ipynb의 설정 코드](../notebooks/analysis_report.ipynb?plain=1#L69)
 * **사분위수 및 경계값 산출:**
   * $Q_1 = 0.015237$, $Q_2 = 0.022017$, $Q_3 = 0.033881$
   * $\text{IQR} = 0.033881 - 0.015237 = 0.018644$
@@ -368,7 +368,7 @@ SRC: [utils/analytics.py](../utils/analytics.py)의 `calculate_customer_rfm`, `s
 | Kaggle Notebook | 허가된 원본을 원격 환경에서 처리하는 작업 공간. 필터링한 표본만 반출한다. |
 | API / CLI | 프로그램 또는 명령줄로 기능을 호출하는 방식. 인증·파일 단위·행 단위 기능을 구분한다. |
 | SQL·조건 필터 | 조건으로 행을 선택하는 방식. 이 프로젝트는 Kaggle 실행 환경에서 Pandas 청크 필터를 수행한다. |
-| Manifest / 추출 기록 | 출처·기간·시드·표본 수·제외 사유·기준일을 저장한 JSON. |
+| Manifest / 추출 기록 | 출처·기간·채널·난수 시드·표본 수·제외 사유·기준일을 저장한 파일이다. 로컬 복원 경로는 `data/raw/hm/sample_manifest.json`이다. [notebooks/prepare_hm_sample.ipynb의 기록 생성 코드](../notebooks/prepare_hm_sample.ipynb?plain=1#L234) |
 | JSON | 키와 값으로 구조화한 텍스트 형식. 설정·검증 기록에 사용한다. |
 | SHA-256 / 체크섬 | 파일 내용의 해시. 같은 입력인지 대조하며 원본 접근 허가를 대신하지 않는다. |
 | ZIP / 압축 | 여러 파일을 묶고 크기를 줄이는 형식. 복원 전 경로·구성·충돌을 검증한다. |

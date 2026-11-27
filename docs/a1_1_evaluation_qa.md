@@ -109,16 +109,18 @@ Original stdout is private. No notebook rows or identifiers are copied here.
 
 > 핵심 설정의 기본값과 권장 범위를 README의 SETTINGS 표에 명확히 기재하세요
 
-아래 범위는 현재 구현을 탐색할 때의 시작점이다. [파라미터 설계 답변](#2-3)
+표본을 뽑을 때 사용한 기간·시드·채널과 기준일은 `data/raw/hm/sample_manifest.json`에 기록한다. `notebooks/analysis_report.ipynb`의 `SETTINGS`는 분석에 쓸 이름과 값을 모아 둔 설정 딕셔너리다. 분석을 시작할 때 추출 기록과 기간·시드·채널을 대조한다. 아래 범위는 설정을 바꿔 볼 때의 시작점이다. [표본 추출 기록과 분석 설정](../README.md#표본-추출-기록과-분석-설정) · [파라미터 설계 답변](#2-3)
 
-| 설정 위치·이름 | 기본 실행값 | 탐색 권장 범위와 변경 영향 |
+| 설정이 있는 파일과 항목 | 기본 실행값 | 탐색 권장 범위와 변경 영향 |
 | --- | --- | --- |
-| 표본 manifest와 노트북 `SETTINGS`의 `start_inclusive`, `end_exclusive`, `seed`, `sales_channel` | `2020-06-01`, `2020-09-01`, `42`, `None` | 기간·고객 선정·채널이 달라진다. 표본을 다시 추출하고 manifest와 설정을 맞춘다. |
-| `SETTINGS["image_size"]` | `32` | 탐색은 16~64에서 시작하되 같은 상품을 비교하려면 공통 원본의 최소 변 길이 이하로 고른다. 해상도에 따라 통계와 작은 이미지의 제외 범위가 달라질 수 있다. |
-| `SETTINGS["batch_size"]` | `32` | 메모리가 빠듯하면 8~32에서 시작해 처리량과 최대 메모리를 함께 측정한다. 원래 입력이 같으면 이미지당 계산 결과는 같아야 한다. |
-| `SETTINGS["iqr_threshold"]` | `1.5` | 분포 민감도 검토는 1.5~3에서 시작한다. 경계와 표시 건수를 바꾸며 RFM은 원금액을 사용한다. |
-| 이미지 호출의 `histogram_bins` | `8` | 보너스 밝기 분포는 8~16에서 시작한다. 비교할 때 구간 수와 이미지 크기를 맞춘다. |
-| manifest의 `reference_date`, RFM의 `frequency_unit` | `2020-08-31`, `purchase_day` | 기준일은 Recency, 단위는 Frequency에 영향을 준다. 주문 수 모드는 주문 ID가 있는 입력에서 사용한다. |
+| `data/raw/hm/sample_manifest.json`과 [`notebooks/analysis_report.ipynb`의 `SETTINGS`](../notebooks/analysis_report.ipynb?plain=1#L69) · `start_inclusive`, `end_exclusive`, `seed`, `sales_channel` | `2020-06-01`, `2020-09-01`, `42`, `None` | 시작일 포함, 종료일 제외, 난수 시드 42, 전체 판매 채널이다. 기간·시드·채널이 바뀌면 표본을 다시 추출하고 분석 설정을 맞춘다. |
+| [`notebooks/analysis_report.ipynb`의 `SETTINGS`](../notebooks/analysis_report.ipynb?plain=1#L69) · `image_size` | `32` | 계산에 쓸 사진 한 변의 픽셀 수다. 16~64에서 시작한다. 해상도에 따라 통계가 달라질 수 있으며, 원본에서 짧은 변이 지정 크기보다 작은 사진은 계산에서 제외된다. 같은 상품을 비교할 때는 원본들의 최소 변 길이 이하로 고른다. |
+| [`notebooks/analysis_report.ipynb`의 `SETTINGS`](../notebooks/analysis_report.ipynb?plain=1#L69) · `batch_size` | `32` | 한 번에 처리할 최대 이미지 수다. 메모리가 빠듯하면 8~32에서 시작해 처리량과 최대 메모리를 함께 측정한다. 입력이 같으면 이미지별 계산 결과는 같다. |
+| [`notebooks/analysis_report.ipynb`의 `SETTINGS`](../notebooks/analysis_report.ipynb?plain=1#L69) · `iqr_threshold` | `1.5` | 이상치 경계에 쓰는 IQR 배수다. 1.5~3에서 시작해 경계와 표시 건수를 비교한다. RFM은 원금액을 사용한다. |
+| [`notebooks/analysis_report.ipynb`의 `NB_FEATURES` 호출](../notebooks/analysis_report.ipynb?plain=1#L1036) · `histogram_bins` | `8` | 픽셀 밝기를 나눌 구간 수다. 8~16에서 시작하고, 사진 간 비교에서는 구간 수와 이미지 크기를 맞춘다. |
+| `data/raw/hm/sample_manifest.json` · `reference_date` | `2020-08-31` | 마지막 구매 후 경과일을 셀 기준일이다. [노트북의 `NB_RFM`에서 기준일 전달](../notebooks/analysis_report.ipynb?plain=1#L1491) |
+| [`src/pipeline.py`의 `DataAnalyzer.calculate_rfm()`](../src/pipeline.py#L162-L163) · `frequency_unit` | `purchase_day` | `NB_RFM` 호출에서 생략해 기본값을 사용한다. 주문 ID가 있는 입력은 `order` 모드와 주문 ID 열(`order_col`)을 지정할 수 있다. |
+
 
 ### 네이토 최종 평가 원문
 
@@ -839,8 +841,8 @@ README의 인사이트 3개는 VIP 유지, New의 다음 구매 유도, Churned�
 | --- | --- | --- |
 | `threshold` (IQR 배수) | 1.5 | 꼬리가 긴 데이터에서 덜 엄격하게 하려면 3으로 |
 | `strategy`, 그룹 열, 대상 마스크 | 상품 유형별 평균 | 분류 체계가 다른 데이터면 그룹 열만 바꿈 |
-| `reference_date` | 2020-08-31 (표본 기록 파일에서 읽음) | 데이터의 마지막 거래일로 |
-| `frequency_unit` | 구매일 수 | 주문 ID가 있는 데이터면 주문 수로 |
+| `reference_date` | `data/raw/hm/sample_manifest.json`에서 읽은 `2020-08-31`을 노트북에서 전달 | 분석에 맞는 기준일로 지정 |
+| `frequency_unit` | 노트북에서 생략해 `src/pipeline.py`의 기본값 `purchase_day`(구매일 수) 적용 | 주문 ID가 있는 데이터면 주문 수로 |
 
 **왜 이렇게:** H&M 표본에는 주문 ID가 없어서 F를 "구매한 날 수"로 셉니다. 주문 ID가 있는 데이터라면 `frequency_unit="order"`와 주문 ID 열 `order_col`을 전달해 주문 수로 셀 수 있습니다.
 

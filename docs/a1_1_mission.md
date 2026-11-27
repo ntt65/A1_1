@@ -92,7 +92,7 @@
 - RFM 계산용 거래 데이터는 최소 `customer_id`, `order_date`, `amount`(또는 `price * qty`) 컬럼을 포함해야 한다.
   - **구현** — 이 데이터의 컬럼명은 `customer_id`, `t_dat`(= `order_date`), `price`(= `amount`)다. 한 행이 상품 하나의 구매이므로 `price`를 금액으로 쓴다.
 - Recency 기준일은 데이터의 최종 거래일(또는 분석 기준일)로 정의한다.
-  - **구현** — 기준일은 **2020-08-31**이며, 표본 기록 파일 `sample_manifest.json`의 `reference_date` 값을 읽어 넘긴다. [노트북: 기준일 전달 코드](../notebooks/analysis_report.ipynb#L1491)
+  - **구현** — 기준일은 **2020-08-31**이다. 표본 추출 조건을 저장한 `data/raw/hm/sample_manifest.json`에서 `reference_date`를 읽고, 분석 노트북의 RFM 단계에서 계산 메서드에 전달한다. [notebooks/analysis_report.ipynb의 기준일 전달 코드](../notebooks/analysis_report.ipynb?plain=1#L1491)
   - **작은 예** — 기준일이 8/31이면 8/31에 산 고객의 R은 0일, 8/1에 마지막으로 산 고객의 R은 30일이다.
 - 해석은 수치 근거 1개 이상 + 시사점 1문장 이상을 포함해야 한다.
   - **구현** — `NB_LOAD` 마크다운과 README에 행 수·기간·금액 통계를 근거로 한 해석을 적었다. [README: 실제 실행 결과와 기술통계](../README.md#실제-실행-결과와-기술통계)
