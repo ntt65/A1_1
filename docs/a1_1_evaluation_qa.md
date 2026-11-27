@@ -2,7 +2,7 @@
 
 기준: [평가 PDF](a1_1_eval.pdf) 15~17페이지와 [평가 Markdown](a1_1_eval.md)의 평가 문항. 자료 대조 의견은 [검토 문서](a1_1_eval_review.md), 용어 해설은 [tech_study.md](tech_study.md)다. 이슈 #6에서 관리한다.
 
-[실행 증거](#평가용-실행-증거) · [네이토 평가](#네이토-평가) · [발표자료](#평가-기술-발표자료) · [평가 문항별 Q&A](#5-평가문항)
+[실행 증거](#평가용-실행-증거) · [미션·평가 대응표](#미션-요구사항과-평가문항-대응표) · [네이토 평가](#네이토-평가) · [발표자료](#평가-기술-발표자료) · [평가 문항별 Q&A](#5-평가문항)
 
 ## 이 문서 읽는 법
 
@@ -34,6 +34,8 @@
 
 ### 평가 문항별 결과 위치
 
+아래 번호는 네이토 평가 항목 #1~#19를 가리킨다.
+
 | 항목 | 실제 결과와 확인 위치 | SRC |
 | --- | --- | --- |
 | 1–3 · 클래스·실행·입력 | 결측 처리 두 이름은 같은 구현을 호출한다. `NB_LOAD` (`1196c1cf`)에 `head()`, `info()`, `describe()`와 조인 후 8,084행·9열을 저장했다. `NB_REPRO`까지 실행됐다. | [DataAnalyzer](../src/pipeline.py) · [호환 회귀 테스트](../tests/test_analytics.py) |
@@ -46,6 +48,33 @@
 | 14–16 · 대치·점수·배치 | `NB_CLEAN`의 이미지 평균 대치 전후 분산은 0.010424 → 0.010130이다. RFM 동점 테스트와 `NB_FEATURES`의 NumPy 배치 축 설명도 확인할 수 있다. | [대치·RFM](../utils/analytics.py) · [동점 테스트](../tests/test_analytics.py) · [배치 계산](../utils/image_features.py) |
 | 17 · 대규모 이미지 병목과 개선 | 실제 이미지 200장 계측에서 읽기+디코딩이 전체의 약 85%였다. `NB_FEATURES` 설명 셀 `923b9a03`에 상품 피처 캐시, 제한된 병렬 로드, 유한 대기열, 표본 선정과 워커별 검증 설계를 기록했다. | [병목 진단과 확장 설계](#대규모-이미지-처리의-병목과-개선-설계) · [이미지 처리](../utils/image_features.py) |
 | 18–19 · 사업 활용과 예측 확장 | 캠페인 대조군과 30일 목표 예시, 기준시점 T까지의 피처와 미래 30일 라벨의 분리 설계를 확인한다. | [캠페인 실험](#4-2) · [예측 확장](#4-3) |
+
+### 미션 요구사항과 평가문항 대응표
+
+미션 구현은 README의 분석 흐름으로 설명하고, 질의응답에서는 아래 표에서 질문에 해당하는 미션 요구사항·코드·결과를 찾는다. 평가 원문의 앞부분에는 미션 요구사항이 반복되며, 평가 문항은 마지막 절에 있다. [미션 요구사항](a1_1_mission.md#4-기능-요구-사항) · [평가 문항](a1_1_eval.md#5-평가문항)
+
+| 평가 | 질문 요지 | 미션 요구사항 | 코드 | 결과 위치 |
+| --- | --- | --- | --- | --- |
+| 1-1 | DataAnalyzer와 필수 메서드 4개 | 2. 최종 결과물, 4-2 | [pipeline.py](../src/pipeline.py#L20) | `NB_LOAD`~`NB_RFM` |
+| 1-2 | 노트북 전체 실행 | 2. 최종 결과물 | [run_checks.py](../utils/run_checks.py) | [실제 실행 확인 기록](#실제-실행-확인-기록) |
+| 1-3 | 1,000행·8열·3종 타입 | 4-1 | [load_data·join_products](../src/pipeline.py#L36) | `NB_LOAD` |
+| 1-4 | 이미지 Mean/Std·텍스트 피처 열 | 4-3 | [image_features.py](../utils/image_features.py#L64) | `NB_FEATURES` |
+| 1-5 | 이상치 전후 분포 시각화 | 4-4, 4-6 | [clip_outliers](../src/pipeline.py#L156) | [IQR 절](../README.md#iqr의-통계적-필요성과-한계) |
+| 1-6 | 6종 차트·제목·축 | 4-6 | [make_figures](../utils/reporting.py#L35) | [필수 시각화 6종](../README.md#필수-시각화-6종) |
+| 1-7 | 기술통계·상관 2쌍·해석 | 4-5 | [summarize](../src/pipeline.py#L177) · [pair_correlation](../utils/reporting.py#L8) | [실제 실행 결과와 기술통계](../README.md#실제-실행-결과와-기술통계) |
+| 1-8 | RFM 4그룹·인사이트 3개 | 4-7 | [calculate_customer_rfm](../utils/analytics.py#L128) | [비즈니스 인사이트](../README.md#비즈니스-인사이트) |
+| 2-1 | 메서드 분리 이유와 책임 | 4-2 | [pipeline.py](../src/pipeline.py#L20) | [분석 흐름과 원본 보존](../README.md#분석-흐름과-원본-보존) |
+| 2-2 | for 대신 NumPy 연산 지목 | 4-3 | [평균·표준편차 계산](../utils/image_features.py#L128) | `NB_FEATURES` |
+| 2-3 | 파라미터를 인자로 받은 이유 | 4-2 | [detect_outliers](../src/pipeline.py#L145) · [calculate_rfm](../src/pipeline.py#L162) | [입력과 계산 기준](../README.md#입력과-계산-기준) |
+| 2-4 | 단계별 마크다운·의사결정 기록 | 2. 최종 결과물 | [분석 노트북](../notebooks/analysis_report.ipynb) | `NB_FEATURES`·`NB_CLEAN`·`NB_STATS` 설명 셀 |
+| 3-1 | IQR 필요성과 한계 | 4-4 | [iqr_limits](../utils/analytics.py#L117) | [Q&A 3-1](#3-1) |
+| 3-2 | 그룹 평균 대치의 이유와 위험 | 4-4 | [impute_features](../utils/analytics.py#L71) | `NB_CLEAN` |
+| 3-3 | RFM 점수 기준과 타당성 | 4-7 | [점수 계산](../utils/analytics.py#L151) | [실제 고객 그룹 요약](../README.md#실제-고객-그룹-요약) |
+| 3-4 | 벡터화가 빠른 이유 | 4-3 (과제 목표) | [배치 축 연산](../utils/image_features.py#L128) | `NB_FEATURES` stride 출력 |
+| 4-1 | 100만 명·1024² 병목 | 없음 (확장) | [순차 이미지 경로](../utils/image_features.py#L96) | [병목과 개선 설계](#대규모-이미지-처리의-병목과-개선-설계) |
+| 4-2 | 첫 캠페인 세그먼트·리스크 | 4-7 | [write_insights](../utils/reporting.py#L73) | [1. VIP 유지 실험](../README.md#1-vip-유지-실험) |
+| 4-3 | ML 예측 확장 | 없음 (확장) | [calculate_rfm](../src/pipeline.py#L162) | [평가 Q&A 4-3](#4-3) |
+| 5 | 보너스 3종 | 5-1~5-3 | [bonus.py](../utils/bonus.py) | [보너스 3개 실제 구현 결과](../README.md#보너스-3개-실제-구현-결과) |
 
 ### 실제 실행 확인 기록
 
@@ -68,15 +97,19 @@ Original stdout is private. No notebook rows or identifiers are copied here.
 
 | 회차 | 결과 | 판정과 보완 |
 | --- | --- | --- |
-| [1차 평가](https://github.com/ntt65/A1_1/blob/d4bebc90a3e1274ed78ebc220b38d755482da4d1/docs/naito_eval_result.md) | 18/19 | #1 결측 처리 호출명에 맞춰 호환 메서드를 연결했다. |
-| [2차 평가](naito_eval_result2.md) | 17/19 | #1은 PASS로 바뀌었고 #13 IQR 분포 비교와 #17 이미지 병목 대응이 FAIL이었다. |
-| [최종 평가](naito_eval_result.md) | **19/19** | IQR의 이론·실측 비교와 이미지 계측·확장 검증 설계를 보강해 #13·#17이 PASS로 바뀌었다. |
+| 1차 평가 | 18/19 | #1 결측 처리 호출명에 맞춰 호환 메서드를 연결했다. |
+| 2차 평가 | 17/19 | #1은 PASS로 바뀌었고 #13 IQR 분포 비교와 #17 이미지 병목 대응이 FAIL이었다. |
+| 최종 평가 | **19/19** | IQR의 이론·실측 비교와 이미지 계측·확장 검증 설계를 보강해 #13·#17이 PASS로 바뀌었다. |
 
 최종 보고서는 2026-11-07 23:50:40에 기록됐으며 평가 대상 커밋은 보고서에 기재되어 있지 않다. 보완 과정은 [네이토 재평가 체크표](a1_1_checklist.md#네이토-재평가-체크표)와 [이슈 #23](https://github.com/ntt65/A1_1/issues/23)에 남아 있다.
 
 ### 설정 기본값과 탐색 범위
 
-최종 평가에서 #11은 PASS였고 기본값과 탐색 범위를 문서에 명시하라는 권고가 있었다. 아래 범위는 현재 구현을 탐색할 때의 시작점이다. [평가 #11 원문](naito_eval_result.md#L111) · [파라미터 설계 답변](#2-3)
+최종 평가 #11은 PASS였고 아래 보완 의견이 있었다.
+
+> 핵심 설정의 기본값과 권장 범위를 README의 SETTINGS 표에 명확히 기재하세요
+
+아래 범위는 현재 구현을 탐색할 때의 시작점이다. [파라미터 설계 답변](#2-3)
 
 | 설정 위치·이름 | 기본 실행값 | 탐색 권장 범위와 변경 영향 |
 | --- | --- | --- |
@@ -86,6 +119,424 @@ Original stdout is private. No notebook rows or identifiers are copied here.
 | `SETTINGS["iqr_threshold"]` | `1.5` | 분포 민감도 검토는 1.5~3에서 시작한다. 경계와 표시 건수를 바꾸며 RFM은 원금액을 사용한다. |
 | 이미지 호출의 `histogram_bins` | `8` | 보너스 밝기 분포는 8~16에서 시작한다. 비교할 때 구간 수와 이미지 크기를 맞춘다. |
 | manifest의 `reference_date`, RFM의 `frequency_unit` | `2020-08-31`, `purchase_day` | 기준일은 Recency, 단위는 Frequency에 영향을 준다. 주문 수 모드는 주문 ID가 있는 입력에서 사용한다. |
+
+### 네이토 최종 평가 원문
+
+<details>
+<summary>2026-11-07 23:50:40 · 19/19 · 원문 펼치기</summary>
+
+```text
+AI 사전평가 결과
+평가 시각: 2026-11-07 23:50:40
+
+100%
+(19 / 19 항목 통과)
+종합 평가
+대부분의 요구사항이 코드·문서·실행 결과에 근거해 충족되었습니다. 핵심 구현(데이터 로드·결측 대치 API, 이미지·텍스트 파생, IQR 탐지·클리핑, RFM 산정 및 4개 이상 세그먼트 생성)과 노트북 실행 증거가 README·결과 JSON·로그·유틸 코드에 일관되게 기재되어 있습니다. 보완점은 문서 인용을 더 짧은 코드 주석으로 연결하고 일부 설계·한계 설명을 노트북 셀에 다시 요약하는 것입니다.
+
+항목별 평가 (19개)
+PASS
+평가 항목 #1
+근거
+src/pipeline.py > 'def load_data(self, *, required_columns=(), date_columns=(), dtype=None) -> pd.DataFrame:' and src/pipeline.py > 'def handle_missing(self, strategy="group_mean", group_col=None, *, columns=None, eligible=None):'
+잘한 점
+DataAnalyzer에 load/결측 호출이 명확히 구현됨
+부족한 점
+해당 없음
+보완
+두 메서드의 의도와 반환/상태 변화를 한 줄씩 더 주석으로 요약하세요
+PASS
+평가 항목 #2
+근거
+docs/results/validation_log.txt > 'Notebook execution: PASS'
+잘한 점
+노트북 전체 실행 결과가 검증 로그에 기록됨
+부족한 점
+해당 없음
+보완
+노트북 실행 결과 저장 경로와 실행 시간을 README에 한 줄 덧붙이세요
+PASS
+평가 항목 #3
+근거
+docs/results/analysis_aggregates.json > '"transaction_rows": 8084' and docs/results/analysis_aggregates.json > '"joined_columns": 9' and README.md > 'NB_LOAD의 실제 info()는 `bool(2)`, `datetime64[us](1)`, `float64(1)`, `str(2)`, `string(3)`을 표시한다.'
+잘한 점
+데이터 규모·열수·다중 자료형을 문서·집계에 명확히 기재함
+부족한 점
+해당 없음
+보완
+노트북에 types 통계 출력 셀을 바로 링크로 연결하세요
+PASS
+평가 항목 #4
+근거
+src/pipeline.py > 'self.df[f"{image_column}_mean"] = image_data.mean(axis=reduce_axes)' and src/pipeline.py > 'for suffix, values in (("length", text_series.str.len()), ("word_count", text_series.str.split().str.len())):'
+잘한 점
+이미지 평균/표준편차와 텍스트 길이·단어수 파생이 구현됨
+부족한 점
+해당 없음
+보완
+파생 컬럼의 null 처리 정책을 노트북에서 한 줄로 요약하세요
+PASS
+평가 항목 #5
+근거
+utils/reporting.py > 'ax.boxplot([transactions["price"].to_numpy(), clipped_amount.to_numpy()], tick_labels=["Raw", "IQR clipped"])' and docs/results/analysis_aggregates.json > '"outliers": { "price": { "count": 212'
+잘한 점
+IQR 탐지 통계와 전후 박스플롯 생성 코드·수치가 모두 존재함
+부족한 점
+해당 없음
+보완
+박스플롯에 이상치로 처리된 행수(수치)를 캡션으로 추가하세요
+PASS
+평가 항목 #6
+근거
+utils/reporting.py > 'ax.hist(transactions["price"], bins=35' and 'ax.boxplot([transactions["price"].to_numpy(), clipped_amount.to_numpy()]' and 'ax.bar(profile.index, profile.Customers'
+잘한 점
+필수 차트(히스토그램·박스플롯·막대 등)와 제목/축 라벨이 코드에 설정됨
+부족한 점
+해당 없음
+보완
+노트북에서 각 Figure의 파일명·생성 위치를 명시적으로 출력하세요
+PASS
+평가 항목 #7
+근거
+docs/results/analysis_aggregates.json > '"statistics": { "price": { "mean": 0.0250139, "median": 0.0220169 } }' and docs/results/analysis_aggregates.json > '"correlations": [{"left":"image_mean","right":"image_std","pearson":-0.9435457970388688},{"left":"Frequency","right":"Monetary","pearson":0.6396637341139406}]'
+잘한 점
+평균·중앙값과 두 쌍의 상관계수가 집계 JSON에 포함되어 있음
+부족한 점
+해당 없음
+보완
+상관 해석의 한 문장 코멘트를 노트북 셀 바로 아래에 추가하세요
+PASS
+평가 항목 #8
+근거
+docs/results/analysis_aggregates.json > '"segments": {"Churned": 499, "VIP": 270, "New": 149, "Loyal": 82}' and README.md > '## 비즈니스 인사이트'
+잘한 점
+RFM으로 4개 그룹이 생성되고 README에 3개 인사이트가 문서화됨
+부족한 점
+해당 없음
+보완
+세 인사이트 각각에 대응하는 표(행수·금액)를 노트북에 바로 보여주세요
+PASS
+평가 항목 #9
+근거
+README.md > '아래 메서드 및 설정 표에 입력과 상태 변화가 있다.' and src/pipeline.py class docstring > 'Object-oriented data analysis pipeline for e-commerce data.'
+잘한 점
+메서드 책임과 상태 변화가 README·클래스 docstring에 설명되어 있음
+부족한 점
+해당 없음
+보완
+주요 메서드(예:handle_missing)의 입력·출력·부작용을 표로 요약해 두면 더 명확합니다
+PASS
+평가 항목 #10
+근거
+src/pipeline.py > 'self.df[f"{image_column}_mean"] = image_data.mean(axis=reduce_axes)' and utils/image_features.py > 'batch.mean(axis=(1, 2, 3))' and utils/image_features.py docstring > '픽셀별 Python 반복 없이'
+잘한 점
+NumPy의 축 연산을 사용한 벡터 연산 지점과 설계 의도가 명시됨
+부족한 점
+해당 없음
+보완
+노트북에 해당 셀에서 사용한 배열 형상 예시를 함께 보여주세요
+PASS
+평가 항목 #11
+근거
+README.md > '`SETTINGS["image_size"]`, `SETTINGS["batch_size"]` | `32`, `32`' and src/pipeline.py signatures (image_size, batch_size, histogram_bins)
+잘한 점
+이미지/처리 관련 파라미터가 인자화되고 README에 설정 위치가 명시됨
+부족한 점
+해당 없음
+보완
+핵심 설정의 기본값과 권장 범위를 README의 SETTINGS 표에 명확히 기재하세요
+PASS
+평가 항목 #12
+근거
+README.md > 'IQR의 통계적 필요성과 한계' and README.md > '4. `handle_missing_values()`로 이미지 통계의 EDA 사본에만 그룹 평균→대치 전 전체 평균을 적용한다.'
+잘한 점
+대치 근거와 분석 단계가 Markdown 문서에 근거와 함께 문서화됨
+부족한 점
+해당 없음
+보완
+의사결정별 참조 노트(노트북 셀 id)를 각 항목에 링크하면 재검증이 쉬워집니다
+PASS
+평가 항목 #13
+근거
+README.md > '사분위수는 극단값이 더 커져도 평균과 표준편차보다 영향을 덜 받으므로, 오염이 섞인 자료에서 중심부를 기준으로 먼 값을 찾는 데 유용하다.'
+잘한 점
+IQR의 필요성과 꼬리 분포에서의 한계를 문서에 설명함
+부족한 점
+해당 없음
+보완
+정규분포·로그정규의 수치 예시(간단 표)를 노트북에 바로 포함하세요
+PASS
+평가 항목 #14
+근거
+README.md > '이미지 대치가 분산을 축소할 수 있어 이미지 상관에는 원래 관측값만 사용한다.' and docs/results/analysis_aggregates.json > '"variance_before": 0.010424100859843282, "variance_after": 0.010130025199517102'
+잘한 점
+그룹별 대치의 분산 축소 위험과 수치적 근거를 문서화함
+부족한 점
+해당 없음
+보완
+대치 전에/후의 분포 플롯(예:밀도)을 인사이트 섹션에 추가하세요
+PASS
+평가 항목 #15
+근거
+README.md > '(평균 순위−0.5)/고객 수가 0.25/0.50/0.75 이하인지에 따라 1/2/3점' and README.md > 'R은 기준일−최종 구매일(기준일 구매=0일), F는 고유 구매일 수, M은 유효 금액 원값 합계다.'
+잘한 점
+RFM 점수 산정 규칙(분위수 근거)과 비즈니스 분류 기준이 문서화됨
+부족한 점
+해당 없음
+보완
+분위수 기반 임계값이 비즈니스 KPI와 어떻게 연결되는지 사례 한 줄을 추가하세요
+PASS
+평가 항목 #16
+근거
+README.md > '배열 축·메모리/Stride/SIMD·RFM 손계산·검증값과 한계를 담았다.' and utils/image_features.py docstring > '픽셀별 Python 반복 없이'
+잘한 점
+NumPy의 연속 메모리·벡터화(또는 SIMD 친화성)를 다룬 설명과 코드 근거가 있음
+부족한 점
+해당 없음
+보완
+노트북에 stride/contiguity 확인 코드 예시를 하나 포함하면 이해가 쉬워집니다
+PASS
+평가 항목 #17
+근거
+README.md > '파일 반복 읽기·디코딩 | 상품 ID·파일 버전·피처 설정을 키로 피처를 캐시한다. 캐시 미스만 제한된 워커에서 읽기·디코딩·축소하고, 크기가 제한된 대기열로 다음 NumPy 배치에 넘긴다.'
+잘한 점
+이미지 처리 병목(읽기+디코딩) 진단과 캐시·병렬화·샘플링 개선 방안이 문서화됨
+부족한 점
+해당 없음
+보완
+노트북에 병목 측정(읽기/디코딩/전처리 시간 분해)을 보여주는 간단 계측 셀을 추가하세요
+PASS
+평가 항목 #18
+근거
+utils/reporting.py > '## 1. VIP 유지 실험' and utils/reporting.py write_insights() template containing '검증: 발송군과 무작위 미발송군'
+잘한 점
+우선 액션 대상(VIP 등)과 검증용 대조군 설계가 인사이트 문서에 제시됨
+부족한 점
+해당 없음
+보완
+각 캠페인 우선순위에 대응한 단기 KPI(숫자)를 README에 표로 요약하세요
+PASS
+평가 항목 #19
+근거
+docs/results/analysis_aggregates.json > '"feature_columns": ["t_dat","customer_id","article_id","price","prod_name","image_mean","image_std",...]' and docs/results/analysis_aggregates.json > '"segments": {"Churned": 499, ...}'
+잘한 점
+ML 확장용 타깃(예:Churned 그룹)과 사용 가능한 피처 목록이 산출물에 포함되어 있음
+부족한 점
+해당 없음
+보완
+예시 타깃(이탈/재구매)별 feature list와 데이터 분리 시점을 노트북에 명확히 보여주세요
+```
+
+</details>
+
+### 네이토 2차 평가 원문
+
+<details>
+<summary>2026-11-07 23:30:31 · 17/19 · 원문 펼치기</summary>
+
+```text
+AI 사전평가 결과
+평가 시각: 2026-11-07 23:30:31
+
+89%
+(17 / 19 항목 통과)
+종합 평가
+대체로 제출물은 요구사항을 충실히 구현하고 문서화가 잘 되어 있으며 DataAnalyzer와 관련 유틸이 명확히 역할을 분리한다. 시연·집계·피처 생성·RFM·시각화 등 핵심 산출 근거가 README와 결과 JSON에 명시되어 있어 재현 가능성이 높다. 다만 IQR의 통계적 필요성·비대칭성 한계에 대한 서술이 목표 수준으로는 부족했고, 대규모 이미지 처리 시 병목 완화(병렬화·구성적 개선)의 구체적 개선방안 서술이 미흡하다.
+
+항목별 평가 (19개)
+PASS
+평가 항목 #1
+근거
+src/pipeline.py > 'class DataAnalyzer:'; 'def load_data(self, *, required_columns=(), date_columns=(), dtype=None)' ; 'def handle_missing(self, strategy="group_mean", group_col=None, *, columns=None, eligible=None):'
+잘한 점
+클래스와 두 메서드가 명확히 구현되어 있고 docstring으로 역할을 설명함
+부족한 점
+추가 보완 포인트: 메서드 예외 경로 사례 문서화가 있으면 유용함
+보완
+핸들링되는 예외 케이스(예: 빈 입력)에 대한 간단한 사용 예시를 추가하라
+PASS
+평가 항목 #2
+근거
+docs/results/validation_log.txt > 'Notebook execution: PASS'
+잘한 점
+노트북 전체 실행 성공을 검증 로그에 기록함
+부족한 점
+추가 보완 포인트: 실패시 재현 방법 로그 첨부 권장
+보완
+실행 환경·셀 번호별 시간 소요 등 간단한 실행 메타를 노트북에 추가하라
+PASS
+평가 항목 #3
+근거
+docs/results/analysis_aggregates.json > '"transaction_rows": 8084'; '"joined_columns": 9'; README.md > 'bool(2), `datetime64[us](1)`, `float64(1)`'
+잘한 점
+행·열 수와 다양한 자료형(문자·숫자·날짜)이 결과 파일에 명시되어 있음
+부족한 점
+추가 보완 포인트: 컬럼별 타입 표를 자동 생성해 노트북에 포함하면 명확함
+보완
+데이터 타입 요약 표(summarize dtypes)를 노트북 시작부에 출력하라
+PASS
+평가 항목 #4
+근거
+src/pipeline.py > 'self.df[f"{image_column}_mean"] = image_data.mean(axis=reduce_axes)'; 'for suffix, values in (("length", text_series.str.len()), ("word_count", text_series.str.split().str.len())):'
+잘한 점
+이미지 mean/std와 텍스트 길이·단어수 파생변수가 코드에 직접 생성됨
+부족한 점
+추가 보완 포인트: 고유값 누락 시 처리 예시(대치/표시)가 문서에 더 필요함
+보완
+피처 생성 시 결측·비정상 입력의 처리 흐름을 한 문단으로 요약하라
+PASS
+평가 항목 #5
+근거
+README.md > 'IQR 전후 박스플롯:'; docs/results/analysis_aggregates.json > '"outliers": {"price": {"lower": -0.01272881355932203, "upper": 0.061847457627118636, "count": 212'
+잘한 점
+IQR 경계와 탐지 건수 및 전후 박스플롯 생성 근거를 문서화함
+부족한 점
+추가 보완 포인트: 어떤 축·스케일을 공유했는지 코드 행 단위로 링크하면 재검증이 쉬움
+보완
+박스플롯을 그리는 코드 셀에 '원본 vs 보정' 축 공유 설정을 주석으로 명시하라
+PASS
+평가 항목 #6
+근거
+docs/results/analysis_aggregates.json > '"figures": ["01_histogram","02_boxplot","03_bar","04_heatmap","05_scatter","06_line"]'; README.md > '모든 그림에 제목·축·단위를 표시한다.'
+잘한 점
+필수 6종 차트 파일 목록과 제목·축 규칙이 README에 명확히 명시됨
+부족한 점
+추가 보완 포인트: 축 단위와 라벨 규칙 예시(포맷)가 노트북에 표시되면 더 명확함
+보완
+차트 생성 함수에서 사용하는 제목·축 라벨 포맷 예시를 노트북에 첨부하라
+PASS
+평가 항목 #7
+근거
+docs/results/analysis_aggregates.json > '"statistics": {"price": {"mean": 0.025013946779157827, "median": 0.022016949152542376}}'; '"correlations": [{"left": "image_mean", "right": "image_std"'
+잘한 점
+기술통계(평균·중앙값)과 두 상관쌍이 결과 JSON에 포함되어 해석 근거 제공됨
+부족한 점
+추가 보완 포인트: 상관 해석을 주석으로 보완하면 비전문가 이해가 쉬움
+보완
+상관 결과 옆에 '해석 한두문장'을 결과 표에 직접 포함하라
+PASS
+평가 항목 #8
+근거
+docs/results/analysis_aggregates.json > '"rfm": {"segments": {"Churned": 499, "VIP": 270, "New": 149, "Loyal": 82}}'; README.md > '비즈니스 인사이트'
+잘한 점
+RFM에서 4개 이상의 그룹을 생성하고 README에 3개 이상의 인사이트를 제시함
+부족한 점
+추가 보완 포인트: 세그먼트별 처리 우선순위 표로 요약하면 실행계획에 유용함
+보완
+README의 인사이트 아래에 세그먼트별 우선순위 표(short list)를 추가하라
+PASS
+평가 항목 #9
+근거
+README.md > '아래 메서드 및 설정 표에 입력과 상태 변화가 있다.'; src/pipeline.py > '"Object-oriented data analysis pipeline for e-commerce data."'
+잘한 점
+메서드 역할과 상태 변화에 대한 문서·설명이 README와 클래스 docstring에 존재함
+부족한 점
+추가 보완 포인트: 메서드별 입력/출력 예시(샘플 호출)을 더해 테스트 이해를 돕기 바람
+보완
+각 공개 메서드에 간단한 사용 예제 코드를 노트북에 추가하라
+PASS
+평가 항목 #10
+근거
+utils/image_features.py > 'means[positions] = batch.mean(axis=(1, 2, 3))' ; utils/image_features.py > 'histogram, edge = advanced_image_statistics(batch, histogram_bins)'
+잘한 점
+NumPy 배치 연산(mean/std/histogram/edge) 지점이 코드에 명확히 구현되어 있음
+부족한 점
+추가 보완 포인트: 벡터화 의도가 노트북에 한 문장으로 적혀있으면 리뷰어 이해가 빨라짐
+보완
+노트북에서 해당 셀 위에 '이 연산은 벡터화로 의도됨' 한 줄을 추가하라
+PASS
+평가 항목 #11
+근거
+src/pipeline.py > 'def load_data(self, *, required_columns=(), date_columns=(), dtype=None)'; utils/image_features.py > 'for name, value in (("image_size", image_size), ("batch_size", batch_size)):'
+잘한 점
+주요 파라미터(image_size, batch_size 등)가 함수 인자로 노출되어 하드코드가 적음
+부족한 점
+추가 보완 포인트: 전체 SETTINGS 연동 예시가 노트북에 더 명확하면 이식성 향상됨
+보완
+노트북 상단에 SETTINGS(dict)를 정의해 함수 인자로 전달하는 예시를 보이라
+PASS
+평가 항목 #12
+근거
+README.md > '의사결정 기록' ; README.md > '분석 흐름과 원본 보존'
+잘한 점
+분석 단계·판단 근거·대치 근거가 README와 관련 문서로 기록되어 있음
+부족한 점
+추가 보완 포인트: 의사결정 변경 이력(간단한 changelog)이 있으면 추적성이 좋아짐
+보완
+의사결정 섹션 하단에 변경 이력 링크 또는 간단 타임스탬프를 추가하라
+FAIL
+평가 항목 #13
+근거
+README.md > 'IQR 보정도 EDA 사본에만 적용한다.'
+잘한 점
+IQR을 EDA 전용 보정으로 다루며 보정 전후 수치(경계·건수)를 제공함
+부족한 점
+판정 불가: IQR의 정규대비 효과와 비대칭(비정규 분포) 한계에 대한 명확한 이론 설명이 부족함
+보완
+IQR이 정규 대비 언제 유리한지와 비대칭 분포에서의 한계를 사례·수치로 한 문단으로 보완하라
+PASS
+평가 항목 #14
+근거
+docs/results/analysis_aggregates.json > '"imputation": {"image_mean_eda": {"variance_before": 0.010424100859843282, "variance_after": 0.010130025199517102}}'
+잘한 점
+그룹 대치로 분산 축소 위험을 수치로 제시하고 원본 상관은 보존한다고 명시함
+부족한 점
+추가 보완 포인트: 그룹별 대치가 그룹간 효과를 과장할 수 있다는 예시 제시 권장
+보완
+그룹 대치 시 분산 축소 영향 예시(간단 표)를 노트북에 추가하라
+PASS
+평가 항목 #15
+근거
+README.md > '`(평균 순위−0.5)/고객 수`가 0.25/0.50/0.75 이하인지에 따라 1/2/3점, 나머지는 4점이다.'
+잘한 점
+RFM 점수 기준(분위수 기반)과 그룹 규칙을 README에서 수식과 함께 근거로 제시함
+부족한 점
+추가 보완 포인트: 비즈니스 근거(예: KPI에 따른 컷오프 설명)을 한 문단 추가하면 완성도 상승
+보완
+RFM 컷오프를 뒷받침하는 간단한 비즈니스 가정(목표 KPI)을 README에 덧붙이라
+PASS
+평가 항목 #16
+근거
+utils/image_features.py > 'return np.ascontiguousarray(sampled)'; README.md > '메모리/Stride/SIMD·RFM'
+잘한 점
+연속 메모리(ascontiguousarray)와 stride 정보를 수집해 NumPy 성능 근거를 제시함
+부족한 점
+추가 보완 포인트: SIMD/벡터화에 대한 간단 그림이나 링크가 있으면 이해에 도움됨
+보완
+성능 근거로 간단한 메모리·stride 설명과 참고 링크를 노트북에 추가하라
+FAIL
+평가 항목 #17
+근거
+utils/image_features.py > 'batch_size는 동시에 계산할 상품 수 상한이다.'
+잘한 점
+배치 크기와 픽셀 버퍼(nbytes)를 기록해 메모리 병목 가능성을 인지하고 있음
+부족한 점
+실제 병목 완화(예: 병렬화 전략·구체적 샘플링·I/O 병렬화) 개선방안 서술이 부족함
+보완
+대규모 시 I/O/디코딩 병목 완화를 위한 병렬화·비동기 로드·샘플링 전략을 설계 제안하라
+PASS
+평가 항목 #18
+근거
+README.md > 'VIP 유지 실험' ; README.md > '검증: 발송군과 무작위 미발송군의 이후 구매율·고객당 마진을 비교한다.'
+잘한 점
+우선 액션 대상(VIP)과 각 실험의 검증용 대조군·측정지표를 구체적으로 제시함
+부족한 점
+추가 보완 포인트: 검증에 필요한 표본 크기 산정 언급이 있으면 실무 적용이 쉬움
+보완
+각 실험 검증에 권장하는 최소 표본 크기 또는 효과 크기 기준을 덧붙이라
+PASS
+평가 항목 #19
+근거
+README.md > 'Churned(R≤2) → Potential' ; docs/results/analysis_aggregates.json > '"feature_columns": ["t_dat","customer_id","article_id","price","prod_name","image_mean","image_std"]'
+잘한 점
+예시 타겟(Churned)과 사용 가능한 피처 목록(image/text/transaction)이 문서와 결과 JSON에 포함됨
+부족한 점
+추가 보완 포인트: ML 확장을 위한 피처 전처리(스케일링·카테고리 인코딩) 예시가 있으면 좋음
+보완
+모델 입력으로 권장되는 피처 전처리 파이프라인(한두 문장)을 노트북에 추가하라
+```
+
+</details>
 
 ## 평가 기술 발표자료
 
